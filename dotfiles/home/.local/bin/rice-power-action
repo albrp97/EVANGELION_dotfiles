@@ -1,0 +1,133 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+action="${1:?power action required}"
+repo_dir="${RICE_REPO_DIR:-$HOME/Documents/code/macbook-linux-rice}"
+caffeinate_pid_file="$HOME/.cache/macbook-linux-rice-caffeinate.pid"
+CONFIG_DIR="${CONFIG_DIR:-$HOME/.config/sketchybar}"
+
+source "$CONFIG_DIR/colors.sh"
+
+normal_items=(
+  power.status_battery power.status_display power.status_session power.divider
+  power.lock power.display power.sleep power.caffeinate power.rice
+  power.logout power.restart power.shutdown
+)
+
+pulse_clicked() {
+  local clicked="${NAME:-}"
+  [[ -n "$clicked" ]] || return 0
+  sketchybar --animate sin 8 --set "$clicked" background.color="$GREEN" background.color="$ITEM_BG_ACTIVE" >/dev/null 2>&1 || true
+}
+
+hide_confirmations() {
+  local args=(
+    --set power.confirm_logout drawing=off
+    --set power.confirm_restart drawing=off
+    --set power.confirm_shutdown drawing=off
+    --set power.cancel drawing=off
+  )
+  for item_name in "${normal_items[@]}"; do
+    args+=(--set "$item_name" drawing=on)
+  done
+  sketchybar "${args[@]}"
+}
+
+close_menu() {
+  "$HOME/.local/bin/rice-power-menu" close
+}
+
+arm_confirmation() {
+  local item="$1"
+  hide_confirmations
+  local args=()
+  for item_name in "${normal_items[@]}"; do
+    args+=(--set "$item_name" drawing=off)
+  done
+  sketchybar "${args[@]}" \
+    --set "$item" drawing=on \
+    --set power.cancel drawing=on \
+    --set power popup.drawing=on
+}
+
+caffeinate_running() {
+  [[ -f "$caffeinate_pid_file" ]] || return 1
+  local pid
+  pid="$(cat "$caffeinate_pid_file")"
+  [[ "$pid" =~ ^[0-9]+$ ]] || return 1
+  kill -0 "$pid" 2>/dev/null
+}
+
+case "$action" in
+  lock)
+    pulse_clicked
+    close_menu
+    /System/Library/CoreServices/Menu\ Extras/User.menu/Contents/Resources/CGSession -suspend
+    ;;
+  display)
+    pulse_clicked
+    close_menu
+    pmset displaysleepnow
+    ;;
+  sleep)
+    pulse_clicked
+    close_menu
+    pmset sleepnow
+    ;;
+  caffeinate)
+    pulse_clicked
+    mkdir -p "$HOME/.cache"
+    if caffeinate_running; then
+      kill "$(cat "$caffeinate_pid_file")"
+      rm -f "$caffeinate_pid_file"
+      sketchybar --set power.caffeinate icon.color="$GREEN" label="caffeinate --30m"
+    else
+      caffeinate -dimsu -t 1800 >/tmp/macbook-linux-rice-caffeinate.log 2>&1 &
+      echo "$!" > "$caffeinate_pid_file"
+      sketchybar --set power.caffeinate icon.color="$ORANGE" label="caffeinate --active"
+    fi
+    sketchybar --set power popup.drawing=on
+    ;;
+  restart-rice)
+    pulse_clicked
+    close_menu
+    if [[ ! -x "$repo_dir/scripts/start-services.sh" ]]; then
+      echo "Missing rice restart script: $repo_dir/scripts/start-services.sh" >&2
+      exit 66
+    fi
+    "$repo_dir/scripts/start-services.sh"
+    ;;
+  arm-logout)
+    pulse_clicked
+    arm_confirmation power.confirm_logout
+    ;;
+  arm-restart)
+    pulse_clicked
+    arm_confirmation power.confirm_restart
+    ;;
+  arm-shutdown)
+    pulse_clicked
+    arm_confirmation power.confirm_shutdown
+    ;;
+  cancel)
+    pulse_clicked
+    hide_confirmations
+    sketchybar --set power popup.drawing=on
+    ;;
+  logout)
+    close_menu
+    osascript -e 'tell application "System Events" to log out'
+    ;;
+  restart)
+    close_menu
+    osascript -e 'tell application "System Events" to restart'
+    ;;
+  shutdown)
+    close_menu
+    osascript -e 'tell application "System Events" to shut down'
+    ;;
+  *)
+    echo "unknown power action: $action" >&2
+    exit 64
+    ;;
+esac

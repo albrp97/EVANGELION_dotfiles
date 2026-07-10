@@ -1,0 +1,116 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="1000" viewBox="0 0 1600 1000">
+  <defs>
+    <style>
+      .bg { fill: #0F1020; }
+      .panel { fill: #191724; stroke: #40394f; stroke-width: 2; }
+      .title { fill: #E0DEF4; font: 700 54px Helvetica, Arial, sans-serif; }
+      .subtitle { fill: #C4C8D8; font: 24px Helvetica, Arial, sans-serif; }
+      .label { fill: #E0DEF4; font: 700 28px Helvetica, Arial, sans-serif; }
+      .small { fill: #C4C8D8; font: 20px Helvetica, Arial, sans-serif; }
+      .hex { fill: #E0DEF4; font: 18px Menlo, Consolas, monospace; }
+      .percent { fill: #E0DEF4; font: 700 24px Helvetica, Arial, sans-serif; }
+    </style>
+  </defs>
+  <rect class="bg" x="0" y="0" width="1600" height="1000"/>
+  <circle cx="1370" cy="140" r="210" fill="#7C5FB8" opacity="0.10"/>
+  <circle cx="1260" cy="225" r="130" fill="#A3D977" opacity="0.08"/>
+  <text class="title" x="90" y="95">Pastel EVA-01 Palette</text>
+  <text class="subtitle" x="92" y="135">Rosé Pine/Nord softness, selected-wallpaper purples, EVA-01 green identity.</text>
+  <rect x="90" y="175" width="1420" height="122" rx="22" class="panel"/>
+  <text class="small" x="115" y="212">Importance split</text>
+  <rect x="115" y="232" width="532" height="40" rx="12" fill="#7C5FB8"/>
+  <rect x="647" y="232" width="280" height="40" rx="0" fill="#A3D977"/>
+  <rect x="927" y="232" width="308" height="40" rx="0" fill="#1F1D2E"/>
+  <rect x="1235" y="232" width="112" height="40" rx="0" fill="#D0C0D8"/>
+  <rect x="1347" y="232" width="70" height="40" rx="0" fill="#F6C177"/>
+  <rect x="1417" y="232" width="56" height="40" rx="0" fill="#EBBCBA"/>
+  <rect x="1473" y="232" width="42" height="40" rx="12" fill="#8CA9BF"/>
+  <text class="small" x="115" y="283">Purple 38% | Green 20% | Darks 22% | Lavender 8% | Orange 5% | Rose 4% | Text/frost 3%</text>
+  <g transform="translate(90,330)">
+    <rect class="panel" x="0" y="0" width="445" height="245" rx="22"/>
+    <text class="label" x="30" y="45">Soft EVA purples</text>
+    <text class="percent" x="363" y="45">38%</text>
+    <text class="small" x="30" y="78">identity, focus, selections</text>
+    <rect x="30" y="110" width="86" height="62" rx="12" fill="#2A203D"/>
+    <text class="hex" x="30" y="198">#2A203D</text>
+    <rect x="128" y="110" width="86" height="62" rx="12" fill="#4B3A68"/>
+    <text class="hex" x="128" y="198">#4B3A68</text>
+    <rect x="226" y="110" width="86" height="62" rx="12" fill="#7C5FB8"/>
+    <text class="hex" x="226" y="198">#7C5FB8</text>
+    <rect x="324" y="110" width="86" height="62" rx="12" fill="#C4A7E7"/>
+    <text class="hex" x="324" y="198">#C4A7E7</text>
+  </g>
+  <g transform="translate(580,330)">
+    <rect class="panel" x="0" y="0" width="445" height="245" rx="22"/>
+    <text class="label" x="30" y="45">Pastel EVA greens</text>
+    <text class="percent" x="363" y="45">20%</text>
+    <text class="small" x="30" y="78">success, live indicators</text>
+    <rect x="30" y="110" width="86" height="62" rx="12" fill="#304D3A"/>
+    <text class="hex" x="30" y="198">#304D3A</text>
+    <rect x="128" y="110" width="86" height="62" rx="12" fill="#6FAF6E"/>
+    <text class="hex" x="128" y="198">#6FAF6E</text>
+    <rect x="226" y="110" width="86" height="62" rx="12" fill="#A3D977"/>
+    <text class="hex" x="226" y="198">#A3D977</text>
+    <rect x="324" y="110" width="86" height="62" rx="12" fill="#D3F6A3"/>
+    <text class="hex" x="324" y="198">#D3F6A3</text>
+  </g>
+  <g transform="translate(1070,330)">
+    <rect class="panel" x="0" y="0" width="445" height="245" rx="22"/>
+    <text class="label" x="30" y="45">Rosé/Nord darks</text>
+    <text class="percent" x="363" y="45">22%</text>
+    <text class="small" x="30" y="78">backgrounds, panels, terminal</text>
+    <rect x="30" y="110" width="86" height="62" rx="12" fill="#0F1020" stroke="#40394f"/>
+    <text class="hex" x="30" y="198">#0F1020</text>
+    <rect x="128" y="110" width="86" height="62" rx="12" fill="#191724" stroke="#40394f"/>
+    <text class="hex" x="128" y="198">#191724</text>
+    <rect x="226" y="110" width="86" height="62" rx="12" fill="#1F1D2E"/>
+    <text class="hex" x="226" y="198">#1F1D2E</text>
+    <rect x="324" y="110" width="86" height="62" rx="12" fill="#26233A"/>
+    <text class="hex" x="324" y="198">#26233A</text>
+  </g>
+  <g transform="translate(90,620)">
+    <rect class="panel" x="0" y="0" width="320" height="235" rx="22"/>
+    <text class="label" x="30" y="45">Wallpaper lavender</text>
+    <text class="percent" x="238" y="45">8%</text>
+    <text class="small" x="30" y="78">soft wallpaper contrast</text>
+    <rect x="30" y="110" width="86" height="62" rx="12" fill="#6F5C99"/>
+    <text class="hex" x="30" y="198">#6F5C99</text>
+    <rect x="128" y="110" width="86" height="62" rx="12" fill="#9A86B8"/>
+    <text class="hex" x="128" y="198">#9A86B8</text>
+    <rect x="226" y="110" width="86" height="62" rx="12" fill="#D0C0D8"/>
+    <text class="hex" x="226" y="198">#D0C0D8</text>
+  </g>
+  <g transform="translate(445,620)">
+    <rect class="panel" x="0" y="0" width="320" height="235" rx="22"/>
+    <text class="label" x="30" y="45">Warm sync orange</text>
+    <text class="percent" x="238" y="45">5%</text>
+    <text class="small" x="30" y="78">warnings, rare glow</text>
+    <rect x="30" y="110" width="112" height="62" rx="12" fill="#D99A5E"/>
+    <text class="hex" x="30" y="198">#D99A5E</text>
+    <rect x="165" y="110" width="112" height="62" rx="12" fill="#F6C177"/>
+    <text class="hex" x="165" y="198">#F6C177</text>
+  </g>
+  <g transform="translate(800,620)">
+    <rect class="panel" x="0" y="0" width="320" height="235" rx="22"/>
+    <text class="label" x="30" y="45">Rose/magenta accent</text>
+    <text class="percent" x="238" y="45">4%</text>
+    <text class="small" x="30" y="78">secondary neon, errors</text>
+    <rect x="30" y="110" width="112" height="62" rx="12" fill="#D98BC4"/>
+    <text class="hex" x="30" y="198">#D98BC4</text>
+    <rect x="165" y="110" width="112" height="62" rx="12" fill="#EBBCBA"/>
+    <text class="hex" x="165" y="198">#EBBCBA</text>
+  </g>
+  <g transform="translate(1155,620)">
+    <rect class="panel" x="0" y="0" width="360" height="235" rx="22"/>
+    <text class="label" x="30" y="45">Text and frost</text>
+    <text class="percent" x="278" y="45">3%</text>
+    <text class="small" x="30" y="78">text, labels, info hints</text>
+    <rect x="30" y="110" width="86" height="62" rx="12" fill="#E0DEF4"/>
+    <text class="hex" x="30" y="198">#E0DEF4</text>
+    <rect x="128" y="110" width="86" height="62" rx="12" fill="#C4C8D8"/>
+    <text class="hex" x="128" y="198">#C4C8D8</text>
+    <rect x="226" y="110" width="86" height="62" rx="12" fill="#8CA9BF"/>
+    <text class="hex" x="226" y="198">#8CA9BF</text>
+  </g>
+  <text class="subtitle" x="90" y="925">Rule: purple stays dominant and soft; green is the signal; Rosé/Nord darks carry the UI; warm accents stay rare.</text>
+</svg>

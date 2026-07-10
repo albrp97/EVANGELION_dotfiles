@@ -1,0 +1,100 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+pid_file="$HOME/.cache/macbook-linux-rice/power-dashboard.pid"
+tui="$HOME/.local/bin/rice-power-dashboard-tui"
+focus_signal="rice_power_dashboard_focus_out"
+origin_grid="12:12:0:0:2:1"
+
+running_pid() {
+  [[ -f "$pid_file" ]] || return 1
+  local pid
+  pid="$(cat "$pid_file" 2>/dev/null || true)"
+  [[ "$pid" =~ ^[0-9]+$ ]] || return 1
+  kill -0 "$pid" 2>/dev/null || return 1
+  printf '%s\n' "$pid"
+}
+
+dashboard_window_info() {
+  command -v yabai >/dev/null 2>&1 || return 1
+  yabai -m query --windows 2>/dev/null | /usr/bin/python3 -c '
+import json
+import sys
+
+try:
+    windows = json.load(sys.stdin)
+except Exception:
+    raise SystemExit(1)
+
+for window in windows:
+    if window.get("app") == "Ghostty" and "EVA-01 POWER DASH" in window.get("title", ""):
+        print(window.get("id", ""), window.get("pid", ""))
+        break
+'
+}
+
+close_dashboard() {
+  local pid window_id ghostty_pid
+  pid="$(running_pid 2>/dev/null || true)"
+  if command -v yabai >/dev/null 2>&1; then
+    yabai -m signal --remove "$focus_signal" >/dev/null 2>&1 || true
+    read -r window_id ghostty_pid < <(dashboard_window_info || true)
+    if [[ -n "${window_id:-}" ]]; then
+      yabai -m window "$window_id" --grid "$origin_grid" >/dev/null 2>&1 || true
+      yabai -m window "$window_id" --sub-layer above >/dev/null 2>&1 || true
+      yabai -m window "$window_id" --opacity 0.52 >/dev/null 2>&1 || true
+      sleep 0.24
+    fi
+  fi
+  if [[ -n "$pid" ]]; then
+    kill "$pid" 2>/dev/null || true
+    for _ in 1 2 3 4 5; do
+      kill -0 "$pid" 2>/dev/null || break
+      sleep 0.06
+    done
+    kill -0 "$pid" 2>/dev/null && kill -KILL "$pid" 2>/dev/null || true
+  fi
+  if [[ "${ghostty_pid:-}" =~ ^[0-9]+$ ]]; then
+    kill "$ghostty_pid" 2>/dev/null || true
+    for _ in 1 2 3 4; do
+      kill -0 "$ghostty_pid" 2>/dev/null || break
+      sleep 0.05
+    done
+    kill -0 "$ghostty_pid" 2>/dev/null && kill -KILL "$ghostty_pid" 2>/dev/null || true
+  fi
+  if command -v yabai >/dev/null 2>&1; then
+    yabai -m signal --remove "$focus_signal" >/dev/null 2>&1 || true
+  fi
+  rm -f "$pid_file"
+}
+
+open_dashboard() {
+  if running_pid >/dev/null; then
+    return 0
+  fi
+  if command -v yabai >/dev/null 2>&1; then
+    yabai -m signal --remove "$focus_signal" >/dev/null 2>&1 || true
+    yabai -m rule --add --one-shot app="^Ghostty$" manage=off grid="$origin_grid" sub-layer=above opacity=0.72 >/dev/null 2>&1 || true
+  fi
+  open -na Ghostty --args -e "$tui"
+}
+
+case "${1:-toggle}" in
+  open)
+    open_dashboard
+    ;;
+  close)
+    close_dashboard
+    ;;
+  toggle)
+    if running_pid >/dev/null; then
+      close_dashboard
+    else
+      open_dashboard
+    fi
+    ;;
+  *)
+    echo "usage: rice-power-dashboard [open|close|toggle]" >&2
+    exit 2
+    ;;
+esac

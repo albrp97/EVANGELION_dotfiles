@@ -1,0 +1,34 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+if [[ $# -ne 1 ]]; then
+  echo "Usage: rice-open-trusted-download /path/to/download" >&2
+  exit 64
+fi
+
+target="$1"
+
+if [[ ! -e "$target" ]]; then
+  echo "File does not exist: $target" >&2
+  exit 66
+fi
+
+case "$target" in
+  "$HOME"/Downloads/*|"$HOME"/Desktop/*)
+    ;;
+  *)
+    echo "Refusing to modify quarantine outside Downloads/Desktop: $target" >&2
+    exit 64
+    ;;
+esac
+
+xattr -dr com.apple.quarantine "$target" 2>/dev/null || true
+
+if [[ -f "$target" ]]; then
+  file_type="$(file -b "$target")"
+  if [[ "$file_type" == *"Mach-O"* || "$target" == *.command || "$target" == *.sh ]]; then
+    chmod u+x "$target"
+  fi
+fi
+
+open "$target"

@@ -1,0 +1,30 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+start_path="${1:-$HOME}"
+
+if ! command -v tmux >/dev/null 2>&1; then
+  echo "tmux is required for the pinned fastfetch console." >&2
+  exec zsh -i
+fi
+
+session="rice-fetch-$$"
+pin_lines="${RICE_FASTFETCH_PIN_LINES:-20}"
+
+shell_pane="$(
+  tmux new-session -d -P -F '#{pane_id}' \
+    -s "$session" \
+    -c "$start_path" \
+    'FASTFETCH_DISABLE=1 exec zsh -i'
+)"
+
+tmux set-option -t "$session" status off
+tmux set-option -t "$session" pane-border-style "fg=#7C5FB8"
+tmux set-option -t "$session" pane-active-border-style "fg=#C4A7E7"
+tmux set-option -t "$session" mouse on
+
+tmux split-window -d -b -v -l "$pin_lines" -t "$shell_pane" \
+  'FASTFETCH_DISABLE=1 fastfetch --config "$HOME/.config/fastfetch/config.jsonc"; while :; do sleep 3600; done'
+
+tmux select-pane -t "$shell_pane"
+tmux attach-session -t "$session"

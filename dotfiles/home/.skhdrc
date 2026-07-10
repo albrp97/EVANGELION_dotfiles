@@ -1,0 +1,65 @@
+# MacBook Linux Rice: yabai/skhd bindings inspired by artzen-dotfiles Hyprland binds.
+
+:: default
+# Command workspace behavior.
+cmd - 1 : "$HOME/.local/bin/rice-yabai-space" 1
+cmd - 2 : "$HOME/.local/bin/rice-yabai-space" 2
+cmd - 3 : "$HOME/.local/bin/rice-yabai-space" 3
+cmd - 4 : "$HOME/.local/bin/rice-yabai-space" 4
+cmd - 5 : "$HOME/.local/bin/rice-yabai-space" 5
+cmd - 6 : "$HOME/.local/bin/rice-yabai-space" 6
+cmd - 7 : "$HOME/.local/bin/rice-yabai-space" 7
+cmd - 8 : "$HOME/.local/bin/rice-yabai-space" 8
+cmd - 9 : "$HOME/.local/bin/rice-yabai-space" 9
+
+cmd + shift - 1 : "$HOME/.local/bin/rice-yabai-move-window-space" 1
+cmd + shift - 2 : "$HOME/.local/bin/rice-yabai-move-window-space" 2
+cmd + shift - 3 : "$HOME/.local/bin/rice-yabai-move-window-space" 3
+cmd + shift - 4 : "$HOME/.local/bin/rice-yabai-move-window-space" 4
+cmd + shift - 5 : "$HOME/.local/bin/rice-yabai-move-window-space" 5
+cmd + shift - 6 : "$HOME/.local/bin/rice-yabai-move-window-space" 6
+cmd + shift - 7 : "$HOME/.local/bin/rice-yabai-move-window-space" 7
+cmd + shift - 8 : "$HOME/.local/bin/rice-yabai-move-window-space" 8
+cmd + shift - 9 : "$HOME/.local/bin/rice-yabai-move-window-space" 9
+
+# Plain Command window management.
+cmd - left  : "$HOME/.local/bin/rice-yabai-focus-window" west
+cmd - down  : "$HOME/.local/bin/rice-yabai-focus-window" south
+cmd - up    : "$HOME/.local/bin/rice-yabai-focus-window" north
+cmd - right : "$HOME/.local/bin/rice-yabai-focus-window" east
+
+cmd + shift - left  : "$HOME/.local/bin/rice-yabai-swap-window" west
+cmd + shift - down  : "$HOME/.local/bin/rice-yabai-swap-window" south
+cmd + shift - up    : "$HOME/.local/bin/rice-yabai-swap-window" north
+cmd + shift - right : "$HOME/.local/bin/rice-yabai-swap-window" east
+
+# 0x18 is =, 0x1B is - in skhd's keycode syntax.
+cmd - 0x18 : "$HOME/.local/bin/rice-yabai-resize-width" grow
+cmd - 0x1B : "$HOME/.local/bin/rice-yabai-resize-width" shrink
+
+# Right Command is Karabiner HyprMod: cmd+alt+ctrl.
+cmd + alt + ctrl - t : "$HOME/.local/bin/rice-ghostty-new-window"
+cmd + alt + ctrl - return : "$HOME/.local/bin/rice-ghostty-new-window"
+cmd + alt + ctrl - e : "$HOME/.local/bin/rice-ghostty-yazi"
+cmd + alt + ctrl - z : open -na /Applications/Zen.app
+cmd + alt + ctrl - v : open -na "Visual Studio Code"
+cmd + alt + ctrl - r : open -na Ghostty --args -e btop
+cmd + alt + ctrl - q : yabai -m window --close
+
+cmd + alt + ctrl - h : yabai -m window --focus west
+cmd + alt + ctrl - j : yabai -m window --focus south
+cmd + alt + ctrl - k : yabai -m window --focus north
+cmd + alt + ctrl - l : yabai -m window --focus east
+
+cmd + alt + ctrl + shift - h : yabai -m window --swap west
+cmd + alt + ctrl + shift - j : yabai -m window --swap south
+cmd + alt + ctrl + shift - k : yabai -m window --swap north
+cmd + alt + ctrl + shift - l : yabai -m window --swap east
+
+cmd + alt + ctrl - f : yabai -m window --toggle float
+cmd + alt + ctrl + shift - f : yabai -m window --toggle zoom-fullscreen
+cmd + alt + ctrl - b : yabai -m space --balance
+
+# Make Command+Q behave like a Linux WM close: close only the focused window,
+# not every window in the app.
+cmd - q : yabai -m window --close

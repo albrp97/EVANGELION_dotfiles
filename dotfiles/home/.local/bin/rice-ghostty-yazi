@@ -1,0 +1,4 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+open -na Ghostty --args -e yazi "${1:-$HOME}"

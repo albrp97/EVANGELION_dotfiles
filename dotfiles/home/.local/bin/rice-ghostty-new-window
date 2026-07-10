@@ -1,0 +1,27 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+if [[ "$(osascript -e 'application "Ghostty" is running')" == "true" ]]; then
+  if ! osascript <<'APPLESCRIPT'
+tell application "Ghostty" to activate
+delay 0.15
+tell application "System Events"
+  tell process "Ghostty"
+    click menu item "New Window" of menu 1 of menu bar item "File" of menu bar 1
+  end tell
+end tell
+APPLESCRIPT
+  then
+    osascript <<'APPLESCRIPT' || open -na /Applications/Ghostty.app
+tell application "Ghostty" to activate
+delay 0.15
+tell application "System Events"
+  tell process "Ghostty"
+    keystroke "n" using command down
+  end tell
+end tell
+APPLESCRIPT
+  fi
+else
+  open -na /Applications/Ghostty.app
+fi

@@ -1,0 +1,27 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+target="${1:?space number required}"
+
+current_count="$(yabai -m query --spaces | jq 'length')"
+
+while [[ "$current_count" -lt "$target" ]]; do
+  if ! yabai -m space --create >/tmp/rice-yabai-space-create.err 2>&1; then
+    osascript -e "display notification \"Space $target does not exist yet. Enable yabai scripting addition or create more Desktops in Mission Control.\" with title \"MacBook Linux Rice\""
+    cat /tmp/rice-yabai-space-create.err >&2
+    exit 1
+  fi
+  current_count="$(yabai -m query --spaces | jq 'length')"
+done
+
+target_display="$(
+  yabai -m query --spaces | jq -r --argjson target "$target" '
+    .[]
+    | select(.index == $target)
+    | .display // empty
+  '
+)"
+
+yabai -m display --focus "$target_display" >/dev/null 2>&1 || true
+yabai -m space --focus "$target"
+yabai -m display --focus "$target_display" >/dev/null 2>&1 || true

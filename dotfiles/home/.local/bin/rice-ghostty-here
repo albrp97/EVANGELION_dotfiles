@@ -1,0 +1,14 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+target="${1:-$PWD}"
+if [[ -f "$target" ]]; then
+  target="$(dirname "$target")"
+fi
+
+if [[ ! -d "$target" ]]; then
+  echo "rice-ghostty-here: not a directory: $target" >&2
+  exit 1
+fi
+
+open -na Ghostty --args --working-directory="$target"

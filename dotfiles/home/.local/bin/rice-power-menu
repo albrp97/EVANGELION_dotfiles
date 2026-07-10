@@ -1,0 +1,140 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+command="${1:-toggle}"
+CONFIG_DIR="${CONFIG_DIR:-$HOME/.config/sketchybar}"
+caffeinate_pid_file="$HOME/.cache/macbook-linux-rice-caffeinate.pid"
+
+source "$CONFIG_DIR/colors.sh"
+
+normal_items=(
+  power.status_battery power.status_display power.status_session power.divider
+  power.lock power.display power.sleep power.caffeinate power.rice
+  power.logout power.restart power.shutdown
+)
+
+brightness_percent() {
+  ioreg -w0 -l 2>/dev/null \
+    | perl -0ne 'if (/"brightness"=\{[^}]*"max"=([0-9]+)[^}]*"value"=([0-9]+)/s) { printf "%d%%", ($2 / $1) * 100 }' \
+    || printf '?%%'
+}
+
+volume_percent() {
+  osascript -e 'output volume of (get volume settings)' 2>/dev/null | awk '{print $1 "%"}' || printf '?%%'
+}
+
+battery_status() {
+  local line percent state time_left
+  line="$(pmset -g batt | awk '/%/ { print; exit }')"
+  percent="$(awk -F'	|;' '{ gsub(/[^0-9]/, "", $2); print $2 }' <<<"$line")"
+  state="$(awk -F"'" '/Battery Power|AC Power/ { print $2; exit }' < <(pmset -g batt))"
+  time_left="$(awk -F'; *' '{ print $3 }' <<<"$line" | sed 's/ remaining.*//; s/^ *//')"
+
+  if [[ "$state" == "AC Power" ]]; then
+    printf '%s%% :: ac power' "${percent:-?}"
+  elif [[ -n "$time_left" && "$time_left" != "(no estimate)" ]]; then
+    printf '%s%% :: %s left' "${percent:-?}" "$time_left"
+  else
+    printf '%s%% :: discharge' "${percent:-?}"
+  fi
+}
+
+uptime_status() {
+  local boot_epoch now seconds days hours minutes
+  boot_epoch="$(sysctl -n kern.boottime | perl -ne 'print $1 if /sec = ([0-9]+)/')"
+  now="$(date +%s)"
+  seconds=$((now - boot_epoch))
+  days=$((seconds / 86400))
+  hours=$(((seconds % 86400) / 3600))
+  minutes=$(((seconds % 3600) / 60))
+
+  if (( days > 0 )); then
+    printf '%dd %02dh :: rice online' "$days" "$hours"
+  else
+    printf '%02dh %02dm :: rice online' "$hours" "$minutes"
+  fi
+}
+
+caffeinate_running() {
+  [[ -f "$caffeinate_pid_file" ]] || return 1
+  local pid
+  pid="$(cat "$caffeinate_pid_file")"
+  [[ "$pid" =~ ^[0-9]+$ ]] || return 1
+  kill -0 "$pid" 2>/dev/null
+}
+
+refresh_status() {
+  local battery_label display_label
+  battery_label="$(battery_status)"
+  display_label="brt $(brightness_percent) :: vol $(volume_percent)"
+
+  sketchybar \
+    --set power.status_battery label="$battery_label" \
+    --set power.status_display label="$display_label" \
+    --set power.status_session label="$(uptime_status)"
+
+  if caffeinate_running; then
+    sketchybar --set power.caffeinate icon.color="$ORANGE" label="caffeinate --active"
+  else
+    sketchybar --set power.caffeinate icon.color="$GREEN" label="caffeinate --30m"
+  fi
+}
+
+hide_confirmations() {
+  local args=(
+    --set power.confirm_logout drawing=off
+    --set power.confirm_restart drawing=off
+    --set power.confirm_shutdown drawing=off
+    --set power.cancel drawing=off
+  )
+  for item_name in "${normal_items[@]}"; do
+    args+=(--set "$item_name" drawing=on)
+  done
+  sketchybar "${args[@]}"
+}
+
+open_menu() {
+  refresh_status
+  hide_confirmations
+  sketchybar \
+    --set power popup.y_offset=-10 popup.background.border_color=0x007c5fb8 \
+    --set power popup.drawing=on
+  sketchybar --animate tanh 16 \
+    --set power popup.y_offset=6 popup.background.border_color="$GREEN" \
+    --set power background.color="$ITEM_BG_ACTIVE"
+}
+
+close_menu() {
+  hide_confirmations
+  sketchybar --animate tanh 12 \
+    --set power popup.y_offset=-10 popup.background.border_color=0x007c5fb8 \
+    --set power background.color="$ITEM_BG"
+  sleep 0.18
+  sketchybar \
+    --set power popup.drawing=off \
+    --set power popup.y_offset=6 popup.background.border_color="$ITEM_BG_ACTIVE"
+}
+
+is_open() {
+  [[ "$(sketchybar --query power 2>/dev/null | jq -r '.popup.drawing')" == "on" ]]
+}
+
+case "$command" in
+  open)
+    open_menu
+    ;;
+  close)
+    close_menu
+    ;;
+  toggle)
+    if is_open; then
+      close_menu
+    else
+      open_menu
+    fi
+    ;;
+  *)
+    echo "usage: rice-power-menu [open|close|toggle]" >&2
+    exit 64
+    ;;
+esac

@@ -1,0 +1,29 @@
+{
+  "name": "macbook-linux-rice-eva01-pastel",
+  "displayName": "EVA-01 Pastel",
+  "description": "Pastel EVA-01 theme inspired by Rosé Pine, Nord, and the selected rice wallpapers.",
+  "version": "0.1.0",
+  "publisher": "macbook-linux-rice",
+  "engines": {
+    "vscode": "^1.80.0"
+  },
+  "categories": [
+    "Themes"
+  ],
+  "contributes": {
+    "themes": [
+      {
+        "label": "EVA-01 Pastel",
+        "uiTheme": "vs-dark",
+        "path": "./themes/eva01-pastel-color-theme.json"
+      }
+    ],
+    "iconThemes": [
+      {
+        "id": "eva01-pastel-icons",
+        "label": "EVA-01 Pastel Icons",
+        "path": "./icons/eva01-pastel-icon-theme.json"
+      }
+    ]
+  }
+}

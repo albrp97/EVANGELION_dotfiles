@@ -1,0 +1,407 @@
+{
+  "global": {
+    "check_for_updates_on_startup": true,
+    "show_in_menu_bar": true,
+    "show_profile_name_in_menu_bar": false
+  },
+  "profiles": [
+    {
+      "name": "MacBook Linux Rice",
+      "selected": true,
+      "devices": [
+        {
+          "identifiers": {
+            "device_address": "c2-01-ab-45-0e-2f",
+            "is_keyboard": true,
+            "is_pointing_device": true
+          },
+          "ignore": false,
+          "manipulate_caps_lock_led": true
+        },
+        {
+          "identifiers": {
+            "vendor_id": 1133,
+            "product_id": 45108,
+            "is_pointing_device": true
+          },
+          "ignore": false
+        }
+      ],
+      "simple_modifications": [],
+      "fn_function_keys": [],
+      "complex_modifications": {
+        "parameters": {
+          "basic.simultaneous_threshold_milliseconds": 50,
+          "basic.to_delayed_action_delay_milliseconds": 500,
+          "basic.to_if_alone_timeout_milliseconds": 1000,
+          "basic.to_if_held_down_threshold_milliseconds": 500,
+          "mouse_motion_to_scroll.speed": 100
+        },
+        "rules": [
+          {
+            "description": "Command+Space leader launcher",
+            "manipulators": [
+              {
+                "type": "basic",
+                "from": {
+                  "key_code": "spacebar",
+                  "modifiers": {
+                    "mandatory": [
+                      "command"
+                    ],
+                    "optional": [
+                      "any"
+                    ]
+                  }
+                },
+                "to": [
+                  {
+                    "set_variable": {
+                      "name": "rice_launcher",
+                      "value": 1
+                    }
+                  }
+                ],
+                "conditions": [
+                  {
+                    "type": "variable_unless",
+                    "name": "rice_launcher",
+                    "value": 1
+                  }
+                ],
+                "to_delayed_action": {
+                  "to_if_invoked": [
+                    {
+                      "set_variable": {
+                        "name": "rice_launcher",
+                        "value": 0
+                      }
+                    }
+                  ]
+                },
+                "parameters": {
+                  "basic.to_delayed_action_delay_milliseconds": 1500
+                }
+              },
+              {
+                "type": "basic",
+                "from": {
+                  "key_code": "spacebar",
+                  "modifiers": {
+                    "optional": [
+                      "any"
+                    ]
+                  }
+                },
+                "conditions": [
+                  {
+                    "type": "variable_if",
+                    "name": "rice_launcher",
+                    "value": 1
+                  }
+                ],
+                "to": [
+                  {
+                    "shell_command": "open /Applications/Raycast.app"
+                  },
+                  {
+                    "set_variable": {
+                      "name": "rice_launcher",
+                      "value": 0
+                    }
+                  }
+                ]
+              },
+              {
+                "type": "basic",
+                "from": {
+                  "key_code": "t",
+                  "modifiers": {
+                    "optional": [
+                      "any"
+                    ]
+                  }
+                },
+                "conditions": [
+                  {
+                    "type": "variable_if",
+                    "name": "rice_launcher",
+                    "value": 1
+                  }
+                ],
+                "to": [
+                  {
+                    "shell_command": "/bin/zsh -lc '$HOME/.local/bin/rice-ghostty-new-window'"
+                  },
+                  {
+                    "set_variable": {
+                      "name": "rice_launcher",
+                      "value": 0
+                    }
+                  }
+                ]
+              },
+              {
+                "type": "basic",
+                "from": {
+                  "key_code": "return_or_enter",
+                  "modifiers": {
+                    "optional": [
+                      "any"
+                    ]
+                  }
+                },
+                "conditions": [
+                  {
+                    "type": "variable_if",
+                    "name": "rice_launcher",
+                    "value": 1
+                  }
+                ],
+                "to": [
+                  {
+                    "shell_command": "/bin/zsh -lc '$HOME/.local/bin/rice-ghostty-new-window'"
+                  },
+                  {
+                    "set_variable": {
+                      "name": "rice_launcher",
+                      "value": 0
+                    }
+                  }
+                ]
+              },
+              {
+                "type": "basic",
+                "from": {
+                  "key_code": "e",
+                  "modifiers": {
+                    "optional": [
+                      "any"
+                    ]
+                  }
+                },
+                "conditions": [
+                  {
+                    "type": "variable_if",
+                    "name": "rice_launcher",
+                    "value": 1
+                  }
+                ],
+                "to": [
+                  {
+                    "shell_command": "/bin/zsh -lc '$HOME/.local/bin/rice-ghostty-yazi'"
+                  },
+                  {
+                    "set_variable": {
+                      "name": "rice_launcher",
+                      "value": 0
+                    }
+                  }
+                ]
+              },
+              {
+                "type": "basic",
+                "from": {
+                  "key_code": "y",
+                  "modifiers": {
+                    "optional": [
+                      "any"
+                    ]
+                  }
+                },
+                "conditions": [
+                  {
+                    "type": "variable_if",
+                    "name": "rice_launcher",
+                    "value": 1
+                  }
+                ],
+                "to": [
+                  {
+                    "shell_command": "/bin/zsh -lc '$HOME/.local/bin/rice-ghostty-fastfetch-console'"
+                  },
+                  {
+                    "set_variable": {
+                      "name": "rice_launcher",
+                      "value": 0
+                    }
+                  }
+                ]
+              },
+              {
+                "type": "basic",
+                "from": {
+                  "key_code": "z",
+                  "modifiers": {
+                    "optional": [
+                      "any"
+                    ]
+                  }
+                },
+                "conditions": [
+                  {
+                    "type": "variable_if",
+                    "name": "rice_launcher",
+                    "value": 1
+                  }
+                ],
+                "to": [
+                  {
+                    "shell_command": "open -na /Applications/Zen.app"
+                  },
+                  {
+                    "set_variable": {
+                      "name": "rice_launcher",
+                      "value": 0
+                    }
+                  }
+                ]
+              },
+              {
+                "type": "basic",
+                "from": {
+                  "key_code": "v",
+                  "modifiers": {
+                    "optional": [
+                      "any"
+                    ]
+                  }
+                },
+                "conditions": [
+                  {
+                    "type": "variable_if",
+                    "name": "rice_launcher",
+                    "value": 1
+                  }
+                ],
+                "to": [
+                  {
+                    "shell_command": "open -na 'Visual Studio Code'"
+                  },
+                  {
+                    "set_variable": {
+                      "name": "rice_launcher",
+                      "value": 0
+                    }
+                  }
+                ]
+              },
+              {
+                "type": "basic",
+                "from": {
+                  "key_code": "r",
+                  "modifiers": {
+                    "optional": [
+                      "any"
+                    ]
+                  }
+                },
+                "conditions": [
+                  {
+                    "type": "variable_if",
+                    "name": "rice_launcher",
+                    "value": 1
+                  }
+                ],
+                "to": [
+                  {
+                    "shell_command": "open -na Ghostty --args -e btop"
+                  },
+                  {
+                    "set_variable": {
+                      "name": "rice_launcher",
+                      "value": 0
+                    }
+                  }
+                ]
+              },
+              {
+                "type": "basic",
+                "from": {
+                  "key_code": "s",
+                  "modifiers": {
+                    "optional": [
+                      "any"
+                    ]
+                  }
+                },
+                "conditions": [
+                  {
+                    "type": "variable_if",
+                    "name": "rice_launcher",
+                    "value": 1
+                  }
+                ],
+                "to": [
+                  {
+                    "shell_command": "/bin/zsh -lc '$HOME/.local/bin/rice-region-screenshot'"
+                  },
+                  {
+                    "set_variable": {
+                      "name": "rice_launcher",
+                      "value": 0
+                    }
+                  }
+                ]
+              },
+              {
+                "type": "basic",
+                "from": {
+                  "key_code": "escape",
+                  "modifiers": {
+                    "optional": [
+                      "any"
+                    ]
+                  }
+                },
+                "conditions": [
+                  {
+                    "type": "variable_if",
+                    "name": "rice_launcher",
+                    "value": 1
+                  }
+                ],
+                "to": [
+                  {
+                    "set_variable": {
+                      "name": "rice_launcher",
+                      "value": 0
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "description": "Right Command becomes HyprMod (Command + Option + Control)",
+            "manipulators": [
+              {
+                "type": "basic",
+                "from": {
+                  "key_code": "right_command",
+                  "modifiers": {
+                    "optional": [
+                      "any"
+                    ]
+                  }
+                },
+                "to": [
+                  {
+                    "key_code": "left_control",
+                    "modifiers": [
+                      "left_command",
+                      "left_option"
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "virtual_hid_keyboard": {
+        "keyboard_type_v2": "ansi"
+      }
+    }
+  ]
+}

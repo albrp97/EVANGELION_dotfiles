@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+/usr/sbin/screencapture -i -s -c -x
+osascript -e 'display notification "Region screenshot copied to clipboard." with title "MacBook Linux Rice"'

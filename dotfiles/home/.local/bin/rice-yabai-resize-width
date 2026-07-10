@@ -1,0 +1,23 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+action="${1:?Usage: rice-yabai-resize-width grow|shrink}"
+step="${RICE_YABAI_RESIZE_STEP:-80}"
+
+window_json="$(yabai -m query --windows --window 2>/dev/null)" || exit 0
+display_id="$(jq -r '.display' <<<"$window_json")"
+display_json="$(yabai -m query --displays --display "$display_id" 2>/dev/null)"
+
+window_center="$(jq -r '.frame.x + (.frame.w / 2)' <<<"$window_json")"
+display_center="$(jq -r '.frame.x + (.frame.w / 2)' <<<"$display_json")"
+is_left_side="$(awk -v w="$window_center" -v d="$display_center" 'BEGIN { print (w < d) ? "true" : "false" }')"
+
+case "$action:$is_left_side" in
+  grow:true)    handle="right"; delta="$step" ;;
+  shrink:true)  handle="right"; delta="-$step" ;;
+  grow:false)   handle="left";  delta="-$step" ;;
+  shrink:false) handle="left";  delta="$step" ;;
+  *) exit 2 ;;
+esac
+
+yabai -m window --resize "$handle:$delta:0" >/dev/null 2>&1 || true

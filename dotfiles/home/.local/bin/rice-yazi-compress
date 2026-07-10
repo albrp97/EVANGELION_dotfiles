@@ -1,0 +1,37 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+if [[ $# -eq 0 ]]; then
+  echo "rice-yazi-compress: select at least one file or folder" >&2
+  exit 1
+fi
+
+for item in "$@"; do
+  if [[ ! -e "$item" ]]; then
+    echo "rice-yazi-compress: missing path: $item" >&2
+    exit 1
+  fi
+done
+
+if [[ $# -eq 1 ]]; then
+  first="$1"
+  parent="$(dirname "$first")"
+  base="$(basename "$first")"
+  out="$parent/${base%/}.zip"
+else
+  parent="$PWD"
+  out="$parent/$(basename "$PWD").zip"
+fi
+
+if [[ -e "$out" ]]; then
+  out="${out%.zip}-$(date +%Y%m%d-%H%M%S).zip"
+fi
+
+if command -v 7zz >/dev/null 2>&1; then
+  7zz a -tzip "$out" "$@"
+elif command -v zip >/dev/null 2>&1; then
+  zip -r "$out" "$@"
+else
+  echo "rice-yazi-compress: install sevenzip or zip" >&2
+  exit 1
+fi

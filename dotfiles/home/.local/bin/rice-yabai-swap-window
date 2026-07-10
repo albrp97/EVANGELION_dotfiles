@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+direction="${1:?Usage: rice-yabai-swap-window west|south|north|east}"
+
+yabai -m config mouse_follows_focus on >/dev/null 2>&1 || true
+yabai -m window --swap "$direction" >/dev/null 2>&1 || exit 0
+yabai -m window --focus >/dev/null 2>&1 || true

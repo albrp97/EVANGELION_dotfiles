@@ -1,0 +1,228 @@
+#!/usr/bin/env python3
+import json
+import os
+import re
+import shutil
+import subprocess
+import sys
+import unicodedata
+
+RESET = "\033[0m"
+TEXT = "\033[37m"
+GREEN = "\033[32m"
+ORANGE = "\033[33m"
+BORDER = "\033[35m"
+
+LEFT_WIDTH = 36
+RIGHT_WIDTH = 36
+GAP = " "
+
+
+def format_size(bytes_value):
+    gib = bytes_value / (1024**3)
+    if abs(gib - round(gib)) < 0.05:
+        return f"{round(gib):.0f}G"
+    return f"{gib:.1f}G"
+
+
+def format_uptime(milliseconds):
+    minutes = int(milliseconds // 60000)
+    hours, minutes = divmod(minutes, 60)
+    days, hours = divmod(hours, 24)
+    if days:
+        return f"{days}d {hours}h"
+    if hours:
+        return f"{hours}h {minutes}m"
+    return f"{minutes}m"
+
+
+def clean_weather(value):
+    return re.sub(r"\s*\([^)]*\)\s*$", "", value).replace(" - ", " ")
+
+
+def short_host(value):
+    if "MacBook Air" in value:
+        match = re.search(r"M\d+", value)
+        suffix = f" {match.group(0)}" if match else ""
+        return f"MacBook Air{suffix}"
+    return value
+
+
+def format_percent(used, total):
+    if not total:
+        return "n/a"
+    return f"{round(used / total * 100):.0f}%"
+
+
+def format_time_left(seconds):
+    if not seconds or seconds < 0:
+        return ""
+    minutes = int(seconds // 60)
+    hours, minutes = divmod(minutes, 60)
+    if hours:
+        return f" {hours}h left"
+    return f" {minutes}m left"
+
+
+def shell_from_env():
+    shell_path = os.environ.get("SHELL", "")
+    shell_name = os.path.basename(shell_path) if shell_path else "shell"
+    shell_bin = shutil.which(shell_name) or shell_path
+    version = ""
+    if shell_bin:
+        try:
+            output = subprocess.check_output(
+                [shell_bin, "--version"],
+                text=True,
+                stderr=subprocess.DEVNULL,
+                timeout=1,
+            ).strip()
+            match = re.search(r"\b\d+(?:\.\d+)+\b", output)
+            version = match.group(0) if match else ""
+        except (subprocess.CalledProcessError, subprocess.TimeoutExpired, FileNotFoundError):
+            version = ""
+    return f"{shell_name} {version}".strip()
+
+
+def terminal_from_env(fallback):
+    name = os.environ.get("TERM_PROGRAM") or fallback
+    version = os.environ.get("TERM_PROGRAM_VERSION", "")
+    if version and version not in name:
+        return f"{name} {version}"
+    return name
+
+
+def collect():
+    fastfetch = shutil.which("fastfetch")
+    if not fastfetch:
+        print("fastfetch is not installed", file=sys.stderr)
+        sys.exit(1)
+
+    modules = "Host:CPU:Memory:Disk:OS:Uptime:Terminal:Battery:Weather"
+    raw = subprocess.check_output(
+        [fastfetch, "--format", "json", "--logo", "none", "--structure", modules],
+        text=True,
+        stderr=subprocess.DEVNULL,
+    )
+    data = {entry["type"]: entry.get("result") for entry in json.loads(raw)}
+
+    host = data.get("Host") or {}
+    cpu = data.get("CPU") or {}
+    memory = data.get("Memory") or {}
+    disks = data.get("Disk") or []
+    os_info = data.get("OS") or {}
+    uptime = data.get("Uptime") or {}
+    terminal = data.get("Terminal") or {}
+    battery = (data.get("Battery") or [{}])[0]
+    weather = data.get("Weather")
+
+    data_disk = next((disk for disk in disks if disk.get("mountpoint") == "/System/Volumes/Data"), disks[0] if disks else {})
+    disk_bytes = (data_disk.get("bytes") or {})
+    free_disk = format_size(disk_bytes["free"]) if "free" in disk_bytes else "n/a"
+    disk_used = disk_bytes.get("used", 0)
+    disk_total = disk_bytes.get("total", 0)
+    disk_percent = format_percent(disk_used, disk_total)
+
+    memory_used = memory.get("used", 0)
+    memory_total = memory.get("total", 0)
+    memory_percent = format_percent(memory_used, memory_total)
+
+    cpu_name = cpu.get("cpu") or "n/a"
+    cpu_cores = (cpu.get("cores") or {}).get("physical")
+    if cpu_cores:
+        cpu_name = f"{cpu_name} {cpu_cores}-core"
+
+    terminal_fallback = terminal.get("prettyName") or terminal.get("processName") or "terminal"
+    terminal_name = terminal_from_env(terminal_fallback)
+    shell_name = shell_from_env()
+
+    battery_percent = f"{battery.get('capacity', 0):.0f}%"
+    battery_time = format_time_left(battery.get("timeRemaining", 0))
+
+    left = [
+        (" mac", short_host(host.get("name") or "n/a")),
+        (" cpu", cpu_name.replace("Apple ", "")),
+        (" ram", f"{format_size(memory_total)} ({memory_percent})"),
+        ("󰋊 disk", f"{free_disk} free ({disk_percent})"),
+        (" batt", f"{battery_percent}{battery_time}"),
+    ]
+    right = [
+        (" os", os_info.get("prettyName", "n/a").replace(" (25E253)", "")),
+        ("󱫐 up", format_uptime(uptime.get("uptime", 0))),
+        (" sh", shell_name),
+        (" term", terminal_name),
+    ]
+    if weather:
+        right.append(("󰖕 sky", clean_weather(weather)))
+
+    return left, right
+
+
+def visible_length(value):
+    plain = re.sub(r"\x1b\[[0-9;]*m", "", value)
+    return sum(2 if unicodedata.east_asian_width(char) in "WF" else 1 for char in plain)
+
+
+def cell(key, value):
+    return f"{GREEN}{key}{RESET} {ORANGE}󰇙{RESET} {TEXT}{value}{RESET}"
+
+
+def pad_ansi(value, width):
+    return value + " " * max(0, width - visible_length(value))
+
+
+def truncate(value, width):
+    if visible_length(value) <= width:
+        return value
+    plain = re.sub(r"\x1b\[[0-9;]*m", "", value)
+    output = []
+    used = 0
+    for char in plain:
+        char_width = 2 if unicodedata.east_asian_width(char) in "WF" else 1
+        if used + char_width > width - 1:
+            break
+        output.append(char)
+        used += char_width
+    return "".join(output) + "…"
+
+
+def border(title, width):
+    left = "─" * 12
+    right = "─" * max(0, width - len(title) - len(left) - 2)
+    return f"{BORDER}┌{left} {title} {right}┐{RESET}"
+
+
+def bottom(width):
+    return f"{BORDER}└{'─' * width}┘{RESET}"
+
+
+def main():
+    left, right = collect()
+    rows = max(len(left), len(right))
+
+    print(
+        pad_ansi(border("Hardware", LEFT_WIDTH), LEFT_WIDTH + 2)
+        + GAP
+        + border("Software", RIGHT_WIDTH)
+    )
+    for index in range(rows):
+        left_value = truncate(cell(*left[index]), LEFT_WIDTH - 1) if index < len(left) else ""
+        right_value = truncate(cell(*right[index]), RIGHT_WIDTH - 1) if index < len(right) else ""
+        print(
+            f"{BORDER}│{RESET}"
+            + pad_ansi(f" {left_value}", LEFT_WIDTH)
+            + f"{BORDER}│{RESET}"
+            + GAP
+            + f"{BORDER}│{RESET}"
+            + pad_ansi(f" {right_value}", RIGHT_WIDTH)
+            + f"{BORDER}│{RESET}"
+        )
+    print(
+        pad_ansi(bottom(LEFT_WIDTH), LEFT_WIDTH + 2)
+        + GAP
+        + bottom(RIGHT_WIDTH)
+    )
+
+
+if __name__ == "__main__":
+    main()

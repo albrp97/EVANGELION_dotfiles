@@ -1,0 +1,58 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+archive="${1:-}"
+if [[ -z "$archive" || ! -f "$archive" ]]; then
+  echo "rice-yazi-extract: select an archive file first" >&2
+  exit 1
+fi
+
+archive_lower="$(printf '%s' "$archive" | tr '[:upper:]' '[:lower:]')"
+
+case "$archive_lower" in
+  *.zip|*.rar|*.7z|*.tar|*.tar.gz|*.tgz|*.tar.bz2|*.tbz2|*.tar.xz|*.txz|*.gz|*.bz2|*.xz) ;;
+  *)
+    echo "rice-yazi-extract: unsupported archive: $archive" >&2
+    exit 1
+    ;;
+esac
+
+dir="$(dirname "$archive")"
+name="$(basename "$archive")"
+base="$name"
+for ext in .tar.gz .tar.bz2 .tar.xz .tgz .tbz2 .txz .zip .rar .7z .tar .gz .bz2 .xz; do
+  base_lower="$(printf '%s' "$base" | tr '[:upper:]' '[:lower:]')"
+  if [[ "$base_lower" == *"$ext" ]]; then
+    base="${base:0:${#base}-${#ext}}"
+    break
+  fi
+done
+
+out="$dir/$base"
+if [[ -e "$out" ]]; then
+  out="$dir/${base}-$(date +%Y%m%d-%H%M%S)"
+fi
+mkdir -p "$out"
+
+if command -v 7zz >/dev/null 2>&1; then
+  7zz x "$archive" "-o$out" -y
+elif command -v unar >/dev/null 2>&1; then
+  unar -o "$out" -force-overwrite "$archive"
+else
+  echo "rice-yazi-extract: install sevenzip or unar" >&2
+  exit 1
+fi
+
+nested="$out/$base"
+if [[ -d "$nested" ]]; then
+  shopt -s dotglob nullglob
+  out_entries=("$out"/*)
+  if [[ ${#out_entries[@]} -eq 1 && "${out_entries[0]}" == "$nested" ]]; then
+    nested_entries=("$nested"/*)
+    if [[ ${#nested_entries[@]} -gt 0 ]]; then
+      mv "${nested_entries[@]}" "$out/"
+    fi
+    rmdir "$nested"
+  fi
+  shopt -u dotglob nullglob
+fi

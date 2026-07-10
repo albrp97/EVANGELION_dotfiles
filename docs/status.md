@@ -1,0 +1,176 @@
+# Live setup status
+
+## Done
+
+- Added automatic dock/external-display routing that prefers the external display and moves normal windows there without force-disabling the MacBook panel.
+- Tightened SketchyBar workspace dots so they only draw up to the highest in-use primary-display space instead of always showing placeholders 1-9.
+- Changed the Yazi action leader from `,` to `\` and made the focused row a high-contrast EVA green bubble with dark text.
+- Installed LinearMouse, added a generic reverse-scroll rule for all mouse-category devices plus tracked per-device smoothing for the docked USB `2.4G Mouse` and MX Master 3S, and added a rice LaunchAgent so it starts at login.
+- Updated SketchyBar battery color thresholds: green now starts at 70%, and charging switches from orange back to green at 95% or higher.
+- Kept the Logitech MX Master 3S explicitly enabled in Karabiner, but moved wheel direction handling to LinearMouse to avoid double-inverting the scroll wheel.
+- Updated and confirmed the Karabiner `Command+Space` launcher on the Flow2/Lofree Bluetooth keyboard by matching either Command key, explicitly enabling the keyboard in the Karabiner profile, and disabling native Spotlight `Command+Space` so it cannot steal the chord.
+- Increased VS Code editor and integrated terminal font sizes by 5%, from `14` to `14.7`.
+- Reinstalled VS Code after the app bundle was missing from `/Applications`, then updated the background patcher to ad-hoc re-sign the modified bundle and clear quarantine so Gatekeeper does not mark it as damaged.
+- Reapplied the VS Code fake-transparency background after a VS Code app update removed the injected workbench CSS link.
+- Disabled Ghostty's close confirmation so `Command+Q` closes immediately, and flipped Yazi's current indicator to dark text on an EVA green background.
+- Swapped Starship prompt emphasis so the current directory uses the former Git-branch lavender, while Git branch/status are orange.
+- Hid VS Code breadcrumbs so the active filename only appears in the editor tab.
+- Added a small Markdown orange accent in VS Code by making bold text render in EVA orange.
+- Refined Yazi around two leaders: `'` for places and `\` for useful actions, forced generic icons into the EVA palette with no blue, and kept green reserved for the focused row and success/git-added details.
+- Fixed `Command+Space`, then `E` so it opens Yazi instead of the fastfetch console, and expanded Yazi with EVA colors, Starship header, full borders, smart enter/paste/filter, Git linemode, preview toggles, Code/Ghostty/Finder shortcuts, bookmarks, and zip/extract helpers.
+- Added a restrained orange accent layer across VS Code controls: primary buttons, progress bars, active inputs/checkboxes/radios, menu selections, prominent status items, and small hover/focus details.
+- Polished the VS Code EVA theme so SCM graph refs, Git decorations, diff gutters, and toolbar/tab/header surfaces stop falling back to VS Code blue/gray/default green.
+- Created the initial Brewfile, setup scripts, and dotfile tree.
+- Chose AeroSpace as the safe first tiling window manager, then migrated to yabai/skhd for the animation/scripting-addition path.
+- Chose right Command as HyprMod.
+- Configured HyprMod as `Command+Option+Control` so `HyprMod+Shift` bindings work.
+- Added Linux-style macOS defaults script to auto-hide the Dock and native menu bar.
+- Added Nord configs for Ghostty, SketchyBar, Starship, and Yazi.
+- Installed the tracked dotfiles into the home directory.
+- Applied macOS defaults:
+  - Dock auto-hide is enabled.
+  - Native menu bar auto-hide is enabled.
+  - Spaces auto-rearrange is disabled.
+  - Displays have separate Spaces is enabled.
+  - Keyboard repeat is faster.
+  - Finder shows hidden files, extensions, path bar, and status bar.
+- Added a user-local Homebrew fallback under `~/.homebrew` so package installation can proceed without writing passwords into commands or logs.
+- Installed Homebrew under `/opt/homebrew`.
+- Moved the unused temporary user-local Homebrew clone into `~/.macbook-linux-rice-backup/`.
+- Installed the formulae, apps, fonts, and Karabiner package.
+- Adopted existing VS Code and Zen installs into Homebrew.
+- Started SketchyBar as a Homebrew service.
+- Started borders through a custom LaunchAgent with Nord active/inactive colors.
+- Created the active Karabiner `MacBook Linux Rice` profile with right Command mapped to HyprMod.
+- Started AeroSpace and confirmed workspaces 1-9 were available during the first implementation.
+- Added VS Code Nord/font settings.
+- Removed Zen rice theming and stopped managing Zen profile CSS/preferences.
+- Made SketchyBar topmost and adjusted window-manager bar spacing so tiled windows no longer cover the bar.
+- Added plain Command workspace bindings:
+  - `Command+1..9` switches workspaces.
+  - `Command+Shift+1..9` moves the focused window to a workspace.
+- Reapplied native menu bar auto-hide defaults.
+- Removed the extra visual gap below SketchyBar.
+- Added `Command+Space` Karabiner launcher mode:
+   - `T` or Enter opens a new Ghostty window.
+   - `E` opens Yazi in Ghostty.
+   - `Z` opens Zen.
+   - `V` opens VS Code.
+   - `R` opens btop in Ghostty.
+- `Command+Space`, then `Space`, opens Raycast search as the Spotlight replacement.
+- Replaced the Ghostty launcher with a script that creates a new window instead of focusing the existing one.
+- Disabled macOS screenshot shortcuts so `Command+Shift+1..9` moves windows without creating screenshots.
+- Deleted Desktop screenshot files, hid Desktop icons, and added `scripts/clean-desktop.sh`.
+- Enabled tap-to-click and set trackpad pointer speed to `1.65`.
+- Added focus/mouse-follow behavior in the active window-manager config.
+- Adapted style from `albrp97/artzen-dotfiles`:
+  - segmented Starship prompt structure with Nord colors,
+  - top-left workspaces and grouped SketchyBar sections,
+  - Yazi layout closer to the Linux config.
+- Fixed Yazi theme rules so the current Yazi schema loads without falling back to preset settings.
+- Added `docs/manual-config.md`.
+- Migrated from AeroSpace to yabai/skhd:
+  - Installed `yabai` and `skhd` from `asmvik/formulae`.
+  - Removed the AeroSpace app, cask, tap, and active config.
+  - Added `~/.yabairc` and `~/.skhdrc`.
+  - Moved SketchyBar workspace indicators to the top-left for the MacBook notch.
+  - Rewired SketchyBar space events to yabai.
+  - Added `docs/yabai-migration.md` and `scripts/check-yabai-status.sh`.
+- After Accessibility was granted, yabai and skhd services started successfully.
+- Current blocker for `Command+2..9`: macOS only has one native Space. Creating spaces from yabai requires the scripting addition, which requires partial SIP from Recovery.
+- SketchyBar now shows workspace placeholders 1-9 even when the native spaces do not exist yet.
+- Added helpers so `Command+1..9` and `Command+Shift+1..9` will create/focus/move spaces automatically once the yabai scripting addition is enabled.
+- Alternative without partial SIP: manually create Desktops 2-9 in Mission Control; then `Command+1..9` can focus those existing native Spaces.
+- Partial SIP is now configured and `boot-args=-arm64e_preview_abi` has been written to NVRAM.
+- A normal reboot is required before yabai recognizes the new boot arg and can load the scripting addition.
+- After reboot, yabai scripting addition loaded successfully.
+- Native macOS Spaces 1-9 were created.
+- Verified `skhd -k 'cmd - 2'`, `cmd - 3`, and `cmd - 1` switch Spaces correctly.
+- Fixed `Command+Shift+1..9` window moving so the focused window is moved before switching Spaces.
+- Restored `Command+Space` as the Karabiner launcher and made `Command+Space`, then `Space`, open Raycast search.
+- Researched Spotlight replacements and installed Raycast because native Spotlight does not expose a reliable skhd-friendly show-search command on this macOS build.
+- Moved `Command+Space` launcher handling from skhd to Karabiner variables because skhd modal letter bindings were unreliable on this machine.
+- Updated Ghostty new-window launching to use Ghostty's File > New Window menu item instead of only simulating `Command+N`.
+- Bound `Command+Q` to close only the focused yabai window instead of quitting the whole app.
+- Added `~/.hushlogin` so new Ghostty login shells no longer show the macOS `Last login` banner.
+- Increased yabai `top_padding` to `10` for a small window margin under SketchyBar.
+- Tightened yabai `top_padding` back down to `2` so tiled windows sit closer to SketchyBar while preserving the `external_bar all:34:0` reservation.
+- Added `Command+Space`, then `S`, for region screenshot selection copied directly to clipboard via macOS `screencapture`.
+- Clean-reinstalled Zen and removed old Zen profile/cache/preferences data so it starts like a fresh install.
+- Remapped Zen launch shortcuts to `/Applications/Zen.app` for reliability.
+- Unquarantined and opened the trusted Sine download at `~/Downloads/sine-osx-arm64`.
+- Added `rice-open-trusted-download` for future trusted unverified downloads without disabling Gatekeeper globally.
+- Created `wallpapers/` with a first-round EVA-01-inspired selection: dark bases with purple, green, teal, magenta, and orange accents.
+- Created `docs/eva01-palette.svg` as the priority-weighted EVA-01 color palette reference.
+- Softened the palette into a Rosé Pine/Nord-inspired Pastel EVA-01 theme based on the chosen wallpapers.
+- Added 30-minute random wallpaper rotation from `wallpapers/` through SketchyBar.
+- Applied the Pastel EVA-01 palette to Ghostty, Starship, SketchyBar, yabai insert feedback, focused window borders, and VS Code.
+- Set the active window border to a thicker EVA green-shade gradient with a dark inactive border.
+- Created and applied the local VS Code theme extension `EVA-01 Pastel`, with token colors tuned for Markdown, JSON, Python, and common languages.
+- Replaced the broken VS Code Vibrancy approach with fake transparency: a blurred/dimmed EVA wallpaper image behind semi-transparent VS Code/Copilot surfaces.
+- Set the VS Code bottom status bar back to EVA purple while keeping the editor-only fake wallpaper background.
+- Made the VS Code editor/code fake wallpaper layer slightly more transparent, from 72% to 66% opacity.
+- Restored the VS Code editor/code overlay to 66% opacity and instead made the generated fake-background PNG 5% transparent, so future transparency tweaks affect the image layer itself.
+- Reduced the generated VS Code fake-background PNG opacity by another 10 percentage points, from 95% to 85%.
+- Made the generated VS Code fake-background image more present by restoring full image alpha, increasing brightness/saturation, and reducing the dark `#0F1020` colorize layer.
+- Tuned VS Code string tokens from wallpaper lavender to the lightest pastel purple/lavender tint `#C4A7E7`.
+- Deepened VS Code string tokens to `#B48DDB` so they read more purple and less bright than the previous lavender.
+- Replaced default VS Code bracket-pair colors and Seti file icons with custom Pastel EVA-01 bracket/icon colors.
+- Reordered VS Code bracket-pair colors for stronger first-level contrast: orange, green, pink, lavender, purple, then deep purple.
+- Applied the closest safe Pastel EVA-01 macOS system UI settings: dark mode, purple accent/highlight, and enabled transparency/wallpaper tint for Finder, Settings, and native controls.
+- Reverted the cursor customization experiment. Mousecape did not reliably replace the core pointer on this Apple Silicon/macOS setup, and the Swift overlay cursor was rejected, so the macOS pointer is left stock.
+- Made the SketchyBar battery item react immediately to plug/unplug via `power_source_change` and reduced fallback polling to 10 seconds.
+- Added a reusable Ghostty dashboard implementation guide to `docs/developer-guide.md` so future dashboards follow the same wrapper/TUI split, yabai animation, outside-close behavior, and EVA terminal style.
+- Made new zsh sessions start Copilot CLI with `--allow-all` by default and exported `COPILOT_ALLOW_ALL=true`.
+- Ensured `~/.local/bin` and `~/bin` are added in both `.zprofile` and `.zshrc`, so Ghostty can find the Copilot CLI whether zsh starts as a login or non-login interactive shell.
+- Forced Ghostty and Yazi onto the same `#0F1020` VS Code surface, enabled Ghostty cell opacity so terminal apps respect transparency, and switched Ghostty to the current `background-blur` setting.
+- Increased transparency again: Ghostty now uses opacity `0.86` and blur `56`; VS Code uses fake wallpaper transparency.
+- Increased Ghostty transparency further to opacity `0.80` with blur `64`.
+- Reduced white-heavy Copilot/terminal styling by changing the main foreground/ANSI white to lavender, keeping green for status/success accents, and reserving orange for cursor/warning-style details.
+- Increased Ghostty transparency to opacity `0.70` with blur `76`.
+- Pushed the Copilot CLI inherited ANSI palette further toward purple: default text, ANSI white, bright black/dim text, blue, magenta, and cyan-adjacent colors now resolve as purple/lavender; orange remains the cursor/yellow detail color.
+- Increased Ghostty transparency to opacity `0.60` with blur `96`.
+- Changed the zsh `copilot` wrapper to run with `FORCE_COLOR=1`, `TERM=xterm-256color`, and no `COLORTERM`, so Copilot emits ANSI colors that Ghostty's purple/orange palette can actually control instead of truecolor RGB that bypasses the palette.
+- Added `~/bin/copilot` as an executable wrapper and moved `~/bin` before `~/.local/bin` in PATH, so the ANSI-color Copilot wrapper is used even outside the zsh function.
+- Adjusted Ghostty to be 10 points less transparent again: opacity `0.70`, blur `76`.
+- Restored warm white as the main terminal/Copilot foreground and ANSI white, keeping purple for structural/dim/accent colors, green for highlights, and orange only for cursor/yellow details.
+- Retuned Starship so the user segment is green, path/git segments fade from dark to medium purple, empty runtime blocks are removed, and the final cap is orange.
+- Forced Ghostty to keep an orange block cursor by disabling shell-integration cursor overrides, and added a custom EVA purple/orange cursor-trail shader.
+- Set VS Code editor and integrated terminal cursors to the same orange block style.
+- Made VS Code preference defaults persistent in the tracked settings: activity bar on top, editor/list/terminal smooth scrolling, smooth caret animation, and smooth cursor blinking.
+- Replaced the wallpaper rotation LaunchAgent with a hidden SketchyBar timer item so rotation continues without macOS background activity notifications.
+- Lengthened the Ghostty EVA cursor-trail shader fade by 25% for a smoother glide.
+- Earlier retuned Starship's directory segment to purple; the current prompt now uses lavender for the directory and orange for Git branch/status.
+- Added plain Command window-management shortcuts: arrows focus windows, Shift+arrows swap them, and `Command+=`/`Command+-` resize width. Restored `Command+F` to apps for native Find/search; floating/tiled is handled by `HyprMod+F`.
+- Added zsh ghost-text autosuggestions, live dropdown-style completion, Carapace command completions, syntax highlighting, and matching keybindings for accepting full or word-by-word suggestions.
+- Forced zsh autocomplete, completion lists, syntax highlighting, and Carapace styles onto the EVA-01 palette to remove default red/blue UI colors.
+- Restored plain `Right Arrow` in zsh to normal cursor movement instead of full autosuggestion acceptance.
+- Bound Ghostty `Command+Right Arrow` to zsh `autosuggest-accept`, so the full ghost suggestion can be accepted without taking over plain Right Arrow.
+- Added fastfetch to terminal startup with an original EVA-01 logo and concise MacBook/session details, shown once per new interactive shell session.
+- Simplified fastfetch: replaced the first EVA mask logo with the exact ArtZen-style HANKA ROBOTICS block wordmark, recolored through the EVA palette, and removed nonessential rice/editor/stack/package/palette lines.
+- Moved fastfetch specs below the ASCII logo and made the logo roughly five characters narrower.
+- Reverted the block-letter attempt and restored the original ArtZen `#` logo shape with only a small spacing trim.
+- Centered the fastfetch logo header/footer labels against the narrowed `#` artwork.
+- Simplified fastfetch into a two-column essentials panel: no username/host title, no GPU, total RAM only, simple battery percent, free disk, packages, and concise weather.
+- Split launcher behavior: `Command+Space`, then `E`, opens Yazi; `Command+Space`, then `Y`, opens a Ghostty/tmux console with fastfetch pinned above the interactive shell.
+- Fixed the pinned fastfetch console launcher so the Ghostty opener and tmux console script are separate, avoiding recursive window spawning.
+- Reverted the native Desktop shortcut workspace-switch experiment because it added delay without visible animation; `Command+1..9` is back to direct yabai focus.
+- Removed the non-working fake workspace transition overlay; `Command+1..9` remains direct yabai focus for the fastest reliable switch.
+- Switched the main rice font from Hack/JetBrains mix to `Liga SFMono Nerd Font` across Ghostty, VS Code, and SketchyBar for a more Apple-terminal-like squared look.
+- Increased SF Mono weight in Ghostty and VS Code: Ghostty uses `font-thicken` strength `120`, VS Code editor/terminal use font weight `500`.
+- Restyled SketchyBar toward the reference: transparent bar background, solid widget bubbles, purple text, reliable simple glyphs, left-side workspace circle pill beside compact date/time, and right-side volume, brightness, weather, and rightmost battery bubbles. Workspace circles are purple with the active circle in green. Wi-Fi, CPU, and RAM are hidden. Battery text is green at 70% or higher, orange while charging below 95% or below 30%, and purple otherwise.
+- Replaced the SketchyBar row-style power card with a floating Ghostty EVA terminal dashboard: it spawns small/translucent near the power bubble, expands into a wide top-left dashboard, collapses back toward the power bubble on close, and supports square status panels, an Android-like command grid, tile hover/click feedback, letter shortcuts, Escape/Q/toggle/outside-focus close, and confirmation mode for logout/restart/shutdown. Raw AppKit panels were tested but did not present reliably from this session, so Ghostty is the live surface.
+- Expanded `docs/manual-config.md` with yabai margin/gap/layout settings.
+
+## Left to do
+
+- Restart Zen once if it was open during the visual reset.
+- If macOS still shows the native app menu bar, log out and back in once so the menu-bar auto-hide default fully takes effect.
+- If Ghostty new-window automation is blocked, grant Accessibility access to the terminal/session app that runs the launcher.
+- Iterate on styling after the base workflow is usable.
+
+## Current applied state
+
+- Home configs are present under `~/.yabairc`, `~/.skhdrc`, `~/.config/`, `~/.zshrc`, and `~/.zprofile`.
+- Backups from dotfile installation are stored under `~/.macbook-linux-rice-backup/`.
+- The machine already hides the macOS Dock and menu bar for a more Linux-style UI.

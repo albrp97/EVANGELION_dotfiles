@@ -1,0 +1,42 @@
+{
+  "theme": "EVA-01 Pastel",
+  "enabled": true,
+  "version": "0.1.0",
+  "background": "#0F1020",
+  "accents": {
+    "primary": "#7C5FB8",
+    "success": "#A3D977",
+    "warning": "#F6C177",
+    "error": "#D98BC4",
+    "muted": "#8CA9BF"
+  },
+  "opacity": {
+    "vscodeEditor": 0.66,
+    "vscodeEditorSoft": 0.56,
+    "vscodePanel": 0.9,
+    "ghostty": 0.6
+  },
+  "wallpapers": [
+    {
+      "name": "09.jpg",
+      "role": "VS Code fake transparency source",
+      "active": true
+    },
+    {
+      "name": "32.jpg",
+      "role": "rotation candidate",
+      "active": true
+    },
+    {
+      "name": "46.jpg",
+      "role": "rotation candidate",
+      "active": true
+    }
+  ],
+  "shortcuts": [
+    "Command+Space, T",
+    "Command+Space, S",
+    "Command+Shift+1"
+  ],
+  "notes": null
+}

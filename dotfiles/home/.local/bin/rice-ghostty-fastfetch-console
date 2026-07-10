@@ -1,0 +1,4 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+open -na Ghostty --args -e "$HOME/.local/bin/rice-fastfetch-console" "${1:-$HOME}"

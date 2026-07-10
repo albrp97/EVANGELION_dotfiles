@@ -1,0 +1,61 @@
+{
+  "$schema": "https://app.linearmouse.org/schema/0.7.2",
+  "schemes": [
+    {
+      "if": {
+        "device": {
+          "category": "mouse"
+        }
+      },
+      "scrolling": {
+        "reverse": {
+          "vertical": true
+        }
+      }
+    },
+    {
+      "if": {
+        "device": {
+          "vendorID": "0x046d",
+          "productID": "0xb034"
+        }
+      },
+      "scrolling": {
+        "reverse": {
+          "vertical": true
+        },
+        "smoothed": {
+          "enabled": true,
+          "preset": "easeInOut",
+          "response": 0.45,
+          "speed": 1.25,
+          "acceleration": 1.15,
+          "inertia": 0.6,
+          "bouncing": false
+        }
+      }
+    },
+    {
+      "if": {
+        "device": {
+          "vendorID": "7847",
+          "productID": "102"
+        }
+      },
+      "scrolling": {
+        "reverse": {
+          "vertical": true
+        },
+        "smoothed": {
+          "enabled": true,
+          "preset": "easeInOut",
+          "response": 0.45,
+          "speed": 1.25,
+          "acceleration": 1.15,
+          "inertia": 0.6,
+          "bouncing": false
+        }
+      }
+    }
+  ]
+}

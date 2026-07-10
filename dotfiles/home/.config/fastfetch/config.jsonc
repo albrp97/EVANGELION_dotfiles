@@ -1,0 +1,48 @@
+{
+  "$schema": "https://github.com/fastfetch-cli/fastfetch/raw/master/doc/json_schema.json",
+  "logo": {
+    "type": "file",
+    "source": "~/.config/fastfetch/eva01-logo.txt",
+    "padding": {
+      "top": 0,
+      "right": 0,
+      "left": 1
+    },
+    "position": "top",
+    "color": {
+      "1": "magenta",
+      "2": "green"
+    }
+  },
+  "display": {
+    "separator": " 󰇙 ",
+    "brightColor": true,
+    "color": {
+      "keys": "magenta",
+      "title": "green",
+      "separator": "yellow"
+    },
+    "key": {
+      "width": 9
+    },
+    "percent": {
+      "type": [
+        "bar",
+        "num",
+        "num-color"
+      ],
+      "color": {
+        "green": "green",
+        "yellow": "yellow",
+        "red": "red"
+      }
+    }
+  },
+  "modules": [
+    {
+      "type": "command",
+      "key": " ",
+      "text": "rice-fastfetch-info"
+    }
+  ]
+}

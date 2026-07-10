@@ -1,0 +1,200 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+export PATH="$HOME/.homebrew/bin:$HOME/.homebrew/sbin:/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin"
+
+lock_dir="$HOME/.cache/macbook-linux-rice/rice-display-route.lock"
+mkdir -p "$(dirname "$lock_dir")"
+
+if [[ -f "$lock_dir/pid" ]]; then
+  lock_pid="$(cat "$lock_dir/pid" 2>/dev/null || true)"
+  if [[ "$lock_pid" =~ ^[0-9]+$ ]] && kill -0 "$lock_pid" 2>/dev/null; then
+    exit 0
+  fi
+  rm -rf "$lock_dir"
+fi
+
+mkdir -p "$lock_dir"
+printf '%s\n' "$$" >"$lock_dir/pid"
+trap 'rm -rf "$lock_dir"' EXIT
+
+if ! command -v yabai >/dev/null 2>&1; then
+  exit 0
+fi
+
+if ! command -v jq >/dev/null 2>&1; then
+  exit 0
+fi
+
+query_displays() {
+  local attempt displays_json
+  for attempt in 1 2 3 4 5; do
+    if displays_json="$(yabai -m query --displays 2>/dev/null)"; then
+      printf '%s' "$displays_json"
+      return 0
+    fi
+    sleep 1
+  done
+
+  return 1
+}
+
+query_windows() {
+  local attempt windows_json
+  for attempt in 1 2 3 4 5; do
+    if windows_json="$(yabai -m query --windows 2>/dev/null)"; then
+      printf '%s' "$windows_json"
+      return 0
+    fi
+    sleep 1
+  done
+
+  return 1
+}
+
+query_system_displays() {
+  local attempt system_json
+  for attempt in 1 2 3; do
+    if system_json="$(system_profiler SPDisplaysDataType -json 2>/dev/null)"; then
+      printf '%s' "$system_json"
+      return 0
+    fi
+    sleep 1
+  done
+
+  return 1
+}
+
+select_target_display() {
+  local yabai_json="$1"
+  local system_json="$2"
+  local target_display="" best_area=0 display_id area display_index match
+  local external_display_ids=()
+
+  if [[ -n "$system_json" ]]; then
+    while IFS= read -r display_id; do
+      [[ -n "$display_id" ]] && external_display_ids+=("$display_id")
+    done < <(
+      jq -r '
+        .. | objects
+        | select(._spdisplays_displayID? != null and ._name? != null)
+        | select((.spdisplays_connection_type // "") != "spdisplays_internal")
+        | select((.spdisplays_online // "") != "spdisplays_no")
+        | ._spdisplays_displayID | tonumber
+      ' <<<"$system_json" | sort -n | uniq
+    )
+  fi
+
+  if ((${#external_display_ids[@]} > 0)); then
+    for display_id in "${external_display_ids[@]}"; do
+      match="$(
+        jq -c --argjson id "$display_id" '
+          .[]
+          | select(.id == $id)
+          | {index, area: ((.frame.w * .frame.h) | floor)}
+        ' <<<"$yabai_json" | head -n 1
+      )"
+      area="$(jq -r '.area // empty' <<<"$match" 2>/dev/null || true)"
+      display_index="$(jq -r '.index // empty' <<<"$match" 2>/dev/null || true)"
+      if [[ "$area" =~ ^[0-9]+$ ]] && [[ "$display_index" =~ ^[0-9]+$ ]] && (( area > best_area )); then
+        best_area="$area"
+        target_display="$display_index"
+      fi
+    done
+  fi
+
+  if [[ -z "$target_display" ]]; then
+    target_display="$(
+      jq -r '
+        [ .[]
+        | select(.frame.x == 0 and .frame.y == 0)
+        | .index
+        ] | sort | .[0] // (max_by(.frame.w * .frame.h) | .index)
+      ' <<<"$yabai_json"
+    )"
+  fi
+
+  printf '%s' "$target_display"
+}
+
+move_windows_to_display() {
+  local target_display="$1"
+  local windows_json window_id
+
+  if ! windows_json="$(query_windows)"; then
+    return 0
+  fi
+
+  while IFS= read -r window_id; do
+    [[ -n "$window_id" ]] || continue
+    yabai -m window "$window_id" --display "$target_display" >/dev/null 2>&1 || true
+  done < <(
+    jq -r --argjson target "$target_display" '
+      .[]
+      | select(.display != $target)
+      | select(."can-move" == true)
+      | select(."is-minimized" == false)
+      | select(."is-hidden" == false)
+      | select(."is-native-fullscreen" == false)
+      | .id
+    ' <<<"$windows_json"
+  )
+}
+
+focus_display_and_space() {
+  local target_display="$1"
+  local displays_json target_space
+
+  if ! displays_json="$(query_displays)"; then
+    return 0
+  fi
+
+  yabai -m display --focus "$target_display" >/dev/null 2>&1 || true
+
+  target_space="$(
+    jq -r --argjson target "$target_display" '
+      [ .[]
+      | select(.index == $target)
+      | .spaces[]?
+      ] | sort | .[0] // empty
+    ' <<<"$displays_json"
+  )"
+
+  if [[ -n "$target_space" ]]; then
+    yabai -m space --focus "$target_space" >/dev/null 2>&1 || true
+  fi
+}
+
+refresh_wallpaper() {
+  local current_wallpaper="$HOME/.cache/macbook-linux-rice-current-wallpaper"
+
+  if [[ -x "$HOME/.local/bin/rice-random-wallpaper" && -f "$current_wallpaper" ]]; then
+    "$HOME/.local/bin/rice-random-wallpaper" "$(cat "$current_wallpaper")" >/dev/null 2>&1 || true
+  fi
+}
+
+if ! displays_json="$(query_displays)"; then
+  exit 0
+fi
+
+if [[ "$(jq 'length' <<<"$displays_json")" -eq 0 ]]; then
+  exit 0
+fi
+
+if ! system_displays_json="$(query_system_displays)"; then
+  system_displays_json=""
+fi
+
+target_display="$(select_target_display "$displays_json" "$system_displays_json")"
+
+if [[ -z "$target_display" || "$target_display" == "null" ]]; then
+  exit 0
+fi
+
+move_windows_to_display "$target_display"
+focus_display_and_space "$target_display"
+refresh_wallpaper
+
+if command -v sketchybar >/dev/null 2>&1; then
+  sketchybar --trigger yabai_space_change >/dev/null 2>&1 || true
+fi

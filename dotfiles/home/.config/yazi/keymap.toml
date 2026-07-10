@@ -1,0 +1,37 @@
+[mgr]
+prepend_keymap = [
+  { on = [ "l" ], run = "plugin smart-enter", desc = "Enter directory or open file" },
+  { on = [ "<Right>" ], run = "plugin smart-enter", desc = "Enter directory or open file" },
+  { on = [ "<Enter>" ], run = "plugin smart-enter", desc = "Enter directory or open file" },
+
+  { on = [ "'", "h" ], run = "cd ~", desc = "Go home" },
+  { on = [ "'", "c" ], run = "cd ~/Documents/code", desc = "Go code" },
+  { on = [ "'", "d" ], run = "cd ~/Downloads", desc = "Go Downloads" },
+  { on = [ "'", "D" ], run = "cd ~/Documents", desc = "Go Documents" },
+  { on = [ "'", "." ], run = "cd ~/.config", desc = "Go .config" },
+  { on = [ "'", "p" ], run = "cd ~/Pictures", desc = "Go Pictures" },
+  { on = [ "'", "m" ], run = "cd ~/Movies", desc = "Go Movies" },
+  { on = [ "'", "t" ], run = "cd /tmp", desc = "Go tmp" },
+
+  { on = [ "\\", "c" ], run = 'shell -- code "$PWD"', desc = "Open current folder in VS Code" },
+  { on = [ "\\", "t" ], run = 'shell -- rice-ghostty-here "$PWD"', desc = "Open Ghostty here" },
+  { on = [ "\\", "f" ], run = "shell -- open -R %h", desc = "Reveal hovered item in Finder" },
+  { on = [ "\\", "s" ], run = 'shell "$SHELL" --block', desc = "Drop to shell here" },
+  { on = [ "\\", "o" ], run = "open --interactive", desc = "Open with..." },
+  { on = [ "\\", "p" ], run = "plugin smart-paste", desc = "Paste into hovered dir or CWD" },
+  { on = [ "\\", "/" ], run = "plugin smart-filter", desc = "Smart filter" },
+  { on = [ "\\", "x" ], run = "shell -- rice-yazi-extract %h", desc = "Extract hovered archive into same-named folder" },
+  { on = [ "\\", "z" ], run = "shell -- rice-yazi-compress %s", desc = "Zip selected files or folders" },
+  { on = [ "\\", "Z" ], run = "shell -- rice-yazi-compress %h", desc = "Zip hovered file or folder" },
+  { on = [ "\\", "v" ], run = "plugin toggle-pane min-preview", desc = "Toggle preview pane" },
+  { on = [ "\\", "V" ], run = "plugin toggle-pane max-preview", desc = "Maximize or restore preview" },
+  { on = [ "\\", "m" ], run = "plugin chmod", desc = "Change selected file modes" },
+  { on = [ "\\", "g" ], run = 'shell -- ya emit cd "$(git rev-parse --show-toplevel)"', desc = "Go Git root" },
+  { on = [ "\\", "." ], run = "hidden toggle", desc = "Toggle hidden files" },
+  { on = [ "\\", "l", "g" ], run = "linemode git", desc = "Line mode: Git status" },
+  { on = [ "\\", "l", "s" ], run = "linemode size", desc = "Line mode: size" },
+  { on = [ "\\", "l", "m" ], run = "linemode mtime", desc = "Line mode: modified time" },
+  { on = [ "\\", "l", "n" ], run = "linemode none", desc = "Line mode: none" },
+  { on = [ "." ], run = "hidden toggle", desc = "Toggle hidden files" },
+  { on = [ "<C-o>" ], run = "open --interactive", desc = "Open with..." }
+]

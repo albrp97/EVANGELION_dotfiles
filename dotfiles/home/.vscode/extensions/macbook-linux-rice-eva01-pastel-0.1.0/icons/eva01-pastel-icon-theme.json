@@ -1,0 +1,41 @@
+{
+  "iconDefinitions": {
+    "_file": { "iconPath": "./file.svg" },
+    "_folder": { "iconPath": "./folder.svg" },
+    "_folder_open": { "iconPath": "./folder-open.svg" },
+    "_python": { "iconPath": "./python.svg" },
+    "_json": { "iconPath": "./json.svg" },
+    "_markdown": { "iconPath": "./markdown.svg" },
+    "_brew": { "iconPath": "./brew.svg" },
+    "_readme": { "iconPath": "./readme.svg" },
+    "_hidden": { "iconPath": "./hidden.svg" }
+  },
+  "file": "_file",
+  "folder": "_folder",
+  "folderExpanded": "_folder_open",
+  "rootFolder": "_folder",
+  "rootFolderExpanded": "_folder_open",
+  "fileExtensions": {
+    "py": "_python",
+    "pyw": "_python",
+    "json": "_json",
+    "jsonc": "_json",
+    "md": "_markdown",
+    "mdx": "_markdown",
+    "toml": "_file",
+    "sh": "_file",
+    "yml": "_file",
+    "yaml": "_file",
+    "svg": "_file",
+    "png": "_file",
+    "jpg": "_file",
+    "jpeg": "_file"
+  },
+  "fileNames": {
+    "Brewfile": "_brew",
+    "README.md": "_readme",
+    ".hushlogin": "_hidden",
+    ".gitkeep": "_hidden",
+    ".DS_Store": "_hidden"
+  }
+}
