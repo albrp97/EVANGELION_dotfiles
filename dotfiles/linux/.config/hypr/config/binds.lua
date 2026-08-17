@@ -74,7 +74,16 @@ hl.bind(mainMod .. " + T",          hl.dsp.exec_cmd(launchPrefix .. TERMINAL))
 hl.bind(mainMod .. " + ALT + T",    hl.dsp.exec_cmd(launchPrefix .. EDITOR))
 hl.bind(mainMod .. " + SHIFT + C",  hl.dsp.exec_cmd(launchPrefix .. CALCULATOR))
 hl.bind("XF86Calculator",           hl.dsp.exec_cmd(launchPrefix .. CALCULATOR))
-hl.bind(mainMod .. " + W",          hl.dsp.exec_cmd(launchPrefix .. BROWSER))
+local function browserCommandOrCloseZenTab()
+    local activeWindow = hl.get_active_window()
+    if activeWindow and activeWindow.class:lower():match("^zen") then
+        hl.dispatch(hl.dsp.send_shortcut({ mods = "CTRL", key = "W" }))
+        return
+    end
+    hl.dispatch(hl.dsp.exec_cmd(launchPrefix .. BROWSER))
+end
+
+hl.bind(mainMod .. " + W",          browserCommandOrCloseZenTab)
 hl.bind("CONTROL + SHIFT + Escape", hl.dsp.exec_cmd(launchPrefix .. TERMINAL .. " -e btop"))
 hl.bind(mainMod .. " + Space",      hl.dsp.exec_cmd(noctCall .. "panel-toggle launcher"))
 hl.bind(mainMod .. " + period",     hl.dsp.exec_cmd(noctCall .. "panel-toggle launcher /emo"))
