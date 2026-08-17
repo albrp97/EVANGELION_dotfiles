@@ -22,6 +22,256 @@
   }
 }
 
+@-moz-document domain("reddit.com") {
+  :root {
+    color-scheme: dark !important;
+    --eva-bg: #0f1020;
+    --eva-base: #191724;
+    --eva-surface: #1f1d2e;
+    --eva-overlay: #26233a;
+    --eva-border: rgba(196, 167, 231, 0.28);
+    --eva-border-strong: rgba(196, 167, 231, 0.52);
+    --eva-text: #e0def4;
+    --eva-text-strong: #f2eaff;
+    --eva-muted: #9a86b8;
+    --eva-lavender: #c4a7e7;
+    --eva-purple: #7c5fb8;
+    --eva-purple-hover: #5a3e85;
+    --eva-green: #a3d977;
+    --eva-green-soft: #6faf6e;
+    --eva-orange: #f6c177;
+    --eva-rose: #d98bc4;
+
+    --color-neutral-background: transparent !important;
+    --color-neutral-background-weak: transparent !important;
+    --color-neutral-background-hover: rgba(124, 95, 184, 0.22) !important;
+    --color-neutral-background-selected: rgba(124, 95, 184, 0.38) !important;
+    --color-neutral-content: var(--eva-text) !important;
+    --color-neutral-content-weak: var(--eva-muted) !important;
+    --color-neutral-content-strong: var(--eva-text-strong) !important;
+    --color-primary: var(--eva-lavender) !important;
+    --color-primary-hover: var(--eva-orange) !important;
+    --color-secondary-background: var(--eva-surface) !important;
+    --color-secondary-background-hover: var(--eva-overlay) !important;
+    --color-secondary-background-selected: rgba(124, 95, 184, 0.48) !important;
+    --color-secondary-weak: var(--eva-muted) !important;
+    --color-brand-orangered: var(--eva-orange) !important;
+    --color-global-white: var(--eva-text-strong) !important;
+    --color-global-black: var(--eva-bg) !important;
+    --color-tone-1: var(--eva-text-strong) !important;
+    --color-tone-2: var(--eva-text) !important;
+    --color-tone-3: var(--eva-muted) !important;
+    --color-tone-4: var(--eva-overlay) !important;
+    --color-tone-5: var(--eva-surface) !important;
+    --color-tone-6: transparent !important;
+    --shreddit-content-background: transparent !important;
+    --shreddit-content-background-hover: rgba(124, 95, 184, 0.22) !important;
+    --shreddit-content-background-selected: rgba(124, 95, 184, 0.38) !important;
+    --shreddit-content-border: var(--eva-border) !important;
+    --shreddit-content-text: var(--eva-text) !important;
+    --shreddit-content-text-weak: var(--eva-muted) !important;
+    --shreddit-content-text-strong: var(--eva-text-strong) !important;
+  }
+
+  html,
+  body,
+  shreddit-app,
+  #2x-container,
+  #page,
+  main,
+  #main-content {
+    background: transparent !important;
+    background-color: transparent !important;
+    background-image: none !important;
+    color: var(--eva-text) !important;
+  }
+
+  body {
+    background: transparent !important;
+    background-color: transparent !important;
+  }
+
+  header,
+  reddit-header-large,
+  faceplate-header,
+  [data-testid="header"],
+  #left-sidebar-container,
+  #left-sidebar,
+  aside {
+    background: rgba(15, 16, 32, 0.82) !important;
+    border-color: var(--eva-border) !important;
+    color: var(--eva-text) !important;
+  }
+
+  header,
+  reddit-header-large,
+  faceplate-header {
+    box-shadow: 0 1px 0 var(--eva-border) !important;
+  }
+
+  shreddit-feed,
+  shreddit-subreddit-header,
+  shreddit-community-header,
+  [data-testid="subreddit-header"],
+  .subreddit-header {
+    background: rgba(25, 23, 36, 0.62) !important;
+    border-color: var(--eva-border) !important;
+    color: var(--eva-text) !important;
+  }
+
+  shreddit-feed {
+    background: transparent !important;
+    background-color: transparent !important;
+  }
+
+  shreddit-post,
+  main article,
+  [data-testid="post-container"],
+  [data-testid="post"] {
+    background: rgba(25, 23, 36, 0.84) !important;
+    border: 1px solid var(--eva-border) !important;
+    border-radius: 14px !important;
+    box-shadow: 0 8px 24px rgba(15, 16, 32, 0.22) !important;
+    color: var(--eva-text) !important;
+  }
+
+  shreddit-post:hover,
+  main article:hover,
+  [data-testid="post-container"]:hover,
+  [data-testid="post"]:hover {
+    border-color: var(--eva-border-strong) !important;
+    box-shadow: 0 10px 28px rgba(124, 95, 184, 0.18) !important;
+  }
+
+  shreddit-post h1,
+  shreddit-post h2,
+  shreddit-post h3,
+  shreddit-post h4,
+  main article h1,
+  main article h2,
+  main article h3,
+  main article h4 {
+    color: var(--eva-text-strong) !important;
+  }
+
+  a,
+  a[role="link"],
+  shreddit-post a,
+  shreddit-comment a {
+    color: var(--eva-lavender) !important;
+  }
+
+  a:hover,
+  a:focus-visible,
+  a[role="link"]:hover,
+  shreddit-post a:hover,
+  shreddit-comment a:hover {
+    color: var(--eva-orange) !important;
+  }
+
+  button,
+  [role="button"],
+  faceplate-button,
+  [data-testid="create-post"],
+  [data-testid="join-button"] {
+    background: rgba(38, 35, 58, 0.78) !important;
+    border: 1px solid var(--eva-border) !important;
+    border-radius: 9px !important;
+    color: var(--eva-text) !important;
+  }
+
+  button:hover,
+  button:focus-visible,
+  [role="button"]:hover,
+  [role="button"]:focus-visible,
+  faceplate-button:hover,
+  [data-testid="create-post"]:hover,
+  [data-testid="join-button"]:hover {
+    background: rgba(124, 95, 184, 0.52) !important;
+    border-color: var(--eva-lavender) !important;
+    color: var(--eva-text-strong) !important;
+  }
+
+  [aria-label*="upvote" i],
+  [data-testid*="upvote" i] {
+    color: var(--eva-green) !important;
+  }
+
+  [aria-label*="downvote" i],
+  [data-testid*="downvote" i] {
+    color: var(--eva-rose) !important;
+  }
+
+  [aria-pressed="true"],
+  [aria-selected="true"],
+  [aria-current="true"],
+  [data-selected="true"] {
+    background: rgba(124, 95, 184, 0.52) !important;
+    border-color: var(--eva-lavender) !important;
+    color: var(--eva-text-strong) !important;
+  }
+
+  input,
+  textarea,
+  select,
+  [contenteditable="true"],
+  [role="textbox"] {
+    background: rgba(15, 16, 32, 0.74) !important;
+    border: 1px solid var(--eva-border) !important;
+    border-radius: 9px !important;
+    color: var(--eva-text) !important;
+    caret-color: var(--eva-orange) !important;
+  }
+
+  input:focus,
+  textarea:focus,
+  select:focus,
+  [contenteditable="true"]:focus,
+  [role="textbox"]:focus {
+    border-color: var(--eva-lavender) !important;
+    box-shadow: 0 0 0 2px rgba(196, 167, 231, 0.18) !important;
+    outline: none !important;
+  }
+
+  shreddit-comment,
+  shreddit-comment-tree,
+  [data-testid="comment"] {
+    border-color: rgba(196, 167, 231, 0.22) !important;
+    color: var(--eva-text) !important;
+  }
+
+  shreddit-comment:hover,
+  [data-testid="comment"]:hover {
+    background: rgba(38, 35, 58, 0.28) !important;
+  }
+
+  pre,
+  code,
+  blockquote {
+    background: rgba(15, 16, 32, 0.8) !important;
+    border-color: var(--eva-border) !important;
+    color: #d8c7ff !important;
+  }
+
+  img,
+  video {
+    border-radius: 10px !important;
+  }
+
+  hr {
+    border-color: var(--eva-border) !important;
+  }
+
+  ::selection {
+    background: rgba(196, 167, 231, 0.42) !important;
+    color: var(--eva-text-strong) !important;
+  }
+
+  * {
+    scrollbar-color: var(--eva-purple) rgba(15, 16, 32, 0.54) !important;
+  }
+}
+
 @-moz-document domain("mail.google.com") {
   :root {
     color-scheme: dark !important;

@@ -203,7 +203,8 @@ Finder and System Settings cannot be fully recolored through supported macOS API
 
 ## Zen
 
-Zen uses the shared EVA CSS for browser chrome and selected web surfaces.
+Zen uses the shared EVA CSS for browser chrome and selected web surfaces,
+including GitHub, Gmail, YouTube, and Reddit.
 `scripts/configure-zen.sh` locates macOS and Linux profiles, backs up existing
 CSS/preferences, and installs `userChrome.css`, `userContent.css`, and the
 stylesheet preference. Restart Zen after applying changes.

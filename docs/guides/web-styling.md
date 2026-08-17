@@ -22,10 +22,40 @@ The tracked content stylesheet currently has rules for:
   lavender links.
 - YouTube: transparent page chrome, dark controls, readable secondary text,
   lavender calls to action, and green active icons.
+- Reddit: wallpaper-compatible dark surfaces, EVA post cards, lavender links,
+  green upvote signals, rose downvote signals, and orange focus/attention
+  details.
 
 There are two GitHub blocks because one handles the broad transparent layout
 and another handles GitHub's color variables and controls. Keep both when
 editing GitHub styling.
+
+The Reddit block is scoped to `domain("reddit.com")` and uses the current
+Shreddit custom elements (`shreddit-post`, `shreddit-comment`,
+`shreddit-feed`, and `reddit-header-large`) plus Reddit's color variables.
+This keeps the styling resilient to changes in generated class names while
+preserving the native feed layout.
+
+Reddit follows the same transparency rule as YouTube: `html`, `body`, the
+application shell, and the feed must stay transparent so the Zen wallpaper
+remains visible. Use translucent `rgba(...)` surfaces only for the header,
+sidebar, post cards, comments, and controls. Do not set a solid `#0F1020`
+background on the page or feed; that color is reserved for opaque controls,
+code blocks, and other intentional overlays.
+
+The page-level part should remain equivalent to this YouTube pattern:
+
+```css
+html,
+body,
+shreddit-app,
+shreddit-feed,
+main {
+  background: transparent !important;
+  background-color: transparent !important;
+  background-image: none !important;
+}
+```
 
 ## Adding a website
 
