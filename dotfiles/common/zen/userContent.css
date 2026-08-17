@@ -95,17 +95,26 @@
   reddit-header-large,
   faceplate-header,
   [data-testid="header"],
+  shreddit-sidebar,
+  shreddit-sidebar-container,
   #left-sidebar-container,
   #left-sidebar,
   aside {
-    background: rgba(15, 16, 32, 0.82) !important;
+    background: transparent !important;
+    background-color: transparent !important;
+    background-image: none !important;
     border-color: var(--eva-border) !important;
     color: var(--eva-text) !important;
   }
 
   header,
   reddit-header-large,
-  faceplate-header {
+  faceplate-header,
+  shreddit-sidebar,
+  shreddit-sidebar-container,
+  #left-sidebar-container,
+  #left-sidebar,
+  aside {
     box-shadow: 0 1px 0 var(--eva-border) !important;
   }
 
