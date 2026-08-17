@@ -1,19 +1,66 @@
-# MacBook Linux rice user guide
+# EVA-01 rice user guide
 
 ## Core idea
 
-This setup makes macOS behave like a keyboard-first Linux rice while keeping normal left Command shortcuts intact.
+This setup keeps the same Pastel EVA-01 terminal and application language on
+macOS and Linux while allowing each operating system to use its native window
+manager and service model. Shared files live in `dotfiles/common`; macOS and
+Linux files live in their respective platform directories.
 
-- **yabai** handles tiling windows and spaces.
-- **skhd** handles global window-manager hotkeys.
-- **Karabiner** handles HyprMod and the `Command+Space` leader launcher.
-- **Right Command** acts as **HyprMod**.
-- **SketchyBar** replaces the visible top bar.
-- **JankyBorders** highlights the focused window through a custom LaunchAgent.
-- **LinearMouse** tunes the MX Master 3S scroll direction and wheel feel without changing the trackpad.
-- **Ghostty**, **Yazi**, **Starship**, and the pastel EVA-01 palette provide the terminal workflow.
-- **VS Code fake transparency** uses a blurred EVA wallpaper behind semi-transparent workbench surfaces, with breadcrumbs hidden so the active filename only appears in the tab.
-- **macOS system UI** uses dark mode, purple controls/highlights, and wallpaper-tinted transparency where Apple exposes safe settings.
+Install the current platform with:
+
+```sh
+scripts/bootstrap.sh
+scripts/install-dotfiles.sh
+```
+
+Zen styling is applied to detected profiles. Linux Code OSS transparency is
+generated separately with `scripts/linux/apply-code-transparency.sh` because
+the patched bundle is machine-generated and should not be committed.
+
+## Shared workflow
+
+- **Ghostty**, **Kitty**, **Yazi**, **Starship**, **btop**, **Fastfetch**, **VS Code**, **Zen**, and **Copilot** use the same EVA palette.
+- **Yazi** uses the shared EVA theme, plugins, archive helpers, Starship header, and Git metadata on both systems.
+- **Copilot** inherits the terminal ANSI palette through `~/bin/copilot`, so its `default` theme remains intentionally terminal-driven.
+- **VS Code** uses the local `EVA-01 Pastel` theme and icon extension.
+- On Linux, `update` shows pacman/AUR/Flatpak packages split into ready and staged sections before asking for confirmation.
+
+## Linux
+
+The Linux layer targets CachyOS/Arch with Hyprland under UWSM and Noctalia.
+Super-arrow focus uses the EVA geometry-aware grid, while Super+Shift moves
+windows. Kitty and Ghostty share the EVA terminal palette; Fish initializes
+Starship and the staged updater; Solaar, Satty, wl-clipboard, grim, and slurp
+provide the hardware, screenshot, and clipboard helpers.
+
+Common Linux shortcuts:
+
+| Action | Shortcut |
+| --- | --- |
+| Focus left/down/up/right | Super+Arrow |
+| Move window left/down/up/right | Super+Shift+Arrow |
+| Close focused window | Super+Q |
+| Toggle floating | Super+Alt+Space |
+| Fullscreen | Super+D |
+| Workspace 1-9 | Super+1..9 |
+| Move window to workspace 1-9 | Super+Shift+1..9 |
+| Region screenshot to clipboard | Super+P |
+| Clipboard panel | Super+Shift+V |
+| Wallpaper panel | Super+Shift+W |
+
+Linux-specific details and reload commands are in
+[docs/manual-config.md](manual-config.md). The Linux Code OSS wrapper is
+`~/bin/code`; run the transparency setup again after a Code OSS package
+upgrade.
+
+## macOS
+
+The macOS layer uses yabai/skhd for tiling and bindings, Karabiner for
+right-Command HyprMod and the `Command+Space` launcher, SketchyBar for the top
+bar, JankyBorders for focus borders, LinearMouse for external mouse tuning,
+and Ghostty for the terminal. It also applies the closest supported dark,
+purple, and wallpaper-tinted macOS system settings.
 
 ## HyprMod
 
@@ -79,7 +126,7 @@ When a dock or external display is connected, `rice-display-route` prefers the e
 - `top` uses `btop`, and `btop` inherits the tracked `eva01-pastel` theme with transparent Ghostty background, lavender structure, green live metrics, orange warning ramps, and rose high-usage peaks.
 - `lg` opens Lazygit.
 - `y` opens Yazi and changes the shell directory to the directory where Yazi exits. `Command+Space`, then `E`, opens Yazi directly in Ghostty. `Command+Space`, then `Y`, opens a dedicated Ghostty/tmux console with fastfetch pinned in a top pane and an interactive shell below it. Yazi is forced to the same `#0F1020` base surface as VS Code, uses full separator borders, shows Starship in the header, and marks Git status in EVA colors.
-- zsh uses ghost-text autosuggestions, live completion menus, syntax highlighting, and Carapace command completions. Completion UI colors are forced through the EVA palette: purple/lavender for values, green for valid commands/highlights, orange for warnings, rose for errors, and muted frost for descriptions. `Right Arrow` moves the cursor normally, `Command+Right` accepts the full ghost suggestion, `Option+Right` accepts/moves by the next word, `Tab` inserts/enters the best completion, and `Down` opens or moves through the completion menu.
+- zsh uses ghost-text autosuggestions, live completion menus, syntax highlighting, and Carapace command completions. Completion UI colors are forced through the EVA palette: purple/lavender for values, green for valid commands/highlights, orange for warnings, rose for errors, and muted lavender for descriptions. `Right Arrow` moves the cursor normally, `Command+Right` accepts the full ghost suggestion, `Option+Right` accepts/moves by the next word, `Tab` inserts/enters the best completion, and `Down` opens or moves through the completion menu.
 - New interactive terminal sessions show a fastfetch splash once, using the ArtZen-style `#` HANKA ROBOTICS logo recolored through the EVA palette, with a two-column essentials panel underneath. It hides the username/host title, removes GPU/usage clutter, shows total RAM and simple battery percent, and adds concise weather. Run `FASTFETCH_DISABLE=1 exec zsh` to suppress it for that session.
 - Ghostty, VS Code, and SketchyBar use `Liga SFMono Nerd Font`, a Nerd-patched SF Mono variant close to Apple's default terminal font. Ligatures are disabled where supported so it stays squared and terminal-like; Ghostty uses macOS font thickening and VS Code uses weight `500` at size `14.7` for a slightly heavier, larger read.
 - New terminal windows suppress the macOS `Last login` banner through `~/.hushlogin`.
@@ -112,7 +159,7 @@ Color importance:
 | Lavender 8% | Wallpaper highlight, strings, types/classes |
 | Orange 5% | Numbers, warnings, rare attention |
 | Rose/magenta 4% | Errors and rare secondary neon |
-| Text/frost 3% | Foreground and muted labels |
+| Text/muted lavender 3% | Foreground and muted labels |
 
 `wallpapers/` contains the selected wallpaper set. `rice-random-wallpaper` chooses one randomly on demand, and `scripts/start-services.sh` applies one immediately at startup. The display-route helper reapplies the cached wallpaper when monitors change so plugged-in screens repaint correctly. Automatic rotation runs every 30 minutes through a hidden SketchyBar timer item, not a LaunchAgent, so macOS does not add a separate “background activity” notification for it.
 
@@ -132,14 +179,17 @@ This bypasses quarantine for that one file only. Gatekeeper stays enabled global
 
 ## VS Code
 
-VS Code uses the local **EVA-01 Pastel** theme extension from `~/.vscode/extensions/macbook-linux-rice-eva01-pastel-0.1.0`. The token colors are tuned for Markdown, JSON, and Python:
+VS Code uses the local **EVA-01 Pastel** theme extension from
+`~/.vscode/extensions/macbook-linux-rice-eva01-pastel-0.1.0`; Linux Code OSS
+also receives it under `~/.vscode-oss/extensions/`. The token colors are tuned
+for Markdown, JSON, and Python:
 
 - Markdown headings/JSON keys/keywords use pastel purple for identity.
 - The main terminal/Copilot foreground is warm white, matching the VS Code editor text. Purple is reserved for structure, secondary text, borders, and selected surfaces.
 - Functions, Markdown links, list markers, Copilot status dots, and selected chat accents use EVA green.
 - Strings use a deeper pastel purple `#B48DDB` so Python, JSON, and Markdown string values are visibly violet without becoming neon.
 - Markdown bold text, numbers/constants, warnings, the Ghostty/VS Code cursors, primary buttons, progress bars, active controls, menu selections, and small hover/focus outlines use soft orange because they are important but should stay rare.
-- Comments and quotes use Nord-frost muted blue with italics.
+- Comments and quotes use muted lavender with italics.
 - Errors use rose/magenta sparingly.
 - Copilot chat, inline chat, ghost text, quick input, panels, sidebar, and editor surfaces share the same translucent `#0F1020` base so the file tree and code area look uniform. Copilot surfaces favor purple borders/backgrounds, green avatars/inline accents, and only small orange details.
 - Brackets use a high-contrast EVA sequence instead of the default rainbow: orange, green, pink, lavender, purple, deep purple. The file explorer uses the local **EVA-01 Pastel Icons** theme with green folders plus purple/lavender file icons.
@@ -153,7 +203,15 @@ Finder and System Settings cannot be fully recolored through supported macOS API
 
 ## Zen
 
-Zen was clean-reinstalled and is left visually stock. The rice does not manage Zen profile CSS, themes, tabs, history, or browser preferences.
+Zen uses the shared EVA CSS for browser chrome and selected web surfaces.
+`scripts/configure-zen.sh` locates macOS and Linux profiles, backs up existing
+CSS/preferences, and installs `userChrome.css`, `userContent.css`, and the
+stylesheet preference. Restart Zen after applying changes.
+
+For the website selectors, supported GitHub/Gmail/YouTube rules, and
+troubleshooting, see [guides/web-styling.md](guides/web-styling.md). For
+palette roles and cross-platform theme ownership, see
+[guides/theme-system.md](guides/theme-system.md).
 
 ## Trackpad and focus
 

@@ -1,87 +1,96 @@
-# MacBook Linux Rice
+# EVA-01 Cross-Platform Rice
 
-Project folder for turning a MacBook into a keyboard-first, Linux-rice-style development machine.
+Reproducible Pastel EVA-01 dotfiles for macOS and Arch-based Linux, with a shared terminal and application theme plus an OS-specific desktop layer.
 
-The current guide and implementation plan live at:
-
-```text
-docs/research-and-plan.md
-```
-
-The AeroSpace vs yabai decision is documented at:
+## Layout
 
 ```text
-docs/window-manager-decision.md
+dotfiles/common/   Shared Starship, Yazi, btop, Fastfetch, Kitty, Copilot,
+                   VS Code theme/icons, and Zen browser styling.
+dotfiles/macos/    yabai, skhd, SketchyBar, Karabiner, macOS helpers,
+                   macOS application settings, and launch agents.
+dotfiles/linux/    Hyprland, Noctalia, Fish, Kitty/Ghostty, Code OSS,
+                   staged updates, clipboard/screenshot helpers, and UWSM.
+scripts/           Platform bootstrap, installation, Zen, and transparency tools.
 ```
 
-Live setup status and usage guide:
+The installer applies `common` first and the selected platform layer second. A platform file can therefore override a shared default without duplicating the whole home directory.
 
-```text
-docs/status.md
-docs/user-guide.md
-docs/manual-config.md
-docs/yabai-migration.md
-```
+## Install
 
-## Project layout
-
-```text
-.
-├── docs/       # Research, setup guide, decisions, replication notes
-├── dotfiles/   # Future tracked config files managed by chezmoi
-└── scripts/    # Future bootstrap, install, and macOS defaults scripts
-```
-
-## Current direction
-
-Current stack:
-
-- yabai for tiling windows, spaces, animations, and deeper macOS window control.
-- skhd for global hotkeys.
-- Karabiner-Elements for a HyprMod key that does not break normal Command shortcuts.
-- SketchyBar for a custom top bar.
-- JankyBorders for focused-window borders.
-- Ghostty for the terminal.
-- Yazi for terminal file management.
-- Starship, zsh, Nerd Fonts, and Nord styling across the setup.
-- chezmoi and a Brewfile later for reproducible dotfiles.
-
-`Command+Space` is now the launcher mode. `Command+1..9` switches spaces and `Command+Shift+1..9` moves windows to spaces.
-
-## First implementation
-
-The repo now includes a first dotfile-ready implementation:
-
-```text
-Brewfile                         # Homebrew packages, casks, fonts, and services
-scripts/bootstrap.sh             # Xcode CLT/Homebrew/Brewfile bootstrap
-scripts/install-dotfiles.sh      # Copies dotfiles/home into $HOME with backups
-scripts/apply-macos-defaults.sh  # Hides Dock/menu bar and applies keyboard/UI defaults
-scripts/start-services.sh        # Starts SketchyBar, borders, yabai, skhd, and Karabiner
-scripts/configure-zen.sh         # Applies Nord userChrome/user.js to Zen profiles
-scripts/check-yabai-status.sh    # Checks yabai/skhd/SIP/runtime status
-dotfiles/home/                   # Config files intended for the user's home directory
-```
-
-Apply order:
+Run the bootstrap for the current operating system:
 
 ```sh
-scripts/bootstrap.sh
-scripts/install-dotfiles.sh
-scripts/apply-macos-defaults.sh
-scripts/start-services.sh
-scripts/configure-zen.sh
-scripts/check-yabai-status.sh
+./scripts/bootstrap.sh
 ```
 
-If standard Homebrew cannot be installed without administrator authentication, `scripts/bootstrap.sh` falls back to user-local Homebrew under `~/.homebrew` and installs GUI apps under `~/Applications`.
+The platform can also be selected explicitly:
 
-The macOS defaults script enables a more Linux-style UI by auto-hiding the Dock and native menu bar. SketchyBar then becomes the visible top bar, while yabai handles tiling/spaces and JankyBorders provides focused-window borders.
+```sh
+./scripts/bootstrap.sh macos
+./scripts/bootstrap.sh linux
+```
 
-HyprMod is implemented as `Command+Option+Control` from the right Command key. Shift is intentionally left outside the base chord so bindings like `HyprMod+Shift+H/J/K/L` and `HyprMod+Shift+1..9` remain distinct.
+Install the dotfiles with a timestamped backup:
 
-Manual steps are still required for macOS permissions:
+```sh
+./scripts/install-dotfiles.sh
+```
 
-- Grant Accessibility access to yabai, skhd, Karabiner-Elements, SketchyBar, and borders when prompted.
-- Grant Input Monitoring to Karabiner-Elements when prompted.
-- Karabiner is preconfigured with the `MacBook Linux Rice` profile and `Right Command to HyprMod`.
+On Linux, finish the Code OSS transparency bundle after Code OSS is installed:
+
+```sh
+./scripts/linux/apply-code-transparency.sh
+```
+
+The generated Code OSS bundle stays in `~/.local/share/rice-code-transparent` and is not tracked. Re-run the script after Code OSS updates.
+
+On macOS, apply the system settings and start the rice services:
+
+```sh
+./scripts/apply-macos-defaults.sh
+./scripts/start-services.sh
+```
+
+Zen profiles are detected automatically by the installer. If Zen was installed after the dotfiles, run:
+
+```sh
+./scripts/configure-zen.sh
+```
+
+## Shared behavior
+
+- Pastel EVA-01 colors are used by Ghostty, Kitty, btop, Starship, Yazi, Fastfetch, VS Code, Zen, and Copilot.
+- `~/bin/copilot` forces the Copilot CLI into the terminal's EVA ANSI palette and enables the existing approval behavior.
+- The local VS Code/Code OSS extension provides the `EVA-01 Pastel` color theme and icons.
+- Yazi plugins, archive helpers, the Starship header, and Git metadata are shared between both systems.
+- Linux uses `~/bin/update` for categorized pacman, AUR, and Flatpak reports. Non-important packages wait three days after first observation; important system packages are due immediately.
+
+## macOS layer
+
+The macOS configuration uses yabai/skhd for tiling and bindings, Karabiner for the right-Command HyprMod, SketchyBar for the top bar, JankyBorders for focus borders, and Ghostty for the terminal.
+
+After installation, grant Accessibility/Input Monitoring permissions to the applications macOS requests. See [docs/user-guide.md](docs/user-guide.md), [docs/manual-config.md](docs/manual-config.md), and [docs/yabai-migration.md](docs/yabai-migration.md).
+
+## Linux layer
+
+The Linux configuration targets CachyOS/Arch with Hyprland under UWSM, Noctalia, Fish, Kitty or Ghostty, Solaar, Satty, and the EVA geometry-aware window grid. The bootstrap installs the available repository dependencies and uses `paru` or `yay` for `zen-browser-bin` when possible.
+
+The Linux Code OSS launcher is `~/bin/code`. It uses the system Code OSS CLI and Electron while loading a patched, user-owned main bundle so package updates do not modify `/usr/lib/code`.
+
+See [docs/user-guide.md](docs/user-guide.md) for the shared workflow and OS-specific shortcuts. The detailed configuration map is in [docs/manual-config.md](docs/manual-config.md).
+
+## Backups and safety
+
+Every dotfile installation preserves existing target files under:
+
+```text
+~/.macbook-linux-rice-backup/<platform>/<timestamp>/
+```
+
+The repository does not contain generated Code OSS bundles, browser profiles, package caches, or secrets.
+
+Theme roles and the palette update workflow are documented in
+[docs/guides/theme-system.md](docs/guides/theme-system.md). Zen browser
+chrome and website styling are documented in
+[docs/guides/web-styling.md](docs/guides/web-styling.md).

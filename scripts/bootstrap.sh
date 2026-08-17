@@ -2,6 +2,30 @@
 set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+
+requested_platform="${1:-}"
+if [[ "$requested_platform" == "linux" || "$requested_platform" == "macos" ]]; then
+  shift
+elif [[ -n "$requested_platform" ]]; then
+  echo "Usage: $0 [macos|linux]" >&2
+  exit 2
+fi
+
+if [[ -z "$requested_platform" ]]; then
+  case "$(uname -s)" in
+    Darwin) requested_platform="macos" ;;
+    Linux) requested_platform="linux" ;;
+    *)
+      echo "Unsupported operating system: $(uname -s)" >&2
+      exit 1
+      ;;
+  esac
+fi
+
+if [[ "$requested_platform" == "linux" ]]; then
+  exec "$ROOT_DIR/scripts/bootstrap-linux.sh" "$@"
+fi
+
 BREWFILE="$ROOT_DIR/Brewfile"
 USER_BREW_PREFIX="$HOME/.homebrew"
 

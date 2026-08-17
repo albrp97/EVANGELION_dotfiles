@@ -1,4 +1,0 @@
-#!/usr/bin/env bash
-set -euo pipefail
-
-exec env -u COLORTERM FORCE_COLOR=1 TERM=xterm-256color "$HOME/.local/bin/copilot" --allow-all "$@"

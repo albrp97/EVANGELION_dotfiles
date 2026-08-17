@@ -1,0 +1,50 @@
+#!/bin/bash
+
+set -euo pipefail
+
+flags_file="${XDG_CONFIG_HOME:-$HOME/.config}/code-flags.conf"
+code_root="${XDG_DATA_HOME:-$HOME/.local/share}/rice-code-transparent"
+code_install_root="${RICE_CODE_INSTALL_ROOT:-/usr/lib/code}"
+patched_main="${code_root}/out/main.js"
+code_cli="${code_install_root}/out/cli.js"
+code_flags=()
+
+if [[ -f "${flags_file}" ]]; then
+    while IFS= read -r line; do
+        if [[ ! "${line}" =~ ^[[:space:]]*#.* ]] && [[ -n "${line}" ]]; then
+            code_flags+=("${line}")
+        fi
+    done < "${flags_file}"
+fi
+
+if [[ ! -f "${code_root}/code.mjs" || ! -f "${patched_main}" ]]; then
+    echo "Code OSS transparency bundle is missing: ${code_root}" >&2
+    echo "Run scripts/linux/apply-code-transparency.sh first." >&2
+    exit 1
+fi
+
+if [[ ! -f "${code_cli}" ]]; then
+    echo "Code OSS CLI is missing: ${code_cli}" >&2
+    echo "Install Code OSS or set RICE_CODE_INSTALL_ROOT." >&2
+    exit 1
+fi
+
+electron_bin="${RICE_ELECTRON_BIN:-}"
+if [[ -z "${electron_bin}" && -x /usr/lib/electron42/electron ]]; then
+    electron_bin="/usr/lib/electron42/electron"
+fi
+if [[ -z "${electron_bin}" ]]; then
+    electron_bin="$(command -v electron42 || command -v electron || true)"
+fi
+if [[ -z "${electron_bin}" || ! -x "${electron_bin}" ]]; then
+    echo "No compatible Electron executable was found." >&2
+    echo "Set RICE_ELECTRON_BIN to the Electron binary used by Code OSS." >&2
+    exit 1
+fi
+
+exec env VSCODE_TRANSPARENT=1 ELECTRON_RUN_AS_NODE=1 \
+    "${electron_bin}" \
+    "${code_cli}" \
+    --ozone-platform=wayland \
+    "${code_root}/code.mjs" \
+    "${code_flags[@]}" "$@"

@@ -1,0 +1,9 @@
+{
+  "carapace": {
+    "Value": "fg-#C4A7E7",
+    "Description": "fg-#9A86B8",
+    "Highlight": "bold,fg-#A3D977",
+    "Error": "fg-#D98BC4",
+    "Progress": "fg-#F6C177"
+  }
+}

@@ -20,10 +20,10 @@ Use them as layout inspiration only: terminal panels, clear header, grouped tele
 The power bubble launches a Ghostty terminal dashboard, because SketchyBar popup rows read as a list and raw AppKit panels did not present reliably from the bar/session context.
 
 ```text
-dotfiles/home/.config/sketchybar/sketchybarrc
-dotfiles/home/.local/bin/rice-power-dashboard
-dotfiles/home/.local/bin/rice-power-dashboard-tui
-dotfiles/home/.config/sketchybar/plugins/power_item.sh
+dotfiles/macos/.config/sketchybar/sketchybarrc
+dotfiles/macos/.local/bin/rice-power-dashboard
+dotfiles/macos/.local/bin/rice-power-dashboard-tui
+dotfiles/macos/.config/sketchybar/plugins/power_item.sh
 ```
 
 Design rules:

@@ -395,7 +395,7 @@ Alternatives:
 ### 15. Nord theme
 
 What it is:
-- A consistent color palette using dark blue/gray backgrounds and icy blue accents.
+- A consistent color palette using dark purple/gray backgrounds and muted lavender accents.
 
 Why recommended:
 - Available or easy to implement across terminals, editors, bars, prompts, and file managers.
@@ -551,6 +551,10 @@ Once the setup feels right:
 - Document manual permission steps.
 - Test by applying from a clean user profile or dry-run where possible.
 
+This document records the original macOS implementation plan. The current
+cross-platform layout and install flow are documented in `README.md`; the
+historical file list below is retained as a record of the first implementation.
+
 ## First implementation decisions
 
 1. HyprMod physical key: right Command.
@@ -567,15 +571,15 @@ scripts/bootstrap.sh
 scripts/install-dotfiles.sh
 scripts/apply-macos-defaults.sh
 scripts/start-services.sh
-dotfiles/home/.aerospace.toml
-dotfiles/home/.config/karabiner/karabiner.json
-dotfiles/home/.config/karabiner/assets/complex_modifications/hyprmod-right-command.json
-dotfiles/home/.config/ghostty/config
-dotfiles/home/.config/sketchybar/
-dotfiles/home/.config/starship.toml
-dotfiles/home/.config/yazi/
-dotfiles/home/.zprofile
-dotfiles/home/.zshrc
+dotfiles/macos/.yabairc
+dotfiles/macos/.config/karabiner/karabiner.json
+dotfiles/macos/.config/karabiner/assets/complex_modifications/hyprmod-right-command.json
+dotfiles/macos/.config/ghostty/config
+dotfiles/macos/.config/sketchybar/
+dotfiles/common/.config/starship.toml
+dotfiles/macos/.config/yazi/
+dotfiles/macos/.zprofile
+dotfiles/macos/.zshrc
 ```
 
 ## Applied state
@@ -587,7 +591,7 @@ dotfiles/home/.zshrc
 - Karabiner has an active `MacBook Linux Rice` profile that maps right Command to HyprMod.
 - AeroSpace was used for the first implementation, then removed during the yabai migration.
 - VS Code settings are tracked for Nord and Hack Nerd Font.
-- Zen profile visual customization was removed; Zen is kept visually stock while preserving profile data.
+- Zen profile visual customization is now provided by the shared `dotfiles/common/zen` layer.
 - SketchyBar is topmost with yabai reserving external bar space so windows do not cover it.
 - Plain `Command+1..9` and `Command+Shift+1..9` are now intentionally bound for workspace switching and moving windows.
 - `Command+Space` now enters a Karabiner leader launcher instead of Spotlight.

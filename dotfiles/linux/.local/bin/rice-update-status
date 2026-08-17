@@ -1,0 +1,330 @@
+#!/usr/bin/env python3
+import json
+import os
+import shutil
+import subprocess
+import sys
+import time
+from pathlib import Path
+
+
+CACHE_TTL = 15 * 60
+STABLE_DELAY = 3 * 24 * 60 * 60
+USE_COLOR = sys.stdout.isatty() and not os.environ.get("NO_COLOR")
+
+RESET = "\033[0m" if USE_COLOR else ""
+BOLD = "\033[1m" if USE_COLOR else ""
+GREEN = "\033[38;2;163;217;119m" if USE_COLOR else ""
+ORANGE = "\033[38;2;246;193;119m" if USE_COLOR else ""
+LAVENDER = "\033[38;2;196;167;231m" if USE_COLOR else ""
+PURPLE = "\033[38;2;180;141;219m" if USE_COLOR else ""
+MUTED = "\033[38;2;154;134;184m" if USE_COLOR else ""
+ROSE = "\033[38;2;217;139;196m" if USE_COLOR else ""
+
+# These packages affect system boot, security, hardware, graphics, or the desktop session.
+IMPORTANT_PREFIXES = (
+    "amd-ucode",
+    "archlinux-keyring",
+    "ca-certificates",
+    "cachyos",
+    "dbus",
+    "glibc",
+    "gnutls",
+    "hypr",
+    "intel-ucode",
+    "lib32-mesa",
+    "lib32-nvidia",
+    "lib32-vulkan",
+    "linux",
+    "mesa",
+    "nvidia",
+    "openssl",
+    "pacman",
+    "pam",
+    "polkit",
+    "sudo",
+    "systemd",
+    "vulkan",
+    "wayland",
+    "wlroots",
+)
+
+
+def cache_path():
+    cache_home = os.environ.get("XDG_CACHE_HOME")
+    base = Path(cache_home) if cache_home else Path.home() / ".cache"
+    return base / "rice-update-status.json"
+
+
+def style(text, color="", bold=False):
+    weight = BOLD if bold else ""
+    return f"{weight}{color}{text}{RESET}" if USE_COLOR else text
+
+
+def pacman_db_stamp():
+    stamps = []
+    for path in (Path("/var/lib/pacman/local"), Path("/var/lib/pacman/sync")):
+        try:
+            stamps.append(path.stat().st_mtime_ns)
+        except OSError:
+            continue
+    return max(stamps) if stamps else None
+
+
+def run_command(command, timeout=20):
+    try:
+        result = subprocess.run(
+            command,
+            capture_output=True,
+            text=True,
+            check=False,
+            timeout=timeout,
+        )
+    except (FileNotFoundError, subprocess.TimeoutExpired):
+        return None
+
+    lines = [line for line in result.stdout.splitlines() if line.strip()]
+    return result.returncode, lines
+
+
+def parse_records(source, lines):
+    records = {}
+    for line in lines:
+        parts = line.split()
+        if not parts:
+            continue
+
+        name = parts[0]
+        target = parts[-1] if "->" in parts else " ".join(parts[1:])
+        key = f"{source}:{name}"
+        records[key] = {
+            "key": key,
+            "source": source,
+            "name": name,
+            "target": target,
+        }
+    return list(records.values())
+
+
+def check_pacman():
+    checkupdates = shutil.which("checkupdates")
+    if checkupdates:
+        result = run_command([checkupdates, "--nocolor"])
+        if result is None:
+            return None
+        code, lines = result
+        if code in (0, 2):
+            return parse_records("pacman", lines)
+        return None
+
+    pacman = shutil.which("pacman")
+    if not pacman:
+        return None
+    result = run_command([pacman, "-Qu"])
+    if result is None:
+        return None
+    code, lines = result
+    return parse_records("pacman", lines) if code == 0 else None
+
+
+def check_optional(command, arguments, source):
+    executable = shutil.which(command)
+    if not executable:
+        return None, False
+
+    result = run_command([executable, *arguments])
+    if result is None:
+        return None, True
+
+    code, lines = result
+    if code == 0:
+        return parse_records(source, lines), True
+    if code == 2:
+        return [], True
+    if code == 1 and not lines and source == "aur":
+        return [], True
+    if code == 1 and not lines:
+        return None, True
+    return parse_records(source, lines), True
+
+
+def is_important(name):
+    normalized = name.casefold()
+    return any(
+        normalized == prefix or normalized.startswith(f"{prefix}-")
+        for prefix in IMPORTANT_PREFIXES
+    )
+
+
+def collect_status(previous_packages):
+    records = {}
+    sources = {}
+    unknown = []
+
+    pacman_records = check_pacman()
+    if pacman_records is None:
+        unknown.append("pacman")
+    else:
+        sources["pacman"] = len(pacman_records)
+        records.update({record["key"]: record for record in pacman_records})
+
+    aur_tool = "paru" if shutil.which("paru") else "yay" if shutil.which("yay") else None
+    if aur_tool:
+        aur_records, _ = check_optional(aur_tool, ["-Qua"], "aur")
+        if aur_records is None:
+            unknown.append(aur_tool)
+        else:
+            sources["aur"] = len(aur_records)
+            records.update({record["key"]: record for record in aur_records})
+
+    flatpak_records, flatpak_installed = check_optional(
+        "flatpak",
+        ["remote-ls", "--updates"],
+        "flatpak",
+    )
+    if flatpak_installed:
+        if flatpak_records is None:
+            unknown.append("flatpak")
+        else:
+            sources["flatpak"] = len(flatpak_records)
+            records.update({record["key"]: record for record in flatpak_records})
+
+    now = int(time.time())
+    packages = {}
+    ready = []
+    waiting = []
+    for key, record in records.items():
+        previous = previous_packages.get(key) or {}
+        first_seen = previous.get("first_seen", now)
+        if previous.get("target") != record["target"]:
+            first_seen = now
+
+        age = max(0, now - int(first_seen))
+        important = is_important(record["name"])
+        due = important or age >= STABLE_DELAY
+        package = {
+            **record,
+            "first_seen": first_seen,
+            "age": age,
+            "important": important,
+            "due": due,
+        }
+        packages[key] = package
+        (ready if due else waiting).append(package)
+
+    return {
+        "total": len(packages),
+        "ready": len(ready),
+        "waiting": len(waiting),
+        "important": sum(1 for package in ready if package["important"]),
+        "sources": sources,
+        "unknown": unknown,
+        "packages": packages,
+        "pacman_db_stamp": pacman_db_stamp(),
+        "checked_at": now,
+    }
+
+
+def read_cache(force):
+    path = cache_path()
+    cached = {}
+    try:
+        with path.open(encoding="utf-8") as stream:
+            cached = json.load(stream)
+    except (FileNotFoundError, OSError, json.JSONDecodeError):
+        pass
+
+    if (
+        not force
+        and isinstance(cached, dict)
+        and isinstance(cached.get("packages"), dict)
+        and "ready" in cached
+        and cached.get("pacman_db_stamp") == pacman_db_stamp()
+    ):
+        try:
+            if time.time() - path.stat().st_mtime < CACHE_TTL:
+                return cached
+        except OSError:
+            pass
+
+    previous_packages = cached.get("packages") if isinstance(cached, dict) else {}
+    status = collect_status(previous_packages if isinstance(previous_packages, dict) else {})
+    try:
+        path.parent.mkdir(parents=True, exist_ok=True)
+        temporary = path.with_suffix(".tmp")
+        with temporary.open("w", encoding="utf-8") as stream:
+            json.dump(status, stream)
+        temporary.replace(path)
+    except OSError:
+        pass
+    return status
+
+
+def source_label(source):
+    if source == "pacman":
+        return "OS / pacman"
+    if source == "aur":
+        helper = "paru" if shutil.which("paru") else "yay"
+        return f"AUR / {helper}"
+    return "Flatpak"
+
+
+def print_report(status):
+    print(style("Pending update report", LAVENDER, bold=True))
+    print(style("====================", PURPLE))
+    for source in ("pacman", "aur", "flatpak"):
+        packages = [
+            package
+            for package in status["packages"].values()
+            if package["source"] == source
+        ]
+        if source not in status["sources"] and not packages:
+            continue
+
+        ready = sorted(
+            (package for package in packages if package["due"]),
+            key=lambda package: package["name"].casefold(),
+        )
+        waiting = sorted(
+            (package for package in packages if not package["due"]),
+            key=lambda package: package["name"].casefold(),
+        )
+        print(f"\n{style(source_label(source), LAVENDER, bold=True)}")
+        print(f"  {style('Ready now', ORANGE, bold=True)} {style(f'({len(ready)})', ORANGE)}:")
+        for package in ready or [{"name": "none", "target": ""}]:
+            target = f" -> {package['target']}" if package["target"] else ""
+            print(f"    {style(package['name'], ORANGE)}{style(target, PURPLE)}")
+        print(f"  Waiting for 3 days ({len(waiting)}):")
+        for package in waiting or [{"name": "none", "target": ""}]:
+            target = f" -> {package['target']}" if package["target"] else ""
+            print(f"    {package['name']}{target}")
+
+    if status["unknown"]:
+        print(f"\n{style('Unable to check:', ROSE, bold=True)} {', '.join(status['unknown'])}")
+    if not status["total"]:
+        print(f"\n{style('No pending packages.', GREEN, bold=True)}")
+
+
+def main():
+    arguments = sys.argv[1:]
+    status = read_cache("--refresh" in arguments)
+    if "--report" in arguments:
+        print_report(status)
+        return
+    if "--ready" in arguments:
+        if status["unknown"]:
+            print("unknown")
+        else:
+            print(status["ready"])
+        return
+    if "--total" in arguments:
+        if status["unknown"]:
+            print("unknown")
+        else:
+            print(status["total"])
+        return
+    print(json.dumps(status, separators=(",", ":")))
+
+
+if __name__ == "__main__":
+    main()

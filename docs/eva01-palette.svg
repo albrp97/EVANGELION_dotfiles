@@ -24,8 +24,8 @@
   <rect x="1235" y="232" width="112" height="40" rx="0" fill="#D0C0D8"/>
   <rect x="1347" y="232" width="70" height="40" rx="0" fill="#F6C177"/>
   <rect x="1417" y="232" width="56" height="40" rx="0" fill="#EBBCBA"/>
-  <rect x="1473" y="232" width="42" height="40" rx="12" fill="#8CA9BF"/>
-  <text class="small" x="115" y="283">Purple 38% | Green 20% | Darks 22% | Lavender 8% | Orange 5% | Rose 4% | Text/frost 3%</text>
+  <rect x="1473" y="232" width="42" height="40" rx="12" fill="#9A86B8"/>
+  <text class="small" x="115" y="283">Purple 38% | Green 20% | Darks 22% | Lavender 8% | Orange 5% | Rose 4% | Text/muted lavender 3%</text>
   <g transform="translate(90,330)">
     <rect class="panel" x="0" y="0" width="445" height="245" rx="22"/>
     <text class="label" x="30" y="45">Soft EVA purples</text>
@@ -102,15 +102,15 @@
   </g>
   <g transform="translate(1155,620)">
     <rect class="panel" x="0" y="0" width="360" height="235" rx="22"/>
-    <text class="label" x="30" y="45">Text and frost</text>
+    <text class="label" x="30" y="45">Text and muted lavender</text>
     <text class="percent" x="278" y="45">3%</text>
     <text class="small" x="30" y="78">text, labels, info hints</text>
     <rect x="30" y="110" width="86" height="62" rx="12" fill="#E0DEF4"/>
     <text class="hex" x="30" y="198">#E0DEF4</text>
     <rect x="128" y="110" width="86" height="62" rx="12" fill="#C4C8D8"/>
     <text class="hex" x="128" y="198">#C4C8D8</text>
-    <rect x="226" y="110" width="86" height="62" rx="12" fill="#8CA9BF"/>
-    <text class="hex" x="226" y="198">#8CA9BF</text>
+    <rect x="226" y="110" width="86" height="62" rx="12" fill="#9A86B8"/>
+    <text class="hex" x="226" y="198">#9A86B8</text>
   </g>
   <text class="subtitle" x="90" y="925">Rule: purple stays dominant and soft; green is the signal; Rosé/Nord darks carry the UI; warm accents stay rare.</text>
 </svg>

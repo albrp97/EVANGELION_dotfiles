@@ -1,0 +1,44 @@
+/* Match Kitty's EVA-01 transparency layer. */
+#main-window,
+#browser,
+#appcontent,
+#content,
+#browser-stack,
+#tabbrowser-tabpanel,
+#tabbrowser-tabpanels,
+#tabbrowser-tabbox,
+#tabbrowser-tabs,
+.browserContainer,
+#browser-bottombox,
+#navigator-toolbox,
+#nav-bar,
+#PersonalToolbar,
+#zen-toolbar-background {
+  background: transparent !important;
+  background-image: none !important;
+}
+
+#zen-browser-background {
+  background: rgba(20, 18, 24, 0.6) !important;
+  background-image: none !important;
+}
+
+.zen-browser-generic-background::before,
+.zen-browser-generic-background::after {
+  background: transparent !important;
+  background-image: none !important;
+  opacity: 0 !important;
+}
+
+#appcontent,
+#content,
+#browser-stack,
+#tabbrowser-tabpanel,
+#tabbrowser-tabpanels,
+#tabbrowser-tabbox,
+.browserContainer,
+browser,
+browser[type="content-primary"] {
+  background: transparent !important;
+  background-color: transparent !important;
+}

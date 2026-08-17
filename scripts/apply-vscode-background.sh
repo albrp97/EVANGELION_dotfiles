@@ -12,7 +12,7 @@ WORKBENCH_HTML="$APP_OUT/vs/code/electron-browser/workbench/workbench.html"
 APP_ASSET_DIR="$APP_OUT/vs/workbench"
 APP_IMAGE="$APP_ASSET_DIR/macbook-linux-rice-vscode-bg.png"
 APP_CSS="$APP_ASSET_DIR/macbook-linux-rice-vscode-background.css"
-TRACKED_IMAGE="$ROOT_DIR/dotfiles/home/.vscode/macbook-linux-rice-vscode-bg.png"
+TRACKED_IMAGE="$ROOT_DIR/dotfiles/macos/.vscode/macbook-linux-rice-vscode-bg.png"
 
 if [[ ! -f "$WALLPAPER" ]]; then
   echo "Wallpaper not found: $WALLPAPER" >&2

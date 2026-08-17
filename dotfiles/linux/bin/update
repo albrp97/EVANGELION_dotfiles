@@ -1,0 +1,128 @@
+#!/usr/bin/env bash
+set -u
+
+if [ -t 1 ] && [ -z "${NO_COLOR:-}" ]; then
+    RESET=$'\033[0m'
+    BOLD=$'\033[1m'
+    GREEN=$'\033[38;2;163;217;119m'
+    ORANGE=$'\033[38;2;246;193;119m'
+    LAVENDER=$'\033[38;2;196;167;231m'
+    MUTED=$'\033[38;2;154;134;184m'
+    ROSE=$'\033[38;2;217;139;196m'
+else
+    RESET=''
+    BOLD=''
+    GREEN=''
+    ORANGE=''
+    LAVENDER=''
+    MUTED=''
+    ROSE=''
+fi
+
+status=0
+force_now=0
+if [ "${1:-}" = "--now" ]; then
+    force_now=1
+fi
+
+status_helper="${HOME}/.local/bin/rice-update-status"
+
+if [ ! -x "$status_helper" ]; then
+    printf '%sCannot determine update eligibility: %s is missing.%s\n' "$ROSE$BOLD" "$status_helper" "$RESET" >&2
+    exit 1
+fi
+
+"$status_helper" --refresh --report
+
+if [ "$force_now" -eq 0 ]; then
+    ready=$("$status_helper" --ready)
+    case "$ready" in
+        unknown)
+            printf '%sUpdate status could not be determined. Use update --now to proceed.%s\n' "$ROSE$BOLD" "$RESET" >&2
+            exit 1
+            ;;
+        ''|*[!0-9]*)
+            printf '%sUpdate status returned an invalid result. Use update --now to proceed.%s\n' "$ROSE$BOLD" "$RESET" >&2
+            exit 1
+            ;;
+        0)
+            printf '%sNo updates are due yet. Non-important packages wait three days; important packages update immediately.%s\n' "$MUTED" "$RESET"
+            exit 0
+            ;;
+    esac
+else
+    total=$("$status_helper" --total)
+    case "$total" in
+        unknown)
+            printf '%sUpdate status could not be determined.%s\n' "$ROSE$BOLD" "$RESET" >&2
+            exit 1
+            ;;
+        ''|*[!0-9]*)
+            printf '%sUpdate status returned an invalid result.%s\n' "$ROSE$BOLD" "$RESET" >&2
+            exit 1
+            ;;
+        0)
+            printf '%sNo pending packages.%s\n' "$GREEN$BOLD" "$RESET"
+            exit 0
+            ;;
+    esac
+fi
+
+printf '\n%sPacman performs full upgrades; approving this also installs waiting packages.%s\n' "$MUTED" "$RESET"
+printf '%s%sUpdate now? [Y/n] %s' "$BOLD" "$ORANGE" "$RESET"
+if ! IFS= read -r answer; then
+    printf '\n%sUpdate cancelled.%s\n' "$MUTED" "$RESET"
+    exit 0
+fi
+case "${answer:-Y}" in
+    y|Y|yes|YES)
+        ;;
+    *)
+        printf '%sUpdate cancelled.%s\n' "$MUTED" "$RESET"
+        exit 0
+        ;;
+esac
+
+run_step() {
+    local label="$1"
+    shift
+    printf '\n%s%s== %s ==%s\n' "$BOLD" "$LAVENDER" "$label" "$RESET"
+    if "$@"; then
+        return 0
+    fi
+    printf '%s%s failed; continuing with the remaining update sources.%s\n' "$ROSE" "$label" "$RESET" >&2
+    status=1
+}
+
+if command -v pacman >/dev/null 2>&1; then
+    if command -v sudo >/dev/null 2>&1; then
+        run_step "CachyOS and system packages" sudo pacman -Syu
+    else
+        printf '%ssudo is required to update system packages.%s\n' "$ROSE" "$RESET" >&2
+        status=1
+    fi
+else
+    printf 'pacman is not installed; skipping system packages.\n' >&2
+fi
+
+if command -v paru >/dev/null 2>&1; then
+    run_step "AUR packages" paru -Sua
+elif command -v yay >/dev/null 2>&1; then
+    run_step "AUR packages" yay -Sua
+fi
+
+if command -v flatpak >/dev/null 2>&1; then
+    run_step "Flatpak applications" flatpak update
+fi
+
+if [ -x "$status_helper" ]; then
+    "$status_helper" --refresh >/dev/null || status=1
+fi
+
+if [ "$status" -eq 0 ]; then
+    printf '\n%s%sAll available updates finished successfully.%s\n' "$BOLD" "$GREEN" "$RESET"
+else
+    printf '\n%sSome update sources reported a failure.%s\n' "$ROSE$BOLD" "$RESET" >&2
+fi
+
+exit "$status"

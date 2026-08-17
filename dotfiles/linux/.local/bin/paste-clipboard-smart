@@ -1,0 +1,13 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+active_class=$(/usr/bin/hyprctl activewindow -j | /usr/bin/jq -r '.class // empty')
+clipboard_types=$(/usr/bin/wl-paste --list-types)
+
+if [[ "$active_class" == "kitty" && ! "$clipboard_types" =~ (^|$'\n')image/ ]]; then
+    mods="CTRL SHIFT"
+else
+    mods="CTRL"
+fi
+
+/usr/bin/hyprctl eval "hl.dispatch(hl.dsp.send_shortcut({ mods = '$mods', key = 'V' }))" >/dev/null

@@ -44,7 +44,7 @@
 - Created the active Karabiner `MacBook Linux Rice` profile with right Command mapped to HyprMod.
 - Started AeroSpace and confirmed workspaces 1-9 were available during the first implementation.
 - Added VS Code Nord/font settings.
-- Removed Zen rice theming and stopped managing Zen profile CSS/preferences.
+- Added shared EVA Zen profile styling with automatic profile discovery and backups.
 - Made SketchyBar topmost and adjusted window-manager bar spacing so tiled windows no longer cover the bar.
 - Added plain Command workspace bindings:
   - `Command+1..9` switches workspaces.

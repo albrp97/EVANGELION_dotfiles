@@ -1,0 +1,15 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+if ! geometry=$(/usr/bin/slurp -b '#00000099' -c '#ffffffcc' -s '#00000000'); then
+    exit 0
+fi
+if [[ -z "$geometry" ]]; then
+    exit 0
+fi
+
+tmpfile=$(mktemp --tmpdir screenshot-region.XXXXXX.png)
+trap 'rm -f -- "$tmpfile"' EXIT
+
+/usr/bin/grim -g "$geometry" "$tmpfile"
+/usr/bin/wl-copy --type image/png < "$tmpfile"

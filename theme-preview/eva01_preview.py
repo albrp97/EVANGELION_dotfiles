@@ -28,7 +28,7 @@ class RicePalette:
             "lavender": 0.08,
             "orange": 0.05,
             "rose": 0.04,
-            "frost": 0.03,
+            "muted_lavender": 0.03,
         }
     )
 

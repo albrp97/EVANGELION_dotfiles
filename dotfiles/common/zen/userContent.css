@@ -1,0 +1,396 @@
+@-moz-document domain("github.com") {
+  html,
+  body,
+  header,
+  nav,
+  .application-main,
+  .application-main > div > div,
+  .feed-background,
+  .PageLayout-pane,
+  .PageLayout-content .Box,
+  .PageLayout-content .Box-row,
+  .Box,
+  .Box-header,
+  .Box-row,
+  .color-bg-default,
+  #repository-container-header,
+  #repo-content-pjax-container {
+    background: transparent !important;
+    background-color: transparent !important;
+    background-image: none !important;
+    box-shadow: none !important;
+  }
+}
+
+@-moz-document domain("mail.google.com") {
+  :root {
+    color-scheme: dark !important;
+    --eva-text: #e0def4;
+    --eva-muted: #9a86b8;
+    --eva-lavender: #c4a7e7;
+    --eva-purple: #7c5fb8;
+    --eva-green: #a3d977;
+    --eva-rose: #d98bc4;
+    --eva-surface: rgba(38, 35, 58, 0.34);
+    --eva-control: rgba(15, 16, 32, 0.46);
+  }
+
+  html,
+  body,
+  #gmail,
+  .aeN,
+  .nH,
+  .AO,
+  .aAy,
+  .aAU,
+  .a3s {
+    background: transparent !important;
+    background-color: transparent !important;
+    background-image: none !important;
+  }
+
+  body,
+  table,
+  td,
+  div {
+    color: var(--eva-text) !important;
+  }
+
+  a,
+  .gD,
+  .go {
+    color: var(--eva-lavender) !important;
+  }
+
+  a:hover,
+  a:focus {
+    color: #f6c177 !important;
+  }
+
+  .aeN,
+  .aeJ,
+  .aKh,
+  .aKk,
+  .aAy {
+    background-color: rgba(15, 16, 32, 0.22) !important;
+    border-color: rgba(196, 167, 231, 0.2) !important;
+  }
+
+  .zA,
+  .yO {
+    background-color: var(--eva-surface) !important;
+    border-bottom-color: rgba(196, 167, 231, 0.2) !important;
+  }
+
+  .zA:hover,
+  .yO:hover,
+  [aria-selected="true"] {
+    background-color: rgba(124, 95, 184, 0.38) !important;
+  }
+
+  .T-I,
+  .amn,
+  button,
+  [role="button"] {
+    background-color: var(--eva-control) !important;
+    border-color: #4b3a68 !important;
+    color: var(--eva-text) !important;
+  }
+
+  .T-I:hover,
+  .amn:hover,
+  button:hover,
+  [role="button"]:hover {
+    background-color: rgba(124, 95, 184, 0.48) !important;
+    border-color: var(--eva-lavender) !important;
+  }
+
+  .T-I-KE,
+  .T-I-atl {
+    background-color: rgba(163, 217, 119, 0.82) !important;
+    border-color: var(--eva-green) !important;
+    color: #0f1020 !important;
+  }
+
+  input,
+  textarea,
+  [role="textbox"] {
+    background-color: var(--eva-control) !important;
+    border-color: #4b3a68 !important;
+    color: var(--eva-text) !important;
+  }
+
+  .a3s,
+  .ii,
+  .gs {
+    color: var(--eva-text) !important;
+  }
+}
+
+@-moz-document domain("youtube.com") {
+  :root {
+    color-scheme: dark !important;
+    --yt-spec-base-background: transparent !important;
+    --yt-spec-raised-background: rgba(38, 35, 58, 0.38) !important;
+    --yt-spec-menu-background: rgba(15, 16, 32, 0.92) !important;
+    --yt-spec-general-background-a: transparent !important;
+    --yt-spec-general-background-b: transparent !important;
+    --yt-spec-text-primary: #e0def4 !important;
+    --yt-spec-text-secondary: #9a86b8 !important;
+    --yt-spec-call-to-action: #c4a7e7 !important;
+    --yt-spec-icon-active: #a3d977 !important;
+    --yt-spec-brand-button-background: #7c5fb8 !important;
+    --yt-spec-brand-button-text: #f2eaff !important;
+    --yt-spec-10-percent-layer: rgba(196, 167, 231, 0.12) !important;
+    --yt-spec-button-chip-background: rgba(38, 35, 58, 0.55) !important;
+    --yt-spec-button-chip-text: #e0def4 !important;
+  }
+
+  html,
+  body,
+  ytd-app,
+  #content,
+  #page-manager,
+  ytd-page-manager,
+  #masthead-container,
+  #guide,
+  #guide-content,
+  #primary,
+  #secondary {
+    background: transparent !important;
+    background-color: transparent !important;
+    background-image: none !important;
+  }
+
+  body,
+  yt-formatted-string,
+  yt-chip-cloud-chip-renderer,
+  #video-title,
+  #channel-name {
+    color: #e0def4 !important;
+  }
+
+  a,
+  yt-formatted-string a,
+  #video-title:hover {
+    color: #c4a7e7 !important;
+  }
+
+  a:hover,
+  yt-formatted-string a:hover {
+    color: #f6c177 !important;
+  }
+
+  ytd-rich-item-renderer,
+  ytd-video-renderer,
+  ytd-grid-video-renderer,
+  ytd-compact-video-renderer,
+  ytd-playlist-renderer,
+  ytd-channel-renderer,
+  ytd-shelf-renderer,
+  ytd-rich-section-renderer {
+    background-color: rgba(38, 35, 58, 0.2) !important;
+    border-color: rgba(196, 167, 231, 0.2) !important;
+  }
+
+  button,
+  tp-yt-paper-button,
+  yt-button-renderer,
+  yt-chip-cloud-chip-renderer {
+    background-color: rgba(38, 35, 58, 0.55) !important;
+    border-color: #4b3a68 !important;
+    color: #e0def4 !important;
+  }
+
+  button:hover,
+  tp-yt-paper-button:hover,
+  yt-chip-cloud-chip-renderer:hover {
+    background-color: rgba(124, 95, 184, 0.48) !important;
+    border-color: #c4a7e7 !important;
+  }
+
+  #search,
+  #search-icon-legacy,
+  input {
+    background-color: rgba(15, 16, 32, 0.46) !important;
+    border-color: #4b3a68 !important;
+    color: #e0def4 !important;
+  }
+
+  ytd-guide-entry-renderer,
+  ytd-mini-guide-entry-renderer,
+  ytd-menu-service-item-renderer {
+    color: #e0def4 !important;
+  }
+
+  ytd-guide-entry-renderer:hover,
+  ytd-mini-guide-entry-renderer:hover,
+  ytd-menu-service-item-renderer:hover {
+    background-color: rgba(124, 95, 184, 0.38) !important;
+  }
+
+  .html5-video-player,
+  .ytp-popup {
+    background-color: #0f1020 !important;
+  }
+}
+
+@-moz-document domain("github.com") {
+  :root {
+    color-scheme: dark !important;
+    --fgColor-default: #e0def4 !important;
+    --fgColor-muted: #9a86b8 !important;
+    --fgColor-accent: #c4a7e7 !important;
+    --fgColor-success: #a3d977 !important;
+    --fgColor-attention: #f6c177 !important;
+    --fgColor-danger: #d98bc4 !important;
+    --bgColor-default: transparent !important;
+    --bgColor-muted: rgba(15, 16, 32, 0.28) !important;
+    --bgColor-neutral-muted: rgba(38, 35, 58, 0.38) !important;
+    --bgColor-accent-muted: rgba(124, 95, 184, 0.28) !important;
+    --borderColor-default: rgba(196, 167, 231, 0.28) !important;
+    --borderColor-muted: rgba(196, 167, 231, 0.18) !important;
+    --borderColor-accent-emphasis: #c4a7e7 !important;
+    --accent-fgColor: #c4a7e7 !important;
+    --accent-emphasis: #7c5fb8 !important;
+    --success-fgColor: #a3d977 !important;
+    --danger-fgColor: #d98bc4 !important;
+  }
+
+  body {
+    color: #e0def4 !important;
+  }
+
+  a,
+  .Link {
+    color: #c4a7e7 !important;
+  }
+
+  a:hover,
+  a:focus,
+  .Link:hover,
+  .Link:focus {
+    color: #f6c177 !important;
+  }
+
+  [class*="color-fg-muted"] {
+    color: #9a86b8 !important;
+  }
+
+  [class*="color-fg-default"] {
+    color: #e0def4 !important;
+  }
+
+  .Box,
+  .Box-header,
+  .Box-row,
+  .border,
+  .border-top,
+  .border-right,
+  .border-bottom,
+  .border-left {
+    border-color: rgba(196, 167, 231, 0.28) !important;
+  }
+
+  .Box,
+  .Box-header,
+  .Box-row,
+  .Subhead,
+  .Header,
+  .HeaderMenu {
+    background-color: rgba(38, 35, 58, 0.24) !important;
+  }
+
+  input,
+  textarea,
+  select,
+  .form-control,
+  .form-select,
+  [role="combobox"] {
+    background-color: rgba(15, 16, 32, 0.42) !important;
+    border-color: #4b3a68 !important;
+    color: #e0def4 !important;
+  }
+
+  .btn,
+  .Button--secondary,
+  [role="button"] {
+    background-color: rgba(38, 35, 58, 0.55) !important;
+    border-color: #4b3a68 !important;
+    color: #e0def4 !important;
+  }
+
+  .btn:hover,
+  .Button--secondary:hover,
+  [role="button"]:hover {
+    background-color: rgba(124, 95, 184, 0.5) !important;
+    border-color: #c4a7e7 !important;
+    color: #f2eaff !important;
+  }
+
+  .btn-primary,
+  .Button--primary {
+    background-color: rgba(163, 217, 119, 0.82) !important;
+    border-color: #a3d977 !important;
+    color: #0f1020 !important;
+  }
+
+  .btn-primary:hover,
+  .Button--primary:hover {
+    background-color: #6faf6e !important;
+    border-color: #a3d977 !important;
+    color: #0f1020 !important;
+  }
+
+  .ContributionCalendar-day[data-level="0"] {
+    background-color: rgba(38, 35, 58, 0.62) !important;
+  }
+
+  .ContributionCalendar-day[data-level="1"] {
+    background-color: rgba(48, 77, 58, 0.82) !important;
+  }
+
+  .ContributionCalendar-day[data-level="2"] {
+    background-color: #6faf6e !important;
+  }
+
+  .ContributionCalendar-day[data-level="3"] {
+    background-color: #a3d977 !important;
+  }
+
+  .ContributionCalendar-day[data-level="4"] {
+    background-color: #c4a7e7 !important;
+  }
+
+  .js-year-list .js-year-link,
+  .js-year-link {
+    background-color: transparent !important;
+    border-color: transparent !important;
+    color: #c4a7e7 !important;
+  }
+
+  .js-year-list .js-year-link:hover,
+  .js-year-list .js-year-link:focus,
+  .js-year-link:hover,
+  .js-year-link:focus {
+    background-color: rgba(124, 95, 184, 0.42) !important;
+    border-color: #c4a7e7 !important;
+    color: #f2eaff !important;
+  }
+
+  .js-year-list .js-year-link.selected,
+  .js-year-list .js-year-link[aria-current="page"],
+  .js-year-list .js-year-link[aria-selected="true"],
+  .js-year-link.selected,
+  .js-year-link[aria-current="page"],
+  .js-year-link[aria-selected="true"] {
+    background-color: rgba(124, 95, 184, 0.88) !important;
+    border-color: #c4a7e7 !important;
+    color: #f2eaff !important;
+  }
+
+  ::selection {
+    background: rgba(196, 167, 231, 0.38) !important;
+    color: #f2eaff !important;
+  }
+}

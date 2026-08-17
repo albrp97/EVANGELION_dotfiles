@@ -1,0 +1,305 @@
+#!/usr/bin/env python3
+import json
+import os
+import re
+import shutil
+import subprocess
+import unicodedata
+
+
+RESET = "\033[0m"
+BOLD = "\033[1m"
+TEXT = "\033[38;2;242;234;255m"
+GREEN = "\033[38;2;163;217;119m"
+ORANGE = "\033[38;2;246;193;119m"
+BORDER = "\033[38;2;196;167;231m"
+
+LEFT_WIDTH = 36
+RIGHT_WIDTH = 36
+GAP = "  "
+
+
+def run_json():
+    fastfetch = shutil.which("fastfetch")
+    if not fastfetch:
+        raise RuntimeError("fastfetch is not installed")
+    raw = subprocess.check_output(
+        [
+            fastfetch,
+            "--format",
+            "json",
+            "--logo",
+            "none",
+            "--structure",
+            "CPU:GPU:Memory:Disk:OS:Uptime:Terminal:Battery:Weather:WM:Shell",
+        ],
+        text=True,
+        stderr=subprocess.DEVNULL,
+    )
+    return {entry["type"]: entry.get("result") for entry in json.loads(raw)}
+
+
+def format_size(bytes_value):
+    value = float(bytes_value or 0)
+    units = ("B", "K", "M", "G", "T", "P")
+    index = 0
+    while value >= 1024 and index < len(units) - 1:
+        value /= 1024
+        index += 1
+    if value >= 100 or index == 0:
+        return f"{value:.0f}{units[index]}"
+    return f"{value:.1f}{units[index]}"
+
+
+def format_percent(used, total):
+    if not total:
+        return "n/a"
+    return f"{round(used / total * 100):.0f}%"
+
+
+def format_uptime(milliseconds):
+    minutes = int((milliseconds or 0) // 60000)
+    hours, minutes = divmod(minutes, 60)
+    days, hours = divmod(hours, 24)
+    if days:
+        return f"{days}d {hours}h"
+    if hours:
+        return f"{hours}h {minutes}m"
+    return f"{minutes}m"
+
+
+def clean_weather(value):
+    if not value:
+        return "n/a"
+    return re.sub(r"\s*\([^)]*\)\s*$", "", value).replace(" - ", " ")
+
+
+def command_version(command, pattern):
+    try:
+        output = subprocess.check_output(
+            command,
+            text=True,
+            stderr=subprocess.DEVNULL,
+            timeout=1,
+        )
+    except (FileNotFoundError, subprocess.CalledProcessError, subprocess.TimeoutExpired):
+        return ""
+    match = re.search(pattern, output)
+    return match.group(1) if match else ""
+
+
+def shell_info(shell_result):
+    shell_path = os.environ.get("SHELL", "")
+    shell_name = os.path.basename(shell_path) if shell_path else ""
+    version = ""
+    if shell_name:
+        version = command_version([shell_path, "--version"], r"\b(\d+(?:\.\d+)+)\b")
+    if not shell_name:
+        shell_name = (shell_result or {}).get("exeName") or "shell"
+    return f"{shell_name} {version}".strip()
+
+
+def terminal_info(terminal_result):
+    name = os.environ.get("TERM_PROGRAM", "")
+    if not name and os.environ.get("KITTY_WINDOW_ID"):
+        name = "kitty"
+    if not name:
+        name = (terminal_result or {}).get("prettyName") or "terminal"
+    version = ""
+    if name == "kitty":
+        version = command_version(["kitty", "--version"], r"kitty\s+(\S+)")
+    if version and version not in name:
+        return f"{name} {version}"
+    return name
+
+
+def power_consumption():
+    nvidia_smi = shutil.which("nvidia-smi")
+    if nvidia_smi:
+        try:
+            output = subprocess.check_output(
+                [
+                    nvidia_smi,
+                    "--query-gpu=power.draw",
+                    "--format=csv,noheader,nounits",
+                ],
+                text=True,
+                stderr=subprocess.DEVNULL,
+                timeout=1,
+            )
+            watts = [float(value) for value in re.findall(r"\d+(?:\.\d+)?", output)]
+            if watts:
+                return f"{round(sum(watts))}W GPU"
+        except (ValueError, subprocess.CalledProcessError, subprocess.TimeoutExpired):
+            pass
+
+    try:
+        hwmon_names = sorted(
+            name for name in os.listdir("/sys/class/hwmon") if name.startswith("hwmon")
+        )
+    except OSError:
+        return "n/a"
+
+    for name in hwmon_names:
+        power_path = os.path.join("/sys/class/hwmon", name)
+        input_path = os.path.join(power_path, "power1_input")
+        if not os.path.isfile(input_path):
+            continue
+        try:
+            with open(input_path, encoding="ascii") as stream:
+                microwatts = float(stream.read().strip())
+            return f"{microwatts / 1_000_000:.1f}W"
+        except (OSError, ValueError):
+            continue
+
+    return "n/a"
+
+
+def os_label(os_info):
+    name = os_info.get("prettyName") or os_info.get("name") or "Linux"
+    kernel = os.uname().release
+    return f"{name} {kernel}" if kernel else name
+
+
+def update_info():
+    helper = shutil.which("rice-update-status")
+    if not helper:
+        return None
+    try:
+        raw = subprocess.check_output(
+            [helper],
+            text=True,
+            stderr=subprocess.DEVNULL,
+            timeout=10,
+        )
+        status = json.loads(raw)
+        ready = status.get("ready")
+        if not isinstance(ready, int) or ready <= 0:
+            return None
+        return f"{ready} ready", ORANGE
+    except (
+        FileNotFoundError,
+        subprocess.CalledProcessError,
+        subprocess.TimeoutExpired,
+        TypeError,
+        ValueError,
+    ):
+        return None
+
+
+def cell(key, value, value_color=TEXT):
+    return f"{GREEN}{key}{RESET} {ORANGE}󰇙{RESET} {value_color}{value}{RESET}"
+
+
+def warning_cell(key, value):
+    return f"{BOLD}{ORANGE}{key} 󰇙 {value}{RESET}"
+
+
+def visible_length(value):
+    plain = re.sub(r"\x1b\[[0-9;]*m", "", value)
+    return sum(2 if unicodedata.east_asian_width(char) in "WF" else 1 for char in plain)
+
+
+def pad_ansi(value, width):
+    return value + " " * max(0, width - visible_length(value))
+
+
+def truncate(value, width):
+    if visible_length(value) <= width:
+        return value
+    plain = re.sub(r"\x1b\[[0-9;]*m", "", value)
+    output = []
+    used = 0
+    for char in plain:
+        char_width = 2 if unicodedata.east_asian_width(char) in "WF" else 1
+        if used + char_width > width - 1:
+            break
+        output.append(char)
+        used += char_width
+    return "".join(output) + "…"
+
+
+def border(title, width):
+    left = "─" * 12
+    right = "─" * max(0, width - len(title) - len(left) - 2)
+    return f"{BORDER}┌{left} {title} {right}┐{RESET}"
+
+
+def bottom(width):
+    return f"{BORDER}└{'─' * width}┘{RESET}"
+
+
+def main():
+    data = run_json()
+    cpu = data.get("CPU") or {}
+    gpus = data.get("GPU") or []
+    memory = data.get("Memory") or {}
+    disks = data.get("Disk") or []
+    os_info = data.get("OS") or {}
+    uptime = data.get("Uptime") or {}
+    terminal = data.get("Terminal") or {}
+    shell = data.get("Shell") or {}
+    wm = data.get("WM") or {}
+
+    disk = next((item for item in disks if item.get("mountpoint") == "/"), disks[0] if disks else {})
+    disk_bytes = disk.get("bytes") or {}
+    disk_used = disk_bytes.get("used", 0)
+    disk_total = disk_bytes.get("total", 0)
+    disk_free = disk_bytes.get("free", 0)
+
+    cpu_name = cpu.get("cpu") or "n/a"
+    cores = (cpu.get("cores") or {}).get("physical")
+    if cores:
+        cpu_name = f"{cpu_name} {cores}-core"
+
+    if isinstance(gpus, dict):
+        gpus = [gpus]
+    gpu = next(
+        (item for item in gpus if item.get("type") == "Discrete"),
+        gpus[0] if gpus else {},
+    )
+    gpu_name = " ".join(
+        part for part in (gpu.get("vendor"), gpu.get("name")) if part
+    ) or "n/a"
+
+    memory_total = memory.get("total", 0)
+    memory_used = memory.get("used", 0)
+    update = update_info()
+
+    left = [
+        (" cpu", cpu_name),
+        ("󰢮 gpu", gpu_name),
+        (" ram", f"{format_size(memory_total)} ({format_percent(memory_used, memory_total)})"),
+        ("󰋊 disk", f"{format_size(disk_free)} free ({format_percent(disk_used, disk_total)})"),
+        ("󰐥 power", power_consumption()),
+    ]
+    right = [
+        (" os", os_label(os_info)),
+        ("󱫐 up", format_uptime(uptime.get("uptime", 0))),
+        (" sh", shell_info(shell)),
+        (" term", terminal_info(terminal)),
+        ("󰖕 sky", clean_weather(data.get("Weather"))),
+    ]
+
+    rows = max(len(left), len(right))
+    print(pad_ansi(border("Hardware", LEFT_WIDTH), LEFT_WIDTH + 2) + GAP + border("Software", RIGHT_WIDTH))
+    for index in range(rows):
+        left_value = truncate(cell(*left[index]), LEFT_WIDTH - 1) if index < len(left) else ""
+        right_value = truncate(cell(*right[index]), RIGHT_WIDTH - 1) if index < len(right) else ""
+        print(
+            f"{BORDER}│{RESET}"
+            + pad_ansi(f" {left_value}", LEFT_WIDTH)
+            + f"{BORDER}│{RESET}"
+            + GAP
+            + f"{BORDER}│{RESET}"
+            + pad_ansi(f" {right_value}", RIGHT_WIDTH)
+            + f"{BORDER}│{RESET}"
+        )
+    print(pad_ansi(bottom(LEFT_WIDTH), LEFT_WIDTH + 2) + GAP + bottom(RIGHT_WIDTH))
+    if update:
+        print()
+        print(warning_cell("󰚰 upd", update[0]))
+
+
+if __name__ == "__main__":
+    main()
