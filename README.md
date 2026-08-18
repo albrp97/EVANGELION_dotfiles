@@ -10,8 +10,8 @@ dotfiles/common/   Shared Starship, Yazi, btop, Fastfetch, Kitty, Copilot,
 dotfiles/macos/    yabai, skhd, SketchyBar, Karabiner, macOS helpers,
                    macOS application settings, and launch agents.
 dotfiles/linux/    Hyprland, Noctalia, Fish, Kitty/Ghostty, Code OSS,
-                   qBittorrent, staged updates, clipboard/screenshot helpers,
-                   and UWSM.
+                   qBittorrent, Vivaldi, staged updates,
+                   clipboard/screenshot helpers, and UWSM.
 scripts/           Platform bootstrap, installation, Zen, and transparency tools.
 ```
 
@@ -61,7 +61,7 @@ Zen profiles are detected automatically by the installer. If Zen was installed a
 
 ## Shared behavior
 
-- Pastel EVA-01 colors are used by Ghostty, Kitty, btop, Starship, Yazi, Fastfetch, VS Code, Zen, qBittorrent, and Copilot.
+- Pastel EVA-01 colors are used by Ghostty, Kitty, btop, Starship, Yazi, Fastfetch, VS Code, Zen, qBittorrent, Vivaldi, and Copilot.
 - `~/bin/copilot` forces the Copilot CLI into the terminal's EVA ANSI palette and enables the existing approval behavior.
 - The local VS Code/Code OSS extension provides the `EVA-01 Pastel` color theme and icons.
 - Yazi plugins, archive helpers, the Starship header, and Git metadata are shared between both systems.
@@ -75,7 +75,7 @@ After installation, grant Accessibility/Input Monitoring permissions to the appl
 
 ## Linux layer
 
-The Linux configuration targets CachyOS/Arch with Hyprland under UWSM, Noctalia, Fish, Kitty or Ghostty, Solaar, Satty, and the EVA geometry-aware window grid. The bootstrap installs the available repository dependencies and uses `paru` or `yay` for `zen-browser-bin` when possible.
+The Linux configuration targets CachyOS/Arch with Hyprland under UWSM, Noctalia, Fish, Kitty or Ghostty, Solaar, Satty, Vivaldi, and the EVA geometry-aware window grid. The bootstrap installs the available repository dependencies and uses `paru` or `yay` for `zen-browser-bin` when possible.
 
 The Linux Code OSS launcher is `~/bin/code`. It uses the system Code OSS CLI and Electron while loading a patched, user-owned main bundle so package updates do not modify `/usr/lib/code`.
 
