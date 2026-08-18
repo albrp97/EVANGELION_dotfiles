@@ -149,6 +149,11 @@ for i = 1, NUM_WPM do
     local key = i % 10
     hl.bind(mainMod .. " + " .. key, hl.dsp.focus({ workspace = i }))
 end
+
+-- Keep the HDMI audio/video workspace hidden from the numbered workspace bar.
+hl.bind(mainMod .. " + 0",       hl.dsp.focus({ workspace = TV_WORKSPACE }))
+hl.bind(mainMod .. " + SHIFT + 0", hl.dsp.window.move({ workspace = TV_WORKSPACE }))
+
 -- Relative
 for i = 1, NUM_WPM do
     local key = i % 10
