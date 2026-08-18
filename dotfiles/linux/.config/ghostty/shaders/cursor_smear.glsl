@@ -1,101 +1,52 @@
-float getSdfRectangle(in vec2 p, in vec2 xy, in vec2 b)
-{
-    vec2 d = abs(p - xy) - b;
-    return length(max(d, 0.0)) + min(max(d.x, d.y), 0.0);
+float roundedBox(vec2 point, vec2 center, vec2 halfSize, float radius) {
+    vec2 q = abs(point - center) - halfSize + radius;
+    return length(max(q, 0.0)) + min(max(q.x, q.y), 0.0) - radius;
 }
 
-float seg(in vec2 p, in vec2 a, in vec2 b, inout float s, float d) {
-    vec2 e = b - a;
-    vec2 w = p - a;
-    vec2 proj = a + e * clamp(dot(w, e) / dot(e, e), 0.0, 1.0);
-    float segd = dot(p - proj, p - proj);
-    d = min(d, segd);
-
-    float c0 = step(0.0, p.y - a.y);
-    float c1 = 1.0 - step(0.0, p.y - b.y);
-    float c2 = 1.0 - step(0.0, e.x * w.y - e.y * w.x);
-    float allCond = c0 * c1 * c2;
-    float noneCond = (1.0 - c0) * (1.0 - c1) * (1.0 - c2);
-    float flip = mix(1.0, -1.0, step(0.5, allCond + noneCond));
-    s *= flip;
-    return d;
+float lineDistance(vec2 point, vec2 start, vec2 end) {
+    vec2 segment = end - start;
+    float denom = max(dot(segment, segment), 0.001);
+    float t = clamp(dot(point - start, segment) / denom, 0.0, 1.0);
+    return length(point - (start + segment * t));
 }
 
-float getSdfParallelogram(in vec2 p, in vec2 v0, in vec2 v1, in vec2 v2, in vec2 v3) {
-    float s = 1.0;
-    float d = dot(p - v0, p - v0);
+void mainImage(out vec4 fragColor, in vec2 fragCoord) {
+    vec2 uv = fragCoord / iResolution.xy;
+    vec4 terminal = texture(iChannel0, uv);
 
-    d = seg(p, v0, v3, s, d);
-    d = seg(p, v1, v0, s, d);
-    d = seg(p, v2, v1, s, d);
-    d = seg(p, v3, v2, s, d);
+    if (iCursorVisible == 0) {
+        fragColor = terminal;
+        return;
+    }
 
-    return s * sqrt(d);
-}
+    vec2 currentCenter = iCurrentCursor.xy + iCurrentCursor.zw * 0.5;
+    vec2 previousCenter = iPreviousCursor.xy + iPreviousCursor.zw * 0.5;
+    float age = max(iTime - iTimeCursorChange, 0.0);
+    float fade = exp(-age * 4.64);
+    float moved = smoothstep(1.0, 8.0, length(currentCenter - previousCenter));
 
-vec2 norm(vec2 value, float isPosition) {
-    return (value * 2.0 - (iResolution.xy * isPosition)) / iResolution.y;
-}
+    vec3 evaOrange = vec3(0.965, 0.757, 0.467);
 
-float antialising(float distance) {
-    return 1. - smoothstep(0., norm(vec2(2., 2.), 0.).x, distance);
-}
+    float trailWidth = max(max(iCurrentCursor.z, iCurrentCursor.w) * 0.72, 10.0);
+    float trail = 1.0 - smoothstep(
+        trailWidth * 0.15,
+        trailWidth,
+        lineDistance(fragCoord, previousCenter, currentCenter)
+    );
+    trail *= fade * moved * 0.55;
 
-float determineStartVertexFactor(vec2 a, vec2 b) {
-    float condition1 = step(b.x, a.x) * step(a.y, b.y);
-    float condition2 = step(a.x, b.x) * step(b.y, a.y);
-    return 1.0 - max(condition1, condition2);
-}
+    vec2 halfCursor = max(iCurrentCursor.zw * 0.5, vec2(5.0));
+    float glowDistance = roundedBox(
+        fragCoord,
+        currentCenter,
+        halfCursor + vec2(6.0),
+        6.0
+    );
+    float glow = (1.0 - smoothstep(0.0, 18.0, glowDistance)) * 0.25;
 
-vec2 getRectangleCenter(vec4 rectangle) {
-    return vec2(rectangle.x + (rectangle.z / 2.), rectangle.y - (rectangle.w / 2.));
-}
+    vec3 color = terminal.rgb;
+    color = mix(color, evaOrange, trail);
+    color += evaOrange * glow;
 
-float ease(float x) {
-    return pow(1.0 - x, 3.0);
-}
-
-vec4 hexToVec4(float r, float g, float b) {
-    return vec4(r / 255.0, g / 255.0, b / 255.0, 1.0);
-}
-
-const float OPACITY = 0.6;
-const float DURATION = 0.3;
-
-void mainImage(out vec4 fragColor, in vec2 fragCoord)
-{
-    fragColor = texture(iChannel0, fragCoord.xy / iResolution.xy);
-
-    vec2 vu = norm(fragCoord, 1.);
-    vec2 offsetFactor = vec2(-.5, 0.5);
-
-    vec4 currentCursor = vec4(norm(iCurrentCursor.xy, 1.), norm(iCurrentCursor.zw, 0.));
-    vec4 previousCursor = vec4(norm(iPreviousCursor.xy, 1.), norm(iPreviousCursor.zw, 0.));
-
-    float vertexFactor = determineStartVertexFactor(currentCursor.xy, previousCursor.xy);
-    float invertedVertexFactor = 1.0 - vertexFactor;
-
-    vec2 v0 = vec2(currentCursor.x + currentCursor.z * vertexFactor, currentCursor.y - currentCursor.w);
-    vec2 v1 = vec2(currentCursor.x + currentCursor.z * invertedVertexFactor, currentCursor.y);
-    vec2 v2 = vec2(previousCursor.x + currentCursor.z * invertedVertexFactor, previousCursor.y);
-    vec2 v3 = vec2(previousCursor.x + currentCursor.z * vertexFactor, previousCursor.y - previousCursor.w);
-
-    float sdfCurrentCursor = getSdfRectangle(vu, currentCursor.xy - (currentCursor.zw * offsetFactor), currentCursor.zw * 0.5);
-    float sdfTrail = getSdfParallelogram(vu, v0, v1, v2, v3);
-
-    float progress = clamp((iTime - iTimeCursorChange) / DURATION, 0.0, 1.0);
-    float easedProgress = ease(progress);
-
-    vec2 centerCC = getRectangleCenter(currentCursor);
-    vec2 centerCP = getRectangleCenter(previousCursor);
-    float lineLength = distance(centerCC, centerCP);
-
-    vec4 newColor = vec4(fragColor);
-    vec4 trail = hexToVec4(110.0, 60.0, 55.0);
-
-    newColor = mix(newColor, trail, antialising(sdfTrail));
-    newColor = mix(newColor, trail, antialising(sdfCurrentCursor));
-    newColor = mix(newColor, fragColor, step(sdfCurrentCursor, 0.));
-
-    fragColor = mix(fragColor, newColor, step(sdfCurrentCursor, easedProgress * lineLength));
+    fragColor = vec4(color, terminal.a);
 }

@@ -28,6 +28,9 @@ edit = [
 open = [
   { run = 'xdg-open %s', orphan = true, desc = "Open" }
 ]
+video = [
+  { run = 'uwsm app -- smplayer %s', orphan = true, desc = "SMPlayer" }
+]
 reveal = [
   { run = 'dolphin --select %s1', orphan = true, desc = "Reveal in Dolphin" }
 ]
@@ -37,16 +40,21 @@ code_dir = [
 terminal = [
   { run = 'kitty --directory %s1', orphan = true, desc = "Open Kitty here" }
 ]
+torrent = [
+  { run = '$HOME/.local/bin/qbittorrent %s', orphan = true, desc = "Open in qBittorrent" }
+]
 extract = [
-  { run = 'rice-yazi-extract %s1', block = true, desc = "Extract archive here" }
+  { run = '$HOME/.local/bin/rice-yazi-extract %s1', block = true, desc = "Extract archive here" }
 ]
 zip = [
-  { run = 'rice-yazi-compress %s', block = true, desc = "Create zip archive" }
+  { run = '$HOME/.local/bin/rice-yazi-compress %s', block = true, desc = "Create zip archive" }
 ]
 
 [open]
 prepend_rules = [
   { url = "*/", use = [ "open", "code_dir", "terminal", "reveal" ] },
+  { url = "*.torrent", use = [ "torrent", "open", "reveal" ] },
+  { mime = "video/*", use = [ "video", "open", "reveal" ] },
   { url = "*.{zip,rar,7z,tar,gz,tgz,bz2,xz}", use = [ "extract", "open", "reveal" ] },
   { mime = "text/*", use = [ "edit", "open", "reveal" ] },
   { mime = "application/json", use = [ "edit", "open", "reveal" ] },

@@ -13,7 +13,7 @@ cursor-color = #f6c177
 cursor-text = #0f1020
 
 palette = 0=#151126
-palette = 1=#d98bc4
+palette = 1=#7c5fb8
 palette = 2=#a3d977
 palette = 3=#f6c177
 palette = 4=#9a86b8
@@ -21,7 +21,7 @@ palette = 5=#c4a7e7
 palette = 6=#6faf6e
 palette = 7=#f2eaff
 palette = 8=#8f7bc4
-palette = 9=#ebbcba
+palette = 9=#c4a7e7
 palette = 10=#d3f6a3
 palette = 11=#f6c177
 palette = 12=#a889e6

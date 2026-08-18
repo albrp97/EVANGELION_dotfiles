@@ -28,7 +28,7 @@ eva_green_dark = "#304D3A"
 eva_green = "#A3D977"
 eva_green_soft = "#6FAF6E"
 eva_orange = "#F6C177"
-eva_rose = "#D98BC4"
+eva_error = "#7C5FB8"
 
 [os]
 disabled = false
@@ -50,7 +50,7 @@ format = "[ $user ]($style)"
 [directory]
 style = "bold bg:eva_lavender fg:eva_fg_dark"
 format = "[ $path ]($style)"
-truncation_length = 3
+truncation_length = 0
 truncation_symbol = "…/"
 truncate_to_repo = false
 
@@ -73,7 +73,7 @@ format = "[$all_status$ahead_behind ]($style)"
 
 [character]
 success_symbol = "[❯](bold eva_green)"
-error_symbol = "[❯](bold eva_rose)"
+error_symbol = "[❯](bold eva_error)"
 vimcmd_symbol = "[❮](bold eva_lavender)"
 
 [cmd_duration]

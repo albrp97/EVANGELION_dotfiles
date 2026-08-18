@@ -1,0 +1,27 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+device="/dev/disk/by-uuid/BC2494582494180A"
+
+if [[ ! -e "$device" ]]; then
+  echo "rice-yazi-windows: Windows partition is not available: $device" >&2
+  exit 1
+fi
+
+if ! command -v udisksctl >/dev/null 2>&1; then
+  echo "rice-yazi-windows: udisksctl is required to mount the Windows partition" >&2
+  exit 1
+fi
+
+mountpoint="$(findmnt -rn -S "$device" -o TARGET || true)"
+if [[ -z "$mountpoint" ]]; then
+  udisksctl mount -b "$device" >/dev/null
+  mountpoint="$(findmnt -rn -S "$device" -o TARGET || true)"
+fi
+
+if [[ -z "$mountpoint" ]]; then
+  echo "rice-yazi-windows: the Windows partition could not be mounted" >&2
+  exit 1
+fi
+
+exec ya emit cd "$mountpoint"

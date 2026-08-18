@@ -68,6 +68,7 @@ hl.bind(mainMod .. " + code:86", function() zoomfunction(0.3) end, { repeating =
 ---- LAUNCHER ----
 ------------------
 
+hl.bind(mainMod .. " + SHIFT + E",  hl.dsp.exec_cmd(launchPrefix .. FILE_MANAGER))
 hl.bind(mainMod .. " + E",          hl.dsp.exec_cmd(launchPrefix .. YAZI))
 hl.bind(mainMod .. " + SHIFT + T", hl.dsp.exec_cmd(launchPrefix .. FILE_MANAGER))
 hl.bind(mainMod .. " + T",          hl.dsp.exec_cmd(launchPrefix .. TERMINAL))

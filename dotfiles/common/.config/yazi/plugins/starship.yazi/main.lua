@@ -14,6 +14,10 @@ local save = ya.sync(function(st, outputs)
     render()
 end)
 
+local get_current_cwd = ya.sync(function()
+    return cx.active.current.cwd
+end)
+
 -- Helper function for accessing the `config_file` state variable
 ---@return string
 local get_config_file = ya.sync(function(st)
@@ -48,17 +52,16 @@ return {
         -- Check setup args
         if args ~= nil then
             if args.config_file ~= nil then
-                local url = Url(args.config_file)
-                if url.is_regular then
-                    local config_file = args.config_file
+                local config_file = args.config_file
 
-                    -- Manually replace '~' and '$HOME' at the start of the path with the OS environment variable
-                    local home = os.getenv("HOME")
-                    if home then
-                        home = tostring(home)
-                        config_file = config_file:gsub("^~", home):gsub("^$HOME", home)
-                    end
+                -- Manually replace '~' and '$HOME' at the start of the path with the OS environment variable
+                local home = os.getenv("HOME")
+                if home then
+                    home = tostring(home)
+                    config_file = config_file:gsub("^~", home):gsub("^%$HOME", home)
+                end
 
+                if Url(config_file).is_regular then
                     st.config_file = config_file
                 end
             end
@@ -180,7 +183,7 @@ return {
         -- Pass current working directory and custom config path (if specified) to the plugin's entry point
         ---Callback for subscribers to update the prompt
         local callback = function()
-            local cwd = cx.active.current.cwd
+            local cwd = get_current_cwd()
             if st.cwd ~= cwd then
                 st.cwd = cwd
 
@@ -197,6 +200,9 @@ return {
         -- Subscribe to events
         ps.sub("cd", callback)
         ps.sub("tab", callback)
+        ya.async(function()
+            callback()
+        end)
     end,
 
     entry = function(_, job)
@@ -204,12 +210,19 @@ return {
 
         -- Setup commands for left and right prompts
         local function base_command()
+            local path = os.getenv("PATH") or ""
+            local home = os.getenv("HOME")
+            if home and home ~= "" then
+                path = home .. "/.local/bin:" .. home .. "/bin:" .. path
+            end
+
             return Command("starship")
                 :arg("prompt")
                 :stdin(Command.INHERIT)
                 :cwd(args[1])
                 :env("STARSHIP_SHELL", "")
                 :env("PWD", args[1])
+                :env("PATH", path)
         end
         local command_left = base_command()
         local command_right = base_command():arg("--right")

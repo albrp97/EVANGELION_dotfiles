@@ -77,6 +77,30 @@ local PANEL_TARGETS = {
   },
 }
 
+local PROFILE_ORDER = { "performance", "balanced", "power-saver" }
+local PROFILE_STYLES = {
+  ["power-saver"] = {
+    label = "SAVE",
+    color = "#A3D977",
+    glyph = "leaf",
+  },
+  balanced = {
+    label = "BAL",
+    color = "#C4A7E7",
+    glyph = "scale",
+  },
+  performance = {
+    label = "PERF",
+    color = "#F6C177",
+    glyph = "cpu",
+  },
+}
+local DEFAULT_PROFILE_STYLE = {
+  label = "--",
+  color = "#C4A7E7",
+  glyph = "cpu",
+}
+
 local target = PANEL_TARGETS[kind] or PANEL_TARGETS.cpu
 local CLOSE_PROBE = [[
 cursor="$(hyprctl cursorpos -j 2>/dev/null)"
@@ -109,6 +133,9 @@ local mediaTitle = ""
 local weatherTemperature = nil
 local weatherGlyph = "weather-cloud"
 local hasUnreadNotifications = false
+local powerProfile = nil
+local profileSamplePending = false
+local profileChangePending = false
 
 local function requestCommand(command, callback)
   if commandPending then
@@ -118,6 +145,46 @@ local function requestCommand(command, callback)
   commandPending = noctalia.runAsync(command, function(result)
     commandPending = false
     callback(result)
+  end)
+end
+
+local function samplePowerProfile()
+  if profileSamplePending or profileChangePending then
+    return
+  end
+
+  profileSamplePending = noctalia.runAsync("powerprofilesctl get 2>/dev/null", function(result)
+    profileSamplePending = false
+    if result.exitCode ~= 0 then
+      return
+    end
+
+    local profile = (result.stdout or ""):match("([%w%-]+)")
+    if PROFILE_STYLES[profile] ~= nil then
+      powerProfile = profile
+    end
+  end)
+end
+
+local function cyclePowerProfile()
+  if profileChangePending then
+    return
+  end
+
+  local currentIndex = 0
+  for index, profile in ipairs(PROFILE_ORDER) do
+    if profile == powerProfile then
+      currentIndex = index
+      break
+    end
+  end
+
+  local nextProfile = PROFILE_ORDER[(currentIndex % #PROFILE_ORDER) + 1]
+  profileChangePending = noctalia.runAsync("powerprofilesctl set " .. nextProfile, function(result)
+    profileChangePending = false
+    if result.exitCode == 0 then
+      powerProfile = nextProfile
+    end
   end)
 end
 
@@ -392,8 +459,25 @@ local function renderExternal()
   ))
 end
 
+local function renderPowerProfile()
+  local style = PROFILE_STYLES[powerProfile] or DEFAULT_PROFILE_STYLE
+  barWidget.render(ui.row(
+    {
+      gap = 4,
+      align = "center",
+      onClick = cyclePowerProfile,
+    },
+    {
+      ui.glyph({ name = style.glyph, size = 15, color = style.color }),
+      ui.label({ text = style.label, color = style.color, fontSize = 11, fontWeight = "bold" }),
+    }
+  ))
+end
+
 local function render()
-  if kind == "workspace" then
+  if kind == "power-profile" then
+    renderPowerProfile()
+  elseif kind == "workspace" then
     renderWorkspaces()
   elseif kind == "media" or kind == "volume" or kind == "weather" or kind == "notifications" then
     renderExternal()
@@ -538,7 +622,9 @@ local function closeIfPointerLeftPanel(result)
 end
 
 function update()
-  if kind == "workspace" then
+  if kind == "power-profile" then
+    samplePowerProfile()
+  elseif kind == "workspace" then
     requestWorkspaces()
   elseif kind == "media" or kind == "volume" or kind == "weather" or kind == "notifications" then
     sampleExternal()
@@ -567,7 +653,9 @@ else
 end
 
 noctalia.setUpdateInterval(UPDATE_INTERVAL_MS)
-if kind == "workspace" then
+if kind == "power-profile" then
+  samplePowerProfile()
+elseif kind == "workspace" then
   requestWorkspaces()
 elseif kind == "media" or kind == "volume" or kind == "weather" or kind == "notifications" then
   sampleExternal()

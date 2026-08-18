@@ -1,0 +1,12 @@
+diff --git a/src/shell/bar/bar.cpp b/src/shell/bar/bar.cpp
+--- a/src/shell/bar/bar.cpp
++++ b/src/shell/bar/bar.cpp
+@@ -2977,7 +2977,7 @@ void Bar::applyBarCompositorBlur(BarInstance& instance) const {
+   if (instance.surface == nullptr) {
+     return;
+   }
+-  if (!barContentVisuallyShown(instance)) {
++  if (!barContentVisuallyShown(instance) || instance.barConfig.backgroundOpacity <= 0.0F) {
+     instance.surface->clearBlurRegion();
+     return;
+   }

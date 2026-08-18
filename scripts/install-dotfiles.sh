@@ -158,6 +158,11 @@ install_layer "$PLATFORM_DIR" no
 
 if [[ "$platform" == "linux" ]]; then
   install_eva_virtual_click
+  if [[ -f /usr/share/applications/smplayer.desktop ]]; then
+    "$ROOT_DIR/scripts/configure-linux-video-defaults.sh"
+  else
+    echo "SMPlayer is not installed; video MIME defaults were not changed." >&2
+  fi
 fi
 
 if [[ "$platform" == "macos" && -d "$ROOT_DIR/wallpapers" ]]; then

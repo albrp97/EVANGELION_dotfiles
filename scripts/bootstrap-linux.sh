@@ -21,6 +21,8 @@ PACMAN_PACKAGES=(
   bat
   btop
   code
+  cmake
+  curl
   eza
   fastfetch
   fd
@@ -34,7 +36,10 @@ PACMAN_PACKAGES=(
   jq
   kitty
   lazygit
+  meson
   neovim
+  ninja
+  nlohmann-json
   noctalia
   perl
   poppler
@@ -43,6 +48,8 @@ PACMAN_PACKAGES=(
   satty
   slurp
   solaar
+  stb
+  smplayer
   starship
   tmux
   uwsm

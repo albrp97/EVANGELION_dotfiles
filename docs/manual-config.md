@@ -44,12 +44,14 @@ VS Code uses fake transparency instead of Vibrancy Continued. The script injects
 | Tool | Config path | Reload/apply |
 | --- | --- | --- |
 | Hyprland | `~/.config/hypr/hyprland.lua` and `~/.config/hypr/config/` | Restart the Hyprland session or reload from the compositor |
-| Noctalia | `~/.config/noctalia/config.toml` | `noctalia msg config-reload` |
-| Noctalia EVA palette/plugin | `~/.config/noctalia/palettes/eva01.json`, `~/.local/share/noctalia/plugins/eva-control-center/`, `~/.local/bin/eva-vclick*` | `noctalia msg config-reload`; restart Noctalia after manifest changes |
+| Lofree Flow 2 | `scripts/lofree-flow2-fn.py` | `pkexec python3 scripts/lofree-flow2-fn.py --apply` over USB |
+| Noctalia | `~/.config/noctalia/config.toml` | `~/.local/bin/noctalia msg config-reload` |
+| Noctalia EVA palette/plugin | `~/.config/noctalia/palettes/eva01.json`, `~/.local/share/noctalia/plugins/eva-control-center/`, `~/.local/bin/eva-vclick*` | `~/.local/bin/noctalia msg config-reload`; restart Noctalia after manifest changes |
 | Fish | `~/.config/fish/config.fish` | `exec fish` |
 | Kitty | `~/.config/kitty/kitty.conf`, shared `themes/eva01.conf` | Open a new Kitty window |
 | Ghostty | `~/.config/ghostty/config` | Open a new Ghostty window |
 | qBittorrent | `~/.config/qBittorrent/themes/eva01/config.json`, `stylesheet.qss` | Restart qBittorrent; enable the custom UI theme in Preferences if needed |
+| SMPlayer | `~/.config/smplayer/smplayer.ini`, `playlist.ini`, `themes/eva01/` (stylesheet and custom playback icons) | Restart SMPlayer; run `scripts/configure-linux-video-defaults.sh` to assign it to video MIME types |
 | Vivaldi | `~/.config/vivaldi/themes/eva01/eva01.zip` | Settings → Themes → Import Theme; install the preview, then select `EVA-01` |
 | Fastfetch | `~/.config/fastfetch/config.jsonc`, `~/.local/bin/rice-fastfetch-info` | Open a new terminal or run the helper directly |
 | btop | `~/.config/btop/btop.conf`, shared `themes/eva01-pastel.theme` | Restart btop |
@@ -62,9 +64,28 @@ VS Code uses fake transparency instead of Vibrancy Continued. The script injects
 | Zen | detected profile `chrome/` and profile `user.js` | `scripts/configure-zen.sh`, then restart Zen |
 | Clipboard/screenshot | `~/.local/bin/paste-clipboard-smart`, `screenshot-region-clipboard` | Used by Hyprland bindings |
 
+SMPlayer now starts in a dark EVA-01 minimalist compact mode: the menu and
+toolbars are hidden, and only a small fallback control set is retained if
+compact mode is toggled off. Its stylesheet uses monospaced text, hard-edged
+terminal/TUI panels, lavender and purple controls, and green playback accents
+instead of Qt's blue defaults. Use
+`F` or `Ctrl+T` for fullscreen, `Ctrl+C` to toggle compact mode, double-click
+the video for fullscreen, and right-click for the context menu. Set
+`iconset=` in `smplayer.ini` to disable the EVA stylesheet.
+
+SMPlayer's compact mode keeps the same window class, so `config/windowrules.lua`
+floats and preserves the size of all SMPlayer windows. This lets compact mode
+remain movable without tiling interference while leaving fullscreen
+transitions to SMPlayer and Hyprland.
+
 The Linux Code OSS transparency script copies only the system bundle's
 immutable assets and patches a user-owned `out/main.js`. It does not track or
 modify the generated bundle in the repository.
+
+The Flow 2 Fn-layer helper uses the keyboard's USB HID/VIA interface directly,
+without a browser. It backs up the complete keymap with `--dump` and changes
+only Fn-layer number-row columns 1-12, so `Fn+1..Fn+0`, `Fn+-`, and `Fn+=`
+send `F1..F12` in both Mac and Windows layers.
 
 The Noctalia EVA bar uses the `evangelion/control-center` plugin for separate
 hover capsules: power, clock/date (`HH:MM DD Mon`), system (CPU, RAM, GPU),
@@ -78,6 +99,10 @@ Notifications. The active workspace dot is EVA green, inactive dots are
 violet, and the widget always renders at least three dots. Every panel closes
 after the pointer leaves both the capsule and the panel.
 
+The rightmost power-profile pill cycles through `Performance`, `Balanced`, and
+`Power-saver` on click. Its accent is orange for Performance, violet for
+Balanced, and green for Power-saver.
+
 The native Control Center sidebar, cards, and graphs remain intact; the EVA
 palette, font, borders, surfaces, and spacing provide the restyling. Its
 Noctalia error/graph accent is mapped to EVA orange so the native panel stays
@@ -85,6 +110,15 @@ within the violet, green, and orange accent set. The installer builds the
 small Hyprland `wlr-virtual-pointer` helper used to route hover events through
 Noctalia's normal anchored widget action. `Super+Shift+X` remains the keyboard
 fallback.
+
+The transparent EVA bar uses a tracked patch to prevent Noctalia from asking
+Hyprland to blur the full bar while keeping compositor blur enabled for
+Ghostty. The Hyprland startup path launches the patched user-local binary at
+`~/.local/bin/noctalia`; rebuild it only after a Noctalia package update with:
+
+```sh
+scripts/build-noctalia-eva.sh
+```
 
 The Linux updater reports pacman, AUR, and Flatpak packages in `Ready now` and
 `Waiting for 3 days` sections. A normal update runs full pacman upgrades because

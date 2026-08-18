@@ -3,7 +3,7 @@ require("full-border"):setup {
 }
 
 require("smart-enter"):setup {
-	open_multi = false,
+	open_multi = true,
 }
 
 require("git"):setup {

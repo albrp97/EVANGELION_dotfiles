@@ -391,3 +391,55 @@ QMessageBox {
 QLabel[role="heading"] {
     color: #C4A7E7;
 }
+
+/*
+ * Keep controls opaque while allowing the main EVA surfaces to reveal the
+ * compositor background.
+ */
+QMainWindow {
+    background-color: transparent;
+}
+
+QDialog,
+QDockWidget,
+QTabWidget::pane,
+QStackedWidget,
+QScrollArea,
+QAbstractScrollArea,
+QMessageBox {
+    background-color: rgba(25, 23, 36, 184);
+}
+
+QWidget#centralWidget,
+QWidget#PropertiesWidget,
+QWidget#groupBar {
+    background-color: rgba(25, 23, 36, 184);
+}
+
+QToolBar,
+QMenuBar,
+QStatusBar {
+    background-color: rgba(20, 18, 24, 224);
+}
+
+QMenu,
+QComboBox QAbstractItemView {
+    background-color: rgba(31, 29, 46, 224);
+}
+
+QAbstractItemView,
+QTableView,
+QTableWidget,
+QTreeView,
+QTreeWidget,
+QListView,
+QListWidget,
+QColumnView {
+    background-color: rgba(25, 23, 36, 184);
+    alternate-background-color: rgba(31, 29, 46, 209);
+}
+
+QScrollBar:vertical,
+QScrollBar:horizontal {
+    background-color: rgba(25, 23, 36, 184);
+}

@@ -45,6 +45,8 @@ Common Linux shortcuts:
 | Fullscreen | Super+D |
 | Workspace 1-9 | Super+1..9 |
 | Move window to workspace 1-9 | Super+Shift+1..9 |
+| Open default file explorer | Super+Shift+E |
+| Open Yazi | Super+E |
 | Region screenshot to clipboard | Super+P |
 | Clipboard panel | Super+Shift+V |
 | Wallpaper panel | Super+Shift+W |
@@ -137,13 +139,14 @@ When a dock or external display is connected, `rice-display-route` prefers the e
 
 | Key | Action |
 | --- | --- |
+| `';w` | Mount and open the Windows files partition |
 | `'h` / `'c` / `'d` / `'D` / `'.` | Jump to Home, `~/Documents/code`, Downloads, Documents, or `~/.config` |
-| `l`, Right, Enter | Smart enter: enter folders, open files |
-| `\c` / `\t` / `\f` | Open current folder in VS Code, open Ghostty here, reveal hovered file in Finder |
-| `\x` / `\z` / `\Z` | Extract hovered archive into a same-named folder, zip selected files/folders, or zip hovered item |
-| `\v` / `\V` | Toggle the preview pane, or maximize/restore preview |
-| `\/` / `\p` / `\m` | Smart filter, smart paste into hovered folder, chmod selected files |
-| `\lg` / `\ls` / `\lm` / `\ln` | Switch line mode to Git, size, modified time, or none |
+| `l`, Right, Enter | Smart enter: enter folders, or open selected files with their associated application |
+| `;c` / `;t` / `;f` | Open current folder in VS Code, open Kitty here, reveal hovered file in Dolphin |
+| `;x` / `;z` / `;Z` | Extract hovered archive into a same-named folder, zip selected files/folders, or zip hovered item |
+| `;v` / `;V` | Toggle the preview pane, or maximize/restore preview |
+| `;/` / `;p` / `;m` | Smart filter, smart paste into hovered folder, chmod selected files |
+| `;lg` / `;ls` / `;lm` / `;ln` | Switch line mode to Git, size, modified time, or none |
 
 ## Theme and wallpapers
 

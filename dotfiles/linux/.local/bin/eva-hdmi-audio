@@ -1,0 +1,184 @@
+#!/usr/bin/env bash
+set -u -o pipefail
+
+card_name="alsa_card.pci-0000_01_00.1"
+tv_pattern='Google TV|BRAVIA|Sony|Android TV|Television'
+runtime_dir="${XDG_RUNTIME_DIR:-/tmp}"
+
+exec 9>"$runtime_dir/eva-hdmi-audio.lock"
+flock -n 9 || exit 0
+
+log() {
+  printf 'eva-hdmi-audio: %s\n' "$*" >&2
+}
+
+for command_name in flock jq pactl; do
+  if ! command -v "$command_name" >/dev/null 2>&1; then
+    log "required command not found: $command_name"
+    exit 1
+  fi
+done
+
+get_card() {
+  pactl -f json list cards |
+    jq -c --arg name "$card_name" '.[] | select(.name == $name)'
+}
+
+profile_is_available() {
+  local card_json="$1"
+  local profile="$2"
+  jq -e --arg profile "$profile" \
+    '.profiles[$profile].available == true' <<<"$card_json" >/dev/null
+}
+
+find_tv_port() {
+  local card_json="$1"
+  jq -r --arg pattern "$tv_pattern" '
+    .ports
+    | to_entries[]
+    | select(.value.availability == "available")
+    | select((.value.properties["device.product.name"] // "")
+      | test($pattern; "i"))
+    | .key
+  ' <<<"$card_json" | head -n 1
+}
+
+find_fallback_port() {
+  local card_json="$1"
+  jq -r --arg pattern "$tv_pattern" '
+    .ports
+    | to_entries[]
+    | select(.value.availability == "available")
+    | select(((.value.properties["device.product.name"] // "")
+      | test($pattern; "i")) | not)
+    | .key
+  ' <<<"$card_json" | head -n 1
+}
+
+find_profile_for_port() {
+  local card_json="$1"
+  local port="$2"
+  local profile
+
+  # Prefer the 5.1 profile for the TV so optical passthrough can carry surround.
+  while IFS= read -r profile; do
+    if profile_is_available "$card_json" "$profile"; then
+      printf '%s\n' "$profile"
+      return 0
+    fi
+  done < <(
+    jq -r --arg port "$port" '
+      .ports[$port].profiles[]
+      | select(test("^output:hdmi-surround-extra[0-9]+$"))
+    ' <<<"$card_json"
+  )
+
+  while IFS= read -r profile; do
+    if profile_is_available "$card_json" "$profile"; then
+      printf '%s\n' "$profile"
+      return 0
+    fi
+  done < <(
+    jq -r --arg port "$port" '
+      .ports[$port].profiles[]
+      | select(test("^output:hdmi-stereo"))
+    ' <<<"$card_json"
+  )
+
+  return 1
+}
+
+configure_audio() {
+  local card_json
+  local tv_port
+  local selected_port
+  local selected_profile
+  local active_profile
+  local sink
+  local current_sink
+  local attempt
+  local sink_profile
+
+  card_json="$(get_card)" || {
+    log "could not query the NVIDIA audio card"
+    return 1
+  }
+  if [[ -z "$card_json" ]]; then
+    log "NVIDIA audio card is not available yet"
+    return 0
+  fi
+
+  tv_port="$(find_tv_port "$card_json")"
+  if [[ -n "$tv_port" ]]; then
+    selected_port="$tv_port"
+  else
+    selected_port="$(find_fallback_port "$card_json")"
+  fi
+
+  if [[ -z "$selected_port" ]]; then
+    log "no available HDMI display audio port"
+    return 0
+  fi
+
+  selected_profile="$(find_profile_for_port "$card_json" "$selected_port")" || {
+    log "no usable audio profile for $selected_port"
+    return 1
+  }
+
+  active_profile="$(jq -r '.active_profile // ""' <<<"$card_json")"
+  if [[ "$active_profile" != "$selected_profile" ]]; then
+    log "selecting $selected_profile"
+    pactl set-card-profile "$card_name" "$selected_profile" || {
+      log "failed to select $selected_profile"
+      return 1
+    }
+    sleep 0.5
+  fi
+
+  sink_profile="${selected_profile#output:}"
+  sink=""
+  for attempt in 1 2 3 4 5; do
+    sink="$(
+      pactl -f json list sinks |
+        jq -r --arg profile "$sink_profile" '
+          .[]
+          | select(.properties["device.profile.name"] == $profile)
+          | .name
+        ' | head -n 1
+    )"
+    [[ -n "$sink" ]] && break
+    sleep 0.3
+  done
+  if [[ -z "$sink" ]]; then
+    log "selected profile has not created a sink yet"
+    return 1
+  fi
+
+  current_sink="$(pactl get-default-sink 2>/dev/null || true)"
+  if [[ "$current_sink" != "$sink" ]]; then
+    log "setting default sink to $sink"
+    if ! pactl set-default-sink "$sink"; then
+      log "failed to set default sink to $sink"
+      return 1
+    fi
+  fi
+}
+
+if ! configure_audio; then
+  log "initial audio configuration failed; waiting for the next audio event"
+fi
+
+while :; do
+  while IFS= read -r event; do
+    case "$event" in
+      *"on card"*|*"on sink"*|*"on server"*)
+        sleep 0.3
+        if ! configure_audio; then
+          log "audio reconfiguration failed; waiting for the next audio event"
+        fi
+        ;;
+    esac
+  done < <(pactl subscribe 2>/dev/null)
+  log "audio event subscription ended; retrying"
+  sleep 1
+done

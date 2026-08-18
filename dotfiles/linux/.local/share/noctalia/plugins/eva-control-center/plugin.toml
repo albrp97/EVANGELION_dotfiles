@@ -128,3 +128,13 @@ entry = "widget.luau"
     type = "string"
     default = "notifications"
     label_key = "metric"
+
+[[widget]]
+id = "power-profile"
+entry = "widget.luau"
+
+    [[widget.setting]]
+    key = "metric"
+    type = "string"
+    default = "power-profile"
+    label_key = "metric"

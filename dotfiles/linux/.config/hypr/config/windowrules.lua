@@ -67,6 +67,15 @@ hl.window_rule({
     },
 })
 
+-- SMPlayer compact mode only hides controls, so its window class stays unchanged.
+hl.window_rule({
+    name            = "smplayer-floating",
+    match           = { class = "^(smplayer)$" },
+    float           = true,
+    center          = true,
+    persistent_size = true,
+})
+
 -- Opacity Overrides
 local terminals = "^(kitty|ghostty|[Kk]onsole|Alacritty|gnome-terminal|xfce[0-9]?-terminal)$"
 

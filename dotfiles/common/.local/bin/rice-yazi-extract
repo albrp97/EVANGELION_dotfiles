@@ -36,6 +36,8 @@ mkdir -p "$out"
 
 if command -v 7zz >/dev/null 2>&1; then
   7zz x "$archive" "-o$out" -y
+elif command -v 7z >/dev/null 2>&1; then
+  7z x "$archive" "-o$out" -y
 elif command -v unar >/dev/null 2>&1; then
   unar -o "$out" -force-overwrite "$archive"
 else
