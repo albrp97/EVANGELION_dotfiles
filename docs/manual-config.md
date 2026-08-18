@@ -49,6 +49,7 @@ VS Code uses fake transparency instead of Vibrancy Continued. The script injects
 | Fish | `~/.config/fish/config.fish` | `exec fish` |
 | Kitty | `~/.config/kitty/kitty.conf`, shared `themes/eva01.conf` | Open a new Kitty window |
 | Ghostty | `~/.config/ghostty/config` | Open a new Ghostty window |
+| qBittorrent | `~/.config/qBittorrent/themes/eva01/config.json`, `stylesheet.qss` | Restart qBittorrent; enable the custom UI theme in Preferences if needed |
 | Fastfetch | `~/.config/fastfetch/config.jsonc`, `~/.local/bin/rice-fastfetch-info` | Open a new terminal or run the helper directly |
 | btop | `~/.config/btop/btop.conf`, shared `themes/eva01-pastel.theme` | Restart btop |
 | Starship | shared `~/.config/starship.toml` | Open a new Fish shell |

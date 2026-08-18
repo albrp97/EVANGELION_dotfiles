@@ -10,7 +10,8 @@ dotfiles/common/   Shared Starship, Yazi, btop, Fastfetch, Kitty, Copilot,
 dotfiles/macos/    yabai, skhd, SketchyBar, Karabiner, macOS helpers,
                    macOS application settings, and launch agents.
 dotfiles/linux/    Hyprland, Noctalia, Fish, Kitty/Ghostty, Code OSS,
-                   staged updates, clipboard/screenshot helpers, and UWSM.
+                   qBittorrent, staged updates, clipboard/screenshot helpers,
+                   and UWSM.
 scripts/           Platform bootstrap, installation, Zen, and transparency tools.
 ```
 
@@ -60,7 +61,7 @@ Zen profiles are detected automatically by the installer. If Zen was installed a
 
 ## Shared behavior
 
-- Pastel EVA-01 colors are used by Ghostty, Kitty, btop, Starship, Yazi, Fastfetch, VS Code, Zen, and Copilot.
+- Pastel EVA-01 colors are used by Ghostty, Kitty, btop, Starship, Yazi, Fastfetch, VS Code, Zen, qBittorrent, and Copilot.
 - `~/bin/copilot` forces the Copilot CLI into the terminal's EVA ANSI palette and enables the existing approval behavior.
 - The local VS Code/Code OSS extension provides the `EVA-01 Pastel` color theme and icons.
 - Yazi plugins, archive helpers, the Starship header, and Git metadata are shared between both systems.
