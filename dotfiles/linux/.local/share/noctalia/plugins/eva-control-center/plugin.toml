@@ -1,0 +1,130 @@
+id = "evangelion/control-center"
+name = "EVA Control Center"
+version = "0.1.0"
+plugin_api = 12
+author = "evangelion"
+license = "MIT"
+dependencies = []
+tags = ["eva", "system", "native"]
+icon = "device-desktop"
+description = "EVA-styled hover capsules for Noctalia's native panels and workspace dots."
+
+[[widget]]
+id = "power"
+entry = "widget.luau"
+
+    [[widget.setting]]
+    key = "metric"
+    type = "string"
+    default = "power"
+    label_key = "metric"
+
+[[widget]]
+id = "clock"
+entry = "widget.luau"
+
+    [[widget.setting]]
+    key = "metric"
+    type = "string"
+    default = "clock"
+    label_key = "metric"
+
+[[widget]]
+id = "cpu"
+entry = "widget.luau"
+
+    [[widget.setting]]
+    key = "metric"
+    type = "string"
+    default = "cpu"
+    label_key = "metric"
+
+[[widget]]
+id = "ram"
+entry = "widget.luau"
+
+    [[widget.setting]]
+    key = "metric"
+    type = "string"
+    default = "ram"
+    label_key = "metric"
+
+[[widget]]
+id = "gpu"
+entry = "widget.luau"
+
+    [[widget.setting]]
+    key = "metric"
+    type = "string"
+    default = "gpu"
+    label_key = "metric"
+
+[[widget]]
+id = "download"
+entry = "widget.luau"
+
+    [[widget.setting]]
+    key = "metric"
+    type = "string"
+    default = "download"
+    label_key = "metric"
+
+[[widget]]
+id = "upload"
+entry = "widget.luau"
+
+    [[widget.setting]]
+    key = "metric"
+    type = "string"
+    default = "upload"
+    label_key = "metric"
+
+[[widget]]
+id = "workspace"
+entry = "widget.luau"
+
+    [[widget.setting]]
+    key = "metric"
+    type = "string"
+    default = "workspace"
+    label_key = "metric"
+
+[[widget]]
+id = "media"
+entry = "widget.luau"
+
+    [[widget.setting]]
+    key = "metric"
+    type = "string"
+    default = "media"
+    label_key = "metric"
+
+[[widget]]
+id = "volume"
+entry = "widget.luau"
+
+    [[widget.setting]]
+    key = "metric"
+    type = "string"
+    default = "volume"
+    label_key = "metric"
+
+[[widget]]
+id = "weather"
+entry = "widget.luau"
+
+    [[widget.setting]]
+    key = "metric"
+    type = "string"
+    default = "weather"
+    label_key = "metric"
+
+[[widget]]
+id = "notifications"
+entry = "widget.luau"
+
+    [[widget.setting]]
+    key = "metric"
+    type = "string"
+    default = "notifications"
+    label_key = "metric"

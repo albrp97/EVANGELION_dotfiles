@@ -86,12 +86,15 @@ install_file() {
   fi
 
   mkdir -p "$(dirname "$target_path")"
-  rm -f "$target_path"
+  local temp_path
+  temp_path="$(mktemp "${target_path}.tmp.XXXXXX")"
+  rm -f "$temp_path"
   if [[ -L "$source_path" ]]; then
-    cp -P "$source_path" "$target_path"
+    cp -P "$source_path" "$temp_path"
   else
-    cp -p "$source_path" "$target_path"
+    cp -p "$source_path" "$temp_path"
   fi
+  mv -f "$temp_path" "$target_path"
 }
 
 install_layer() {
@@ -117,8 +120,45 @@ install_tree_to_root() {
   done < <(find "$source_dir" \( -type f -o -type l \) -print0)
 }
 
+install_eva_virtual_click() {
+  local protocol="$ROOT_DIR/scripts/protocols/wlr-virtual-pointer-unstable-v1.xml"
+  local source="$ROOT_DIR/scripts/eva-vclick.c"
+  local wrapper="$ROOT_DIR/scripts/eva-vclick-current.sh"
+  local build_dir
+  build_dir="$(mktemp -d)"
+
+  if ! command -v wayland-scanner >/dev/null 2>&1 \
+    || ! command -v "${CC:-cc}" >/dev/null 2>&1 \
+    || ! pkg-config --exists wayland-client; then
+    rm -rf "$build_dir"
+    echo "Missing Wayland build dependencies for the Noctalia hover anchor." >&2
+    echo "Install wayland-scanner, a C compiler, and wayland-client development files." >&2
+    exit 1
+  fi
+
+  if ! wayland-scanner client-header "$protocol" \
+      "$build_dir/wlr-virtual-pointer-unstable-v1-client-protocol.h" \
+    || ! wayland-scanner private-code "$protocol" \
+      "$build_dir/wlr-virtual-pointer-unstable-v1-client-protocol.c" \
+    || ! "${CC:-cc}" -O2 -Wall -Wextra -I"$build_dir" "$source" \
+      "$build_dir/wlr-virtual-pointer-unstable-v1-client-protocol.c" \
+      -o "$build_dir/eva-vclick" $(pkg-config --cflags --libs wayland-client); then
+    rm -rf "$build_dir"
+    echo "Failed to build the Noctalia hover anchor helper." >&2
+    exit 1
+  fi
+
+  install_file "$build_dir/eva-vclick" ".local/bin/eva-vclick"
+  install_file "$wrapper" ".local/bin/eva-vclick-current"
+  rm -rf "$build_dir"
+}
+
 install_layer "$COMMON_DIR" yes
 install_layer "$PLATFORM_DIR" no
+
+if [[ "$platform" == "linux" ]]; then
+  install_eva_virtual_click
+fi
 
 if [[ "$platform" == "macos" && -d "$ROOT_DIR/wallpapers" ]]; then
   install_tree_to_root "$ROOT_DIR/wallpapers" "$HOME/.local/share/macbook-linux-rice/wallpapers"

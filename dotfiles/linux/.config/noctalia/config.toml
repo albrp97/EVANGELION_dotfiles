@@ -2,9 +2,9 @@
 ui_scale = 1.20
 
 [bar.default]
-center = [ "workspaces", "spacer_1", "active_window" ]
+center = [ "group:g_workspace" ]
 concave_edge_corners = true
-end = [ "media", "spacer_1", "tray", "notifications", "network", "volume", "session" ]
+end = [ "group:g_media", "group:g_volume", "group:g_weather", "group:g_notifications" ]
 margin_edge = 0
 margin_ends = 0
 radius_bottom_left = 12
@@ -12,30 +12,139 @@ radius_bottom_right = 12
 radius_top_left = 0
 radius_top_right = 0
 scale = 1.10
-start = [ "launcher", "clock", "spacer_1", "group:g1" ]
+widget_spacing = 10
+background_opacity = 0.0
+border_width = 0
+contact_shadow = false
+shadow = false
+start = [
+  "group:g_power",
+  "group:g_clock",
+  "group:g_system",
+  "group:g_network",
+]
 thickness = 35
 
     [[bar.default.capsule_group]]
     border = ""
-    fill = "on_secondary"
-    id = "g1"
-    members = [ "temp", "sysmon_2", "sysmon_3" ]
-    opacity = 1.0
-    padding = 6.0
+    fill = "surface_variant"
+    id = "g_power"
+    members = [ "eva_power" ]
+    opacity = 0.75
+    padding = 10.0
+
+    [[bar.default.capsule_group]]
+    border = ""
+    fill = "surface_variant"
+    id = "g_clock"
+    members = [ "eva_clock" ]
+    opacity = 0.75
+    padding = 10.0
+
+    [[bar.default.capsule_group]]
+    border = ""
+    fill = "surface_variant"
+    id = "g_system"
+    members = [ "eva_cpu", "eva_ram", "eva_gpu" ]
+    opacity = 0.75
+    padding = 10.0
+
+    [[bar.default.capsule_group]]
+    border = ""
+    fill = "surface_variant"
+    id = "g_network"
+    members = [ "eva_download", "eva_upload" ]
+    opacity = 0.75
+    padding = 10.0
+
+    [[bar.default.capsule_group]]
+    border = ""
+    fill = "surface_variant"
+    id = "g_workspace"
+    members = [ "eva_workspace" ]
+    opacity = 0.75
+    padding = 10.0
+
+    [[bar.default.capsule_group]]
+    border = ""
+    fill = "surface_variant"
+    id = "g_media"
+    members = [ "eva_media" ]
+    opacity = 0.75
+    padding = 10.0
+
+    [[bar.default.capsule_group]]
+    border = ""
+    fill = "surface_variant"
+    id = "g_volume"
+    members = [ "eva_volume" ]
+    opacity = 0.75
+    padding = 10.0
+
+    [[bar.default.capsule_group]]
+    border = ""
+    fill = "surface_variant"
+    id = "g_weather"
+    members = [ "eva_weather" ]
+    opacity = 0.75
+    padding = 10.0
+
+    [[bar.default.capsule_group]]
+    border = ""
+    fill = "surface_variant"
+    id = "g_notifications"
+    members = [ "eva_notifications" ]
+    opacity = 0.75
+    padding = 10.0
+
+[control_center]
+hidden_tabs = []
+show_session_button = true
+show_shortcut_labels = true
+sidebar = "full"
+sidebar_section = "full"
+width = 780
+
+[plugins]
+enabled = [ "evangelion/control-center" ]
+
+[location]
+auto_locate = true
+
+[weather]
+enabled = true
+unit = "metric"
 
 [shell]
+button_borders = true
+card_borders = true
+corner_radius_scale = 0.90
 clipboard_image_action_command = "satty -f -"
+font_family = "Liga SFMono Nerd Font"
+lang = "en"
+input_borders = true
 launch_apps_as_systemd_services = true
 polkit_agent = true
+popup_borders = true
+popup_shadows = false
 settings_show_advanced = true
+
+    [shell.animation]
+    enabled = true
+    speed = 0.85
 
     [shell.greeter_sync]
     auto_sync = true
 
     [shell.panel]
+    borders = true
+    control_center_placement = "attached"
+    list_item_background = true
     open_near_click_control_center = true
+    shadow = true
     session_placement = "floating"
     session_position = "center"
+    transparency_mode = "solid"
 
     [shell.screenshot]
     copy_to_clipboard = false
@@ -79,61 +188,88 @@ settings_show_advanced = true
     variant = "destructive"
 
 [system.monitor]
+cpu_poll_seconds = 2.0
 gpu_poll_seconds = 2
+memory_poll_seconds = 2.0
+network_poll_seconds = 2.0
 
 [theme]
 mode = "dark"
-source = "wallpaper"
+source = "custom"
+custom_palette = "eva01"
 wallpaper_scheme = "m3-tonal-spot"
 
     [theme.templates]
     builtin_ids = [ "gtk3", "gtk4", "kcolorscheme", "qt", "alacritty" ]
 
-[widget.clock]
-color = "secondary"
-format = "{:%H:%M %A %m/%d/%y}"
+[widget.eva_power]
+type = "evangelion/control-center:power"
 
-[widget.launcher]
-color = "secondary"
+    [widget.eva_power.actions]
+    left = "panel-open session"
 
-[widget.media]
-hide_when_no_media = true
-title_scroll = "on_hover"
+[widget.eva_clock]
+type = "evangelion/control-center:clock"
 
-[widget.network]
-color = "secondary"
+    [widget.eva_clock.actions]
+    left = "panel-open control-center calendar"
 
-[widget.notifications]
-color = "secondary"
+[widget.eva_cpu]
+type = "evangelion/control-center:cpu"
 
-[widget.session]
-color = "error"
+    [widget.eva_cpu.actions]
+    left = "panel-open control-center system"
 
-[widget.spacer_1]
-type = "spacer"
+[widget.eva_ram]
+type = "evangelion/control-center:ram"
 
-[widget.temp]
+    [widget.eva_ram.actions]
+    left = "panel-open control-center system"
 
-[widget.sysmon_2]
-glyph = "gpu-usage"
-stat = "gpu_temp"
-type = "sysmon"
+[widget.eva_gpu]
+type = "evangelion/control-center:gpu"
 
-[widget.sysmon_3]
-glyph = "cpu-2"
-stat = "ram_used"
-type = "sysmon"
+    [widget.eva_gpu.actions]
+    left = "panel-open control-center system"
 
-[widget.tray]
-capsule = true
-capsule_fill = "on_secondary"
+[widget.eva_download]
+type = "evangelion/control-center:download"
 
-[widget.volume]
-color = "secondary"
+    [widget.eva_download.actions]
+    left = "panel-open control-center network"
 
-[widget.workspaces]
-active_pill_size = 2.5
-capsule = true
-capsule_fill = "on_primary"
-inactive_pill_size = 1.0
-pill_scale = 0.80
+[widget.eva_upload]
+type = "evangelion/control-center:upload"
+
+    [widget.eva_upload.actions]
+    left = "panel-open control-center network"
+
+[widget.eva_workspace]
+type = "evangelion/control-center:workspace"
+
+    [widget.eva_workspace.actions]
+    left = "panel-open control-center home"
+
+[widget.eva_media]
+type = "evangelion/control-center:media"
+
+    [widget.eva_media.actions]
+    left = "panel-open control-center media"
+
+[widget.eva_volume]
+type = "evangelion/control-center:volume"
+
+    [widget.eva_volume.actions]
+    left = "panel-open control-center audio"
+
+[widget.eva_weather]
+type = "evangelion/control-center:weather"
+
+    [widget.eva_weather.actions]
+    left = "panel-open control-center weather"
+
+[widget.eva_notifications]
+type = "evangelion/control-center:notifications"
+
+    [widget.eva_notifications.actions]
+    left = "panel-open control-center notifications"

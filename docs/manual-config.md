@@ -44,7 +44,8 @@ VS Code uses fake transparency instead of Vibrancy Continued. The script injects
 | Tool | Config path | Reload/apply |
 | --- | --- | --- |
 | Hyprland | `~/.config/hypr/hyprland.lua` and `~/.config/hypr/config/` | Restart the Hyprland session or reload from the compositor |
-| Noctalia | `~/.config/noctalia/config.toml` | Restart Noctalia |
+| Noctalia | `~/.config/noctalia/config.toml` | `noctalia msg config-reload` |
+| Noctalia EVA palette/plugin | `~/.config/noctalia/palettes/eva01.json`, `~/.local/share/noctalia/plugins/eva-control-center/`, `~/.local/bin/eva-vclick*` | `noctalia msg config-reload`; restart Noctalia after manifest changes |
 | Fish | `~/.config/fish/config.fish` | `exec fish` |
 | Kitty | `~/.config/kitty/kitty.conf`, shared `themes/eva01.conf` | Open a new Kitty window |
 | Ghostty | `~/.config/ghostty/config` | Open a new Ghostty window |
@@ -62,6 +63,26 @@ VS Code uses fake transparency instead of Vibrancy Continued. The script injects
 The Linux Code OSS transparency script copies only the system bundle's
 immutable assets and patches a user-owned `out/main.js`. It does not track or
 modify the generated bundle in the repository.
+
+The Noctalia EVA bar uses the `evangelion/control-center` plugin for separate
+hover capsules: power, clock/date (`HH:MM DD Mon`), system (CPU, RAM, GPU),
+network (download, upload), workspace dots, media (while a player is active),
+volume, weather, and notifications. Noctalia is explicitly configured for
+English UI and calendar names, with a transparent full-width bar background
+and no bar shadow or contact-shadow haze. The
+left metrics route to the native System, Calendar, and Network tabs; the
+center dots open Home; and the right capsules route to Audio, Weather, and
+Notifications. The active workspace dot is EVA green, inactive dots are
+violet, and the widget always renders at least three dots. Every panel closes
+after the pointer leaves both the capsule and the panel.
+
+The native Control Center sidebar, cards, and graphs remain intact; the EVA
+palette, font, borders, surfaces, and spacing provide the restyling. Its
+Noctalia error/graph accent is mapped to EVA orange so the native panel stays
+within the violet, green, and orange accent set. The installer builds the
+small Hyprland `wlr-virtual-pointer` helper used to route hover events through
+Noctalia's normal anchored widget action. `Super+Shift+X` remains the keyboard
+fallback.
 
 The Linux updater reports pacman, AUR, and Flatpak packages in `Ready now` and
 `Waiting for 3 days` sections. A normal update runs full pacman upgrades because
