@@ -8,7 +8,11 @@ hl.window_rule({
     match             = { title = "^([Pp]icture[-\\s]?[Ii]n[-\\s]?[Pp]icture)(.*)$" },
     float             = true,
     keep_aspect_ratio = true,
-    size              = { "max(monitor_w, monitor_h)*0.25", "min(monitor_w, monitor_h)*0.25" },
+    persistent_size   = false,
+    size              = {
+        "min(monitor_w*0.25, monitor_h*0.40*16/9)",
+        "min(monitor_h*0.40, monitor_w*0.25*9/16)",
+    },
     pin               = true,
 })
 

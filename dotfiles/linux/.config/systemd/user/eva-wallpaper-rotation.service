@@ -1,0 +1,6 @@
+[Unit]
+Description=Rotate the EVA wallpaper
+
+[Service]
+Type=oneshot
+ExecStart=%h/.local/bin/rice-random-wallpaper

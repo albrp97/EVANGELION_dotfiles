@@ -54,15 +54,125 @@ VS Code uses fake transparency instead of Vibrancy Continued. The script injects
 | SMPlayer | `~/.config/smplayer/smplayer.ini`, `playlist.ini`, `themes/eva01/` (stylesheet and custom playback icons) | Restart SMPlayer; run `scripts/configure-linux-video-defaults.sh` to assign it to video MIME types |
 | Vivaldi | `~/.config/vivaldi/themes/eva01/eva01.zip` | Settings → Themes → Import Theme; install the preview, then select `EVA-01` |
 | Fastfetch | `~/.config/fastfetch/config.jsonc`, `~/.local/bin/rice-fastfetch-info` | Open a new terminal or run the helper directly |
+| Wallpaper rotation | `~/Pictures/Wallpapers/EVANGELION`, `~/.local/bin/rice-random-wallpaper`, `~/.config/systemd/user/eva-wallpaper-rotation.timer` | `systemctl --user enable --now eva-wallpaper-rotation.timer`; rotates to a different random image every 30 minutes |
 | btop | `~/.config/btop/btop.conf`, shared `themes/eva01-pastel.theme` | Restart btop |
 | Starship | shared `~/.config/starship.toml` | Open a new Fish shell |
 | Yazi | `~/.config/yazi/yazi.toml`, `keymap.toml`, shared theme/plugins | Restart Yazi |
 | Code OSS | `~/.config/Code - OSS/User/settings.json` and `keybindings.json` | Reload the Code OSS window |
 | Code OSS EVA extension | `~/.vscode-oss/extensions/macbook-linux-rice-eva01-pastel-0.1.0/` | Reload the Code OSS window |
-| Code OSS transparency | `scripts/linux/apply-code-transparency.sh` | Re-run after every Code OSS update |
+| Code OSS transparency | `scripts/linux/apply-code-transparency.sh`, `~/.local/share/applications/code-oss.desktop` | Re-run after every Code OSS update; restart Code OSS |
+| LosslessCut EVA theme | `scripts/linux/apply-losslesscut-theme.sh`, `~/.local/share/rice-losslesscut`, `~/.config/losslesscut/eva01.css` | Re-run after every LosslessCut update; restart LosslessCut |
 | Staged updates | `~/bin/update`, `~/.local/bin/rice-update-status` | Run `update` or `update --now` |
 | Zen | detected profile `chrome/` and profile `user.js` | `scripts/configure-zen.sh`, then restart Zen |
 | Clipboard/screenshot | `~/.local/bin/paste-clipboard-smart`, `screenshot-region-clipboard` | Used by Hyprland bindings |
+
+Linux Code OSS transparency uses a user-owned runtime overlay rather than relying
+on `--window-transparent` alone. The generator patches Electron's native
+`BrowserWindow`, keeps theme background updates transparent, and changes the
+workbench root from opaque `#252526` to the EVA `#141218CC` surface so Hyprland
+can blur the wallpaper behind the application without fading the text or icons.
+It also copies Code OSS's `node_modules.asar` into the overlay instead of
+symlinking it; Electron uses that local archive for dependency resolution.
+
+### Code OSS transparency recovery
+
+This is a native-window fix, not only a theme or compositor-opacity change. The
+layers are:
+
+1. `~/.local/share/applications/code-oss.desktop` routes graphical launches to
+   `~/bin/code` instead of `/usr/bin/code-oss`.
+2. `dotfiles/linux/bin/code` directly starts the Electron binary with
+   `VSCODE_TRANSPARENT=1`, Wayland, and the generated `code.mjs`. The old
+   `--window-transparent` flag is intentionally not required; Electron warns
+   about it, while the patched main process controls transparency.
+3. `scripts/linux/apply-code-transparency.sh` copies the installed Code OSS
+   bundle into `~/.local/share/rice-code-transparent`. It patches the native
+   `BrowserWindow` options to add `{ transparent: true }` when
+   `VSCODE_TRANSPARENT=1`, and patches native background updates to use
+   `#00000000`.
+4. The generator copies `out/vs/workbench/workbench.desktop.main.js` and changes
+   the hard-coded workbench root from `#252526` to `#141218CC`. This provides
+   the dark EVA tint while leaving text and controls opaque and readable.
+5. The generator copies `node_modules.asar` as a regular file at the overlay
+   root. Do not change this to a symlink: Electron can then resolve dependencies
+   from `/usr/lib/code/node_modules.asar` and produce `mkdirp` or `fs-extra`
+   errors.
+6. Hyprland supplies the visual blur in
+   `dotfiles/linux/.config/hypr/config/decorations.lua`. Keep
+   `active_opacity = 1.0`; lowering compositor opacity fades the entire
+   application, including text and icons. The current blur is enabled with
+   size `5` and `4` passes.
+
+To recreate the fix after a Code OSS update:
+
+```sh
+cd ~/code/EVANGELION_dotfiles
+scripts/install-dotfiles.sh linux
+scripts/linux/apply-code-transparency.sh
+```
+
+Close existing Code OSS windows and launch it again through the desktop menu or:
+
+```sh
+~/bin/code ~/code/EVANGELION_dotfiles
+```
+
+The generated runtime is disposable and must not be edited by hand. If the
+generator reports an unsupported bundle, inspect the new system strings before
+changing the patch points:
+
+```sh
+grep -F 'invokeFunction(Rl,this.windowState' /usr/lib/code/out/main.js
+grep -F 'setBackgroundColor' /usr/lib/code/out/main.js
+grep -F '#252526' /usr/lib/code/out/vs/workbench/workbench.desktop.main.js
+```
+
+After a successful rebuild, these checks should pass:
+
+```sh
+test -f ~/.local/share/rice-code-transparent/node_modules.asar
+test ! -L ~/.local/share/rice-code-transparent/node_modules.asar
+grep -F 'VSCODE_TRANSPARENT==="1"?{transparent:!0}:void 0' \
+  ~/.local/share/rice-code-transparent/out/main.js
+grep -F '#141218CC' \
+  ~/.local/share/rice-code-transparent/out/vs/workbench/workbench.desktop.main.js
+```
+
+If the window is still opaque, verify that all old Code OSS windows were closed
+and that the desktop entry points to `~/bin/code`. If the window is transparent
+but dependency errors appear, rebuild the overlay and confirm that
+`node_modules.asar` is a regular local copy rather than a symlink. A wallpaper
+visible through the window with readable text confirms that both the native
+transparency patch and Hyprland blur are active.
+
+### LosslessCut EVA theme recovery
+
+LosslessCut has no supported user stylesheet setting, so the Linux theme uses a
+user-owned runtime overlay. `scripts/linux/apply-losslesscut-theme.sh` extracts
+the package-managed `app.asar`, appends
+`dotfiles/linux/.config/losslesscut/eva01.css` to the current renderer CSS,
+patches the Electron window to use a transparent background, repacks the
+archive, and copies only the executable and patched archive into
+`~/.local/share/rice-losslesscut`. The remaining immutable LosslessCut files
+are symlinked from `/usr/share/losslesscut`.
+
+The desktop entry points to `~/bin/losslesscut`, which prefers that overlay and
+falls back to the stock binary with a clear warning if the overlay is missing.
+The theme intentionally reuses the qBittorrent EVA palette: `#0F1020` and
+`#191724` surfaces, purple focus/borders, green primary actions, orange
+warnings, and rose danger states. Hyprland supplies the compositor blur while
+the app's CSS keeps controls and text opaque.
+
+After a `losslesscut-bin` update, close LosslessCut and rebuild the overlay:
+
+```sh
+cd ~/code/EVANGELION_dotfiles
+scripts/linux/apply-losslesscut-theme.sh
+```
+
+The script uses the `asar` command when available, otherwise
+`npx --yes @electron/asar@latest`. It validates the renderer CSS link and main
+process patch points before replacing the user-owned overlay.
 
 SMPlayer now starts in a dark EVA-01 minimalist compact mode: the menu and
 toolbars are hidden, and only a small fallback control set is retained if
@@ -81,6 +191,12 @@ transitions to SMPlayer and Hyprland.
 The Linux Code OSS transparency script copies only the system bundle's
 immutable assets and patches a user-owned `out/main.js`. It does not track or
 modify the generated bundle in the repository.
+
+Noctalia's automatic greeter synchronization is disabled because it invokes
+polkit to update the login greeter and would otherwise request the account
+password after every wallpaper rotation. Wallpaper changes remain session-local.
+If the greeter needs to be updated intentionally, run
+`noctalia msg greeter-sync` manually and authenticate once for that operation.
 
 The Flow 2 Fn-layer helper uses the keyboard's USB HID/VIA interface directly,
 without a browser. It backs up the complete keymap with `--dump` and changes

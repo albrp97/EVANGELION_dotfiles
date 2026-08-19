@@ -6,7 +6,6 @@ flags_file="${XDG_CONFIG_HOME:-$HOME/.config}/code-flags.conf"
 code_root="${XDG_DATA_HOME:-$HOME/.local/share}/rice-code-transparent"
 code_install_root="${RICE_CODE_INSTALL_ROOT:-/usr/lib/code}"
 patched_main="${code_root}/out/main.js"
-code_cli="${code_install_root}/out/cli.js"
 code_flags=()
 
 if [[ -f "${flags_file}" ]]; then
@@ -23,12 +22,6 @@ if [[ ! -f "${code_root}/code.mjs" || ! -f "${patched_main}" ]]; then
     exit 1
 fi
 
-if [[ ! -f "${code_cli}" ]]; then
-    echo "Code OSS CLI is missing: ${code_cli}" >&2
-    echo "Install Code OSS or set RICE_CODE_INSTALL_ROOT." >&2
-    exit 1
-fi
-
 electron_bin="${RICE_ELECTRON_BIN:-}"
 if [[ -z "${electron_bin}" && -x /usr/lib/electron42/electron ]]; then
     electron_bin="/usr/lib/electron42/electron"
@@ -42,9 +35,8 @@ if [[ -z "${electron_bin}" || ! -x "${electron_bin}" ]]; then
     exit 1
 fi
 
-exec env VSCODE_TRANSPARENT=1 ELECTRON_RUN_AS_NODE=1 \
+exec env VSCODE_TRANSPARENT=1 \
     "${electron_bin}" \
-    "${code_cli}" \
     --ozone-platform=wayland \
     "${code_root}/code.mjs" \
     "${code_flags[@]}" "$@"

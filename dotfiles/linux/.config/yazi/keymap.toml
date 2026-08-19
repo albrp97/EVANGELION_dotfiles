@@ -1,16 +1,18 @@
 [mgr]
 prepend_keymap = [
+  { on = [ "a" ], run = "plugin smart-create", desc = "Create file or extensionless folder" },
   { on = [ "l" ], run = "plugin smart-enter", desc = "Enter directory or open file" },
   { on = [ "<Right>" ], run = "plugin smart-enter", desc = "Enter directory or open file" },
   { on = [ "<Enter>" ], run = "plugin smart-enter", desc = "Enter directory or open file" },
 
   { on = [ "'", "h" ], run = "cd ~", desc = "Go home" },
-  { on = [ "'", "c" ], run = "cd ~/Documents/code", desc = "Go code" },
+  { on = [ "'", "c" ], run = "cd ~/code", desc = "Go code" },
   { on = [ "'", "d" ], run = "cd ~/Downloads", desc = "Go Downloads" },
   { on = [ "'", "D" ], run = "cd ~/Documents", desc = "Go Documents" },
   { on = [ "'", "." ], run = "cd ~/.config", desc = "Go .config" },
   { on = [ "'", "p" ], run = "cd ~/Pictures", desc = "Go Pictures" },
-  { on = [ "'", "m" ], run = "cd ~/Movies", desc = "Go Movies" },
+  { on = [ "'", "m" ], run = "cd ~/Music", desc = "Go Music" },
+  { on = [ "'", "v" ], run = "cd ~/Videos", desc = "Go Videos" },
   { on = [ "'", "t" ], run = "cd /tmp", desc = "Go tmp" },
   { on = [ "'", "w" ], run = 'shell -- "$HOME/.local/bin/rice-yazi-windows"', desc = "Mount and go to Windows files" },
 

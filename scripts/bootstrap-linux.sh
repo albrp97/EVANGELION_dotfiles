@@ -73,10 +73,10 @@ elif sudo pacman -S --needed paru; then
 fi
 
 if [[ -n "$aur_helper" ]]; then
-  echo "Installing the Zen browser package through $aur_helper..."
-  "$aur_helper" -S --needed zen-browser-bin
+  echo "Installing Zen and LosslessCut through $aur_helper..."
+  "$aur_helper" -S --needed zen-browser-bin losslesscut-bin
 else
-  echo "No paru or yay helper is available; install Zen separately from the AUR." >&2
+  echo "No paru or yay helper is available; install Zen and LosslessCut separately from the AUR." >&2
 fi
 
 echo

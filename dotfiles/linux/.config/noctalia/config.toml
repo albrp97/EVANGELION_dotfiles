@@ -142,7 +142,8 @@ settings_show_advanced = true
     speed = 0.85
 
     [shell.greeter_sync]
-    auto_sync = true
+    # Syncing the login greeter uses polkit; keep wallpaper rotation session-local.
+    auto_sync = false
 
     [shell.panel]
     borders = true

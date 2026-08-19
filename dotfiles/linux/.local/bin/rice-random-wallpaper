@@ -1,0 +1,53 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+wallpaper_dir="${RICE_WALLPAPER_DIR:-$HOME/Pictures/Wallpapers/EVANGELION}"
+fallback_dir="$HOME/.local/share/macbook-linux-rice/wallpapers"
+
+if [[ ! -d "$wallpaper_dir" ]]; then
+  wallpaper_dir="$fallback_dir"
+fi
+
+if [[ ! -d "$wallpaper_dir" ]]; then
+  echo "Wallpaper directory does not exist: $wallpaper_dir" >&2
+  exit 66
+fi
+
+if ! command -v noctalia >/dev/null 2>&1; then
+  echo "Noctalia is required to apply Linux wallpapers." >&2
+  exit 1
+fi
+
+mapfile -t wallpapers < <(
+  find "$wallpaper_dir" -maxdepth 1 -type f \
+    \( -iname '*.jpg' -o -iname '*.jpeg' -o -iname '*.png' -o -iname '*.webp' \) \
+    -print | sort
+)
+
+if (( ${#wallpapers[@]} == 0 )); then
+  echo "No wallpaper files found in: $wallpaper_dir" >&2
+  exit 66
+fi
+
+current=""
+if current="$(noctalia msg wallpaper-get 2>/dev/null)"; then
+  :
+fi
+
+if (( ${#wallpapers[@]} > 1 )); then
+  alternatives=()
+  for wallpaper in "${wallpapers[@]}"; do
+    if [[ "$wallpaper" != "$current" ]]; then
+      alternatives+=("$wallpaper")
+    fi
+  done
+  if (( ${#alternatives[@]} > 0 )); then
+    wallpapers=("${alternatives[@]}")
+  fi
+fi
+
+wallpaper="${wallpapers[RANDOM % ${#wallpapers[@]}]}"
+noctalia msg wallpaper-set "$wallpaper"
+
+mkdir -p "$HOME/.cache"
+printf '%s\n' "$wallpaper" > "$HOME/.cache/macbook-linux-rice-current-wallpaper"

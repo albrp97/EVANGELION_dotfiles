@@ -6,6 +6,8 @@ CODE_INSTALL_ROOT="${RICE_CODE_INSTALL_ROOT:-/usr/lib/code}"
 CODE_ROOT="${XDG_DATA_HOME:-$HOME/.local/share}/rice-code-transparent"
 TEMPLATE="$ROOT_DIR/dotfiles/linux/.local/share/rice-code-transparent/code.mjs"
 STOCK_MAIN="$CODE_INSTALL_ROOT/out/main.js"
+WORKBENCH_MAIN="$CODE_INSTALL_ROOT/out/vs/workbench/workbench.desktop.main.js"
+STOCK_NODE_MODULES_ASAR="$CODE_INSTALL_ROOT/node_modules.asar"
 
 if [[ ! -f "$STOCK_MAIN" ]]; then
   echo "Code OSS main bundle not found: $STOCK_MAIN" >&2
@@ -15,6 +17,14 @@ fi
 
 if [[ ! -f "$TEMPLATE" ]]; then
   echo "Missing portable Code OSS launcher template: $TEMPLATE" >&2
+  exit 1
+fi
+if [[ ! -f "$WORKBENCH_MAIN" ]]; then
+  echo "Code OSS workbench bundle not found: $WORKBENCH_MAIN" >&2
+  exit 1
+fi
+if [[ ! -f "$STOCK_NODE_MODULES_ASAR" ]]; then
+  echo "Code OSS dependency archive not found: $STOCK_NODE_MODULES_ASAR" >&2
   exit 1
 fi
 
@@ -50,16 +60,47 @@ perl -0pi -e \
 for source_path in "$CODE_INSTALL_ROOT"/*; do
   [[ -e "$source_path" || -L "$source_path" ]] || continue
   name="$(basename "$source_path")"
-  [[ "$name" == "out" || "$name" == "code.mjs" ]] && continue
-  ln -s "$source_path" "$temporary_root/$name"
+  [[ "$name" == "out" || "$name" == "code.mjs" || "$name" == "node_modules" ]] && continue
+  if [[ "$name" == "node_modules.asar" ]]; then
+    # Electron's ASAR resolver needs the archive at the user-owned app path.
+    cp --reflink=auto "$source_path" "$temporary_root/$name"
+  else
+    ln -s "$source_path" "$temporary_root/$name"
+  fi
 done
 
 for source_path in "$CODE_INSTALL_ROOT/out"/*; do
   [[ -e "$source_path" || -L "$source_path" ]] || continue
   name="$(basename "$source_path")"
-  [[ "$name" == "main.js" ]] && continue
+  [[ "$name" == "main.js" || "$name" == "vs" ]] && continue
   ln -s "$source_path" "$temporary_root/out/$name"
 done
+
+mkdir -p "$temporary_root/out/vs/workbench"
+for source_path in "$CODE_INSTALL_ROOT/out/vs"/*; do
+  [[ -e "$source_path" || -L "$source_path" ]] || continue
+  name="$(basename "$source_path")"
+  [[ "$name" == "workbench" ]] && continue
+  ln -s "$source_path" "$temporary_root/out/vs/$name"
+done
+for source_path in "$CODE_INSTALL_ROOT/out/vs/workbench"/*; do
+  [[ -e "$source_path" || -L "$source_path" ]] || continue
+  name="$(basename "$source_path")"
+  if [[ "$name" == "workbench.desktop.main.js" ]]; then
+    cp "$source_path" "$temporary_root/out/vs/workbench/$name"
+  else
+    ln -s "$source_path" "$temporary_root/out/vs/workbench/$name"
+  fi
+done
+
+patched_workbench="$temporary_root/out/vs/workbench/workbench.desktop.main.js"
+if ! grep -Fq 'default:return $e.fromHex("#252526")}}' "$patched_workbench"; then
+  echo "Unsupported Code OSS workbench bundle: root background patch point was not found." >&2
+  exit 1
+fi
+perl -0pi -e \
+  's/default:return \$e\.fromHex\("#252526"\)\}\}/default:return \$e.fromHex("#141218CC")}}/' \
+  "$patched_workbench"
 
 cp -p "$TEMPLATE" "$temporary_root/code.mjs"
 

@@ -163,10 +163,29 @@ if [[ "$platform" == "linux" ]]; then
   else
     echo "SMPlayer is not installed; video MIME defaults were not changed." >&2
   fi
+
+  if command -v systemctl >/dev/null 2>&1 \
+    && systemctl --user daemon-reload \
+    && systemctl --user enable --now eva-wallpaper-rotation.timer; then
+    :
+  else
+    echo "Could not enable the EVA wallpaper rotation timer; run systemctl --user enable --now eva-wallpaper-rotation.timer." >&2
+  fi
+
+  if [[ -x /usr/share/losslesscut/losslesscut ]]; then
+    if ! "$ROOT_DIR/scripts/linux/apply-losslesscut-theme.sh"; then
+      echo "LosslessCut is installed, but its EVA theme could not be prepared." >&2
+      echo "Run scripts/linux/apply-losslesscut-theme.sh after installing the ASAR tool." >&2
+    fi
+  fi
 fi
 
-if [[ "$platform" == "macos" && -d "$ROOT_DIR/wallpapers" ]]; then
-  install_tree_to_root "$ROOT_DIR/wallpapers" "$HOME/.local/share/macbook-linux-rice/wallpapers"
+if [[ -d "$ROOT_DIR/wallpapers" ]]; then
+  if [[ "$platform" == "macos" ]]; then
+    install_tree_to_root "$ROOT_DIR/wallpapers" "$HOME/.local/share/macbook-linux-rice/wallpapers"
+  elif [[ "$platform" == "linux" ]]; then
+    install_tree_to_root "$ROOT_DIR/wallpapers" "$HOME/Pictures/Wallpapers/EVANGELION"
+  fi
 fi
 
 if [[ "$platform" == "linux" && -d "$COMMON_DIR/.vscode/extensions" ]]; then
@@ -177,7 +196,7 @@ if [[ -d "$COMMON_DIR/zen" ]]; then
   "$ROOT_DIR/scripts/configure-zen.sh" "$COMMON_DIR/zen" "$BACKUP_DIR/zen"
 fi
 
-chmod u+x "$HOME/bin/copilot" "$HOME/bin/code" "$HOME/bin/update" 2>/dev/null || true
+chmod u+x "$HOME/bin/copilot" "$HOME/bin/code" "$HOME/bin/losslesscut" "$HOME/bin/update" 2>/dev/null || true
 find "$HOME/.local/bin" -type f -name 'rice-*' -exec chmod u+x {} + 2>/dev/null || true
 find "$HOME/.local/bin" -type f \( -name 'screenshot-*' -o -name 'paste-*' \) -exec chmod u+x {} + 2>/dev/null || true
 chmod u+x "$HOME/.config/sketchybar/sketchybarrc" "$HOME/.config/sketchybar/plugins/"*.sh 2>/dev/null || true

@@ -1,0 +1,351 @@
+/*
+ * LosslessCut EVA-01 overlay.
+ *
+ * LosslessCut uses Radix color variables for most of its controls, so the
+ * palette is overridden here instead of replacing individual components.
+ */
+
+:root,
+.dark,
+.dark-theme,
+.radix-themes,
+.radix-themes.dark-theme,
+.radix-themes:where(.dark, .dark-theme) {
+  color-scheme: dark;
+
+  --gray-1: #0F1020;
+  --gray-2: #141218;
+  --gray-3: #191724;
+  --gray-4: #1F1D2E;
+  --gray-5: #26233A;
+  --gray-6: #2D2944;
+  --gray-7: #4B3A68;
+  --gray-8: #6B52A1;
+  --gray-9: #7C5FB8;
+  --gray-10: #9A86B8;
+  --gray-11: #C4A7E7;
+  --gray-12: #F2EAFF;
+
+  --gray-a1: rgba(15, 16, 32, 0);
+  --gray-a2: rgba(196, 167, 231, 0.04);
+  --gray-a3: rgba(196, 167, 231, 0.08);
+  --gray-a4: rgba(196, 167, 231, 0.12);
+  --gray-a5: rgba(196, 167, 231, 0.17);
+  --gray-a6: rgba(196, 167, 231, 0.22);
+  --gray-a7: rgba(196, 167, 231, 0.30);
+  --gray-a8: rgba(196, 167, 231, 0.42);
+  --gray-a9: rgba(196, 167, 231, 0.52);
+  --gray-a10: rgba(196, 167, 231, 0.62);
+  --gray-a11: rgba(196, 167, 231, 0.78);
+  --gray-a12: rgba(242, 234, 255, 0.94);
+
+  --green-1: #0F1814;
+  --green-2: #14231A;
+  --green-3: #1B3423;
+  --green-4: #24452B;
+  --green-5: #315A35;
+  --green-6: #427342;
+  --green-7: #5B8E52;
+  --green-8: #78B568;
+  --green-9: #A3D977;
+  --green-10: #B3E58A;
+  --green-11: #C5ED9F;
+  --green-12: #E6F7D8;
+
+  --orange-1: #1B1510;
+  --orange-2: #2A1E12;
+  --orange-3: #422B15;
+  --orange-4: #5C3917;
+  --orange-5: #754A1B;
+  --orange-6: #925E23;
+  --orange-7: #B37735;
+  --orange-8: #D3944D;
+  --orange-9: #F6C177;
+  --orange-10: #F8CB8B;
+  --orange-11: #FBD7A1;
+  --orange-12: #FFF0D5;
+
+  --red-1: #1B111A;
+  --red-2: #291526;
+  --red-3: #3C1B36;
+  --red-4: #552347;
+  --red-5: #6C2D58;
+  --red-6: #85406B;
+  --red-7: #A25784;
+  --red-8: #BF719E;
+  --red-9: #D98BC4;
+  --red-10: #E29BCF;
+  --red-11: #E9ACD9;
+  --red-12: #F8DDF0;
+
+  --cyan-1: #0F1814;
+  --cyan-2: #14231A;
+  --cyan-3: #1B3423;
+  --cyan-4: #24452B;
+  --cyan-5: #315A35;
+  --cyan-6: #427342;
+  --cyan-7: #5B8E52;
+  --cyan-8: #78B568;
+  --cyan-9: #A3D977;
+  --cyan-10: #B3E58A;
+  --cyan-11: #C5ED9F;
+  --cyan-12: #E6F7D8;
+
+  --cyan-a1: rgba(163, 217, 119, 0.04);
+  --cyan-a2: rgba(163, 217, 119, 0.08);
+  --cyan-a3: rgba(163, 217, 119, 0.12);
+  --cyan-a4: rgba(163, 217, 119, 0.17);
+  --cyan-a5: rgba(163, 217, 119, 0.22);
+  --cyan-a6: rgba(163, 217, 119, 0.30);
+  --cyan-a7: rgba(163, 217, 119, 0.38);
+  --cyan-a8: rgba(163, 217, 119, 0.46);
+  --cyan-a9: rgba(163, 217, 119, 0.55);
+  --cyan-a10: rgba(163, 217, 119, 0.64);
+  --cyan-a11: rgba(197, 237, 159, 0.78);
+  --cyan-a12: rgba(230, 247, 216, 0.94);
+
+  --color-background: rgba(15, 16, 32, 0.86);
+  --color-panel-solid: #191724;
+  --color-panel-translucent: rgba(31, 29, 46, 0.88);
+  --color-surface: rgba(15, 16, 32, 0.68);
+  --base-button-classic-box-shadow-top: inset 0 0 0 1px var(--gray-a5);
+  --base-button-classic-box-shadow-bottom: none;
+  --base-button-classic-disabled-box-shadow: inset 0 0 0 1px var(--gray-a4);
+  --select-trigger-classic-box-shadow: inset 0 0 0 1px var(--gray-a6);
+  --shadow-1: 0 0 0 1px var(--gray-a5), 0 2px 10px rgba(15, 16, 32, 0.35);
+  --shadow-2: 0 0 0 1px var(--gray-a6), 0 5px 18px rgba(15, 16, 32, 0.45);
+  --shadow-3: 0 0 0 1px var(--gray-a7), 0 12px 30px rgba(15, 16, 32, 0.55);
+  --radius-1: 4px;
+  --radius-2: 5px;
+  --radius-3: 6px;
+  --radius-4: 8px;
+  --radius-5: 10px;
+}
+
+.radix-themes[data-accent-color='cyan'] {
+  --cyan-1: #0F1814;
+  --cyan-2: #14231A;
+  --cyan-3: #1B3423;
+  --cyan-4: #24452B;
+  --cyan-5: #315A35;
+  --cyan-6: #427342;
+  --cyan-7: #5B8E52;
+  --cyan-8: #78B568;
+  --cyan-9: #A3D977;
+  --cyan-10: #B3E58A;
+  --cyan-11: #C5ED9F;
+  --cyan-12: #E6F7D8;
+
+  --cyan-a1: rgba(163, 217, 119, 0.04);
+  --cyan-a2: rgba(163, 217, 119, 0.08);
+  --cyan-a3: rgba(163, 217, 119, 0.12);
+  --cyan-a4: rgba(163, 217, 119, 0.17);
+  --cyan-a5: rgba(163, 217, 119, 0.22);
+  --cyan-a6: rgba(163, 217, 119, 0.30);
+  --cyan-a7: rgba(163, 217, 119, 0.38);
+  --cyan-a8: rgba(163, 217, 119, 0.46);
+  --cyan-a9: rgba(163, 217, 119, 0.55);
+  --cyan-a10: rgba(163, 217, 119, 0.64);
+  --cyan-a11: rgba(197, 237, 159, 0.78);
+  --cyan-a12: rgba(230, 247, 216, 0.94);
+
+  --accent-1: var(--cyan-1);
+  --accent-2: var(--cyan-2);
+  --accent-3: var(--cyan-3);
+  --accent-4: var(--cyan-4);
+  --accent-5: var(--cyan-5);
+  --accent-6: var(--cyan-6);
+  --accent-7: var(--cyan-7);
+  --accent-8: var(--cyan-8);
+  --accent-9: var(--cyan-9);
+  --accent-10: var(--cyan-10);
+  --accent-11: var(--cyan-11);
+  --accent-12: var(--cyan-12);
+  --accent-a1: var(--cyan-a1);
+  --accent-a2: var(--cyan-a2);
+  --accent-a3: var(--cyan-a3);
+  --accent-a4: var(--cyan-a4);
+  --accent-a5: var(--cyan-a5);
+  --accent-a6: var(--cyan-a6);
+  --accent-a7: var(--cyan-a7);
+  --accent-a8: var(--cyan-a8);
+  --accent-a9: var(--cyan-a9);
+  --accent-a10: var(--cyan-a10);
+  --accent-a11: var(--cyan-a11);
+  --accent-a12: var(--cyan-a12);
+}
+
+html,
+body,
+#root {
+  background: transparent !important;
+}
+
+body {
+  color: var(--gray-12);
+  font-family: 'Liga SFMono Nerd Font', 'JetBrains Mono', 'Open Sans', sans-serif;
+}
+
+.radix-themes {
+  background: transparent !important;
+}
+
+#app-root {
+  background: rgba(15, 16, 32, 0.86) !important;
+  color: var(--gray-12) !important;
+}
+
+a,
+.link-button {
+  color: var(--green-11);
+}
+
+button,
+input,
+select,
+textarea {
+  font-family: inherit;
+}
+
+input,
+select,
+textarea {
+  background: rgba(38, 35, 58, 0.86) !important;
+  border-color: var(--gray-7) !important;
+  color: var(--gray-12) !important;
+}
+
+input:focus,
+select:focus,
+textarea:focus,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  border-color: var(--gray-11) !important;
+  outline-color: var(--green-9);
+}
+
+.rt-Button:not(.rt-variant-ghost),
+.rt-IconButton:not(.rt-variant-ghost),
+.rt-SelectTrigger {
+  border-color: var(--gray-7);
+  background: rgba(38, 35, 58, 0.86);
+  color: var(--gray-12);
+  box-shadow: none;
+}
+
+.rt-Button:not(.rt-variant-ghost):hover,
+.rt-IconButton:not(.rt-variant-ghost):hover,
+.rt-SelectTrigger:hover {
+  border-color: var(--gray-11);
+  background: var(--gray-7);
+  color: #F7EFFF;
+}
+
+.rt-Button:where(.rt-variant-solid),
+.rt-IconButton:where(.rt-variant-solid) {
+  border-color: var(--green-9);
+  background: var(--green-9);
+  color: #0F1020;
+}
+
+.rt-Button:where(.rt-variant-solid):hover,
+.rt-IconButton:where(.rt-variant-solid):hover {
+  background: var(--green-10);
+  color: #0F1020;
+}
+
+.rt-Button:where(.rt-variant-soft),
+.rt-IconButton:where(.rt-variant-soft) {
+  background: rgba(124, 95, 184, 0.34);
+  color: var(--gray-12);
+}
+
+.rt-Button:where(.rt-variant-ghost):hover,
+.rt-IconButton:where(.rt-variant-ghost):hover {
+  background: rgba(75, 58, 104, 0.72);
+  color: #F7EFFF;
+}
+
+.rt-Card,
+.rt-DialogContent,
+.rt-PopoverContent,
+.rt-DropdownMenuContent,
+.rt-ContextMenuContent,
+.rt-SelectContent,
+.rt-TooltipContent {
+  border-color: var(--gray-7) !important;
+  background: rgba(31, 29, 46, 0.96) !important;
+  color: var(--gray-12) !important;
+  box-shadow: var(--shadow-2);
+}
+
+.rt-DialogOverlay {
+  background: rgba(15, 16, 32, 0.78) !important;
+  backdrop-filter: blur(12px);
+}
+
+[data-highlighted],
+[data-state='checked'],
+[data-state='on'] {
+  background-color: rgba(124, 95, 184, 0.72) !important;
+  color: #F7EFFF !important;
+}
+
+hr,
+.rt-Separator {
+  border-color: var(--gray-7);
+  background-color: var(--gray-7);
+}
+
+kbd {
+  background: var(--gray-4);
+  border-color: var(--gray-8);
+  color: var(--gray-11);
+}
+
+.segment-list-entry {
+  border-color: transparent !important;
+}
+
+.segment-list-entry:hover,
+.segment-list-entry:focus-within {
+  background: rgba(75, 58, 104, 0.36) !important;
+  border-color: var(--gray-7) !important;
+}
+
+.consistent-scrollbar::-webkit-scrollbar-thumb {
+  background: var(--gray-10);
+}
+
+::selection,
+.radix-themes ::selection {
+  background: rgba(124, 95, 184, 0.72);
+  color: #F7EFFF;
+}
+
+.swal2-popup {
+  border: 1px solid var(--gray-7) !important;
+  background: rgba(25, 23, 36, 0.98) !important;
+  color: var(--gray-12) !important;
+  box-shadow: var(--shadow-3) !important;
+}
+
+.swal2-input,
+.swal2-textarea,
+.swal2-select {
+  border-color: var(--gray-7) !important;
+  background: var(--gray-3) !important;
+  color: var(--gray-12) !important;
+}
+
+.swal2-confirm {
+  background: var(--green-9) !important;
+  color: #0F1020 !important;
+}
+
+.swal2-cancel,
+.swal2-deny {
+  background: var(--gray-7) !important;
+  color: #F7EFFF !important;
+}

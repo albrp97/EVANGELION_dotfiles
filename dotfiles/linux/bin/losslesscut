@@ -1,0 +1,17 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+overlay_root="${XDG_DATA_HOME:-$HOME/.local/share}/rice-losslesscut"
+stock_binary="/usr/share/losslesscut/losslesscut"
+
+if [[ -x "$overlay_root/losslesscut" ]]; then
+  exec "$overlay_root/losslesscut" --ozone-platform=wayland "$@"
+fi
+
+if [[ -x "$stock_binary" ]]; then
+  echo "LosslessCut EVA theme is not prepared; run scripts/linux/apply-losslesscut-theme.sh." >&2
+  exec "$stock_binary" "$@"
+fi
+
+echo "LosslessCut is not installed: $stock_binary" >&2
+exit 1

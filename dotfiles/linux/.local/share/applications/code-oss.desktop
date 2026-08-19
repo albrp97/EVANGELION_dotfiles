@@ -1,0 +1,19 @@
+[Desktop Entry]
+Name=Code - OSS
+Comment=Code Editing. Redefined.
+GenericName=Text Editor
+Exec=/bin/sh -c "exec \"\\$HOME/bin/code\" \"\\$@\"" sh %F
+Icon=com.visualstudio.code.oss
+Type=Application
+StartupNotify=false
+StartupWMClass=code-oss
+Categories=TextEditor;Development;IDE;
+MimeType=application/x-code-oss-workspace;
+Actions=new-empty-window;
+Keywords=vscode;
+X-Desktop-File-Install-Version=0.28
+
+[Desktop Action new-empty-window]
+Name=New Empty Window
+Exec=/bin/sh -c "exec \"\\$HOME/bin/code\" --new-window \"\\$@\"" sh %F
+Icon=com.visualstudio.code.oss
