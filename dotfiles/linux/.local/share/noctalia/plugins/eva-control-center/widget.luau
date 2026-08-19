@@ -3,6 +3,13 @@
 local kind = noctalia.getConfig("metric") or "cpu"
 local CLOSE_GRACE_MS = 350
 local UPDATE_INTERVAL_MS = 500
+local METRIC_WIDTHS = {
+  cpu = 40,
+  ram = 40,
+  gpu = 40,
+  download = 52,
+  upload = 52,
+}
 
 local PANEL_TARGETS = {
   power = {
@@ -324,12 +331,17 @@ local function renderMetric()
     value = formatRate(metric("net", "txBytesPerSec"))
   end
 
+  local rowOptions = {
+    gap = 4,
+    align = "center",
+    onHover = handleHover,
+  }
+  if METRIC_WIDTHS[kind] ~= nil then
+    rowOptions.width = METRIC_WIDTHS[kind]
+  end
+
   barWidget.render(ui.row(
-    {
-      gap = 4,
-      align = "center",
-      onHover = handleHover,
-    },
+    rowOptions,
     {
       ui.glyph({ name = target.glyph, size = 14, color = color }),
       ui.label({ text = value, color = color, fontSize = 11, fontWeight = "bold" }),

@@ -47,7 +47,7 @@ thickness = 35
     id = "g_system"
     members = [ "eva_cpu", "eva_ram", "eva_gpu" ]
     opacity = 0.75
-    padding = 10.0
+    padding = 6.0
 
     [[bar.default.capsule_group]]
     border = ""
@@ -55,7 +55,7 @@ thickness = 35
     id = "g_network"
     members = [ "eva_download", "eva_upload" ]
     opacity = 0.75
-    padding = 10.0
+    padding = 6.0
 
     [[bar.default.capsule_group]]
     border = ""
