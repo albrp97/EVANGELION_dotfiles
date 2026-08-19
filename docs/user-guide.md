@@ -53,8 +53,10 @@ Common Linux shortcuts:
 
 Linux-specific details and reload commands are in
 [docs/manual-config.md](manual-config.md). The Linux Code OSS wrapper is
-`~/bin/code`; run the transparency setup again after a Code OSS package
-upgrade.
+`~/bin/code`. It launches normal GUI commands such as `code .` as a detached
+UWSM service, so the terminal remains usable; use `code --wait` when you
+intentionally want the command to stay in the foreground. Run the transparency
+setup again after a Code OSS package upgrade.
 
 ### LosslessCut
 

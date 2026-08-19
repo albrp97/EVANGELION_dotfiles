@@ -58,7 +58,7 @@ VS Code uses fake transparency instead of Vibrancy Continued. The script injects
 | btop | `~/.config/btop/btop.conf`, shared `themes/eva01-pastel.theme` | Restart btop |
 | Starship | shared `~/.config/starship.toml` | Open a new Fish shell |
 | Yazi | `~/.config/yazi/yazi.toml`, `keymap.toml`, shared theme/plugins | Restart Yazi |
-| Code OSS | `~/.config/Code - OSS/User/settings.json` and `keybindings.json` | Reload the Code OSS window |
+| Code OSS | `~/bin/code`, `~/.config/Code - OSS/User/settings.json` and `keybindings.json` | `code .` launches without blocking the terminal; use `code --wait` when blocking is intentional |
 | Code OSS EVA extension | `~/.vscode-oss/extensions/macbook-linux-rice-eva01-pastel-0.1.0/` | Reload the Code OSS window |
 | Code OSS transparency | `scripts/linux/apply-code-transparency.sh`, `~/.local/share/applications/code-oss.desktop` | Re-run after every Code OSS update; restart Code OSS |
 | LosslessCut EVA theme | `scripts/linux/apply-losslesscut-theme.sh`, `~/.local/share/rice-losslesscut`, `~/.config/losslesscut/eva01.css` | Re-run after every LosslessCut update; restart LosslessCut |
@@ -81,8 +81,11 @@ layers are:
 
 1. `~/.local/share/applications/code-oss.desktop` routes graphical launches to
    `~/bin/code` instead of `/usr/bin/code-oss`.
-2. `dotfiles/linux/bin/code` directly starts the Electron binary with
-   `VSCODE_TRANSPARENT=1`, Wayland, and the generated `code.mjs`. The old
+2. `dotfiles/linux/bin/code` starts the Electron binary with
+   `VSCODE_TRANSPARENT=1`, Wayland, and the generated `code.mjs`. Normal GUI
+   launches run as a detached UWSM user service, so `code .` returns the shell
+   prompt immediately instead of hiding the terminal until Code OSS exits.
+   `code --wait` (or `code -w`) intentionally stays in the foreground. The old
    `--window-transparent` flag is intentionally not required; Electron warns
    about it, while the patched main process controls transparency.
 3. `scripts/linux/apply-code-transparency.sh` copies the installed Code OSS

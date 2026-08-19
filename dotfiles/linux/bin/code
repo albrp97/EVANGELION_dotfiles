@@ -35,8 +35,35 @@ if [[ -z "${electron_bin}" || ! -x "${electron_bin}" ]]; then
     exit 1
 fi
 
-exec env VSCODE_TRANSPARENT=1 \
-    "${electron_bin}" \
-    --ozone-platform=wayland \
-    "${code_root}/code.mjs" \
-    "${code_flags[@]}" "$@"
+code_command=(
+    env
+    VSCODE_TRANSPARENT=1
+    "${electron_bin}"
+    --ozone-platform=wayland
+    "${code_root}/code.mjs"
+    "${code_flags[@]}"
+    "$@"
+)
+
+wait_for_exit=false
+for argument in "$@"; do
+    case "${argument}" in
+        -w|--wait|--verbose)
+            wait_for_exit=true
+            ;;
+    esac
+done
+
+if [[ "${wait_for_exit}" == true ]]; then
+    exec "${code_command[@]}"
+fi
+
+if command -v uwsm >/dev/null 2>&1; then
+    exec uwsm app -t service -a code-oss -d "Code - OSS" -- "${code_command[@]}"
+fi
+
+log_dir="${XDG_CACHE_HOME:-${HOME}/.cache}/macbook-linux-rice"
+mkdir -p "${log_dir}"
+nohup "${code_command[@]}" \
+    >"${log_dir}/code-launcher.log" \
+    2>&1 < /dev/null &
