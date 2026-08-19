@@ -1,10 +1,10 @@
 [Unit]
-Description=Rotate the EVA wallpaper every minute
+Description=Rotate the EVA wallpaper every 30 minutes
 
 [Timer]
-OnBootSec=1min
-OnUnitActiveSec=1min
-AccuracySec=1s
+OnBootSec=30min
+OnUnitActiveSec=30min
+AccuracySec=1min
 Unit=eva-wallpaper-rotation.service
 
 [Install]

@@ -203,11 +203,11 @@ Color importance:
 `rice-random-wallpaper` chooses one randomly on demand, and
 `scripts/start-services.sh` applies one immediately at startup. The
 display-route helper reapplies the cached wallpaper when monitors change so
-plugged-in screens repaint correctly. Automatic rotation runs every minute
+plugged-in screens repaint correctly. Automatic rotation runs every 30 minutes
 through a hidden SketchyBar timer item, not a LaunchAgent, so macOS does not add
 a separate “background activity” notification for it. On Linux, the same helper
 uses Noctalia and `eva-wallpaper-rotation.timer` to select a different image
-from `~/Pictures/Wallpapers/EVANGELION` every minute.
+from `~/Pictures/Wallpapers/EVANGELION` every 30 minutes.
 
 ## Screenshots
 
