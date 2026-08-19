@@ -54,7 +54,7 @@ VS Code uses fake transparency instead of Vibrancy Continued. The script injects
 | SMPlayer | `~/.config/smplayer/smplayer.ini`, `playlist.ini`, `themes/eva01/` (stylesheet and custom playback icons) | Restart SMPlayer; run `scripts/configure-linux-video-defaults.sh` to assign it to video MIME types |
 | Vivaldi | `~/.config/vivaldi/themes/eva01/eva01.zip` | Settings → Themes → Import Theme; install the preview, then select `EVA-01` |
 | Fastfetch | `~/.config/fastfetch/config.jsonc`, `~/.local/bin/rice-fastfetch-info` | Open a new terminal or run the helper directly |
-| Wallpaper rotation | `~/Pictures/Wallpapers/EVANGELION`, `~/.local/bin/rice-random-wallpaper`, `~/.config/systemd/user/eva-wallpaper-rotation.timer` | `systemctl --user enable --now eva-wallpaper-rotation.timer`; rotates to a different random image every 30 minutes |
+| Wallpaper rotation | `~/Pictures/Wallpapers/EVANGELION`, `~/.local/bin/rice-random-wallpaper`, `~/.config/systemd/user/eva-wallpaper-rotation.timer` | `systemctl --user enable --now eva-wallpaper-rotation.timer`; rotates to a different random image every minute |
 | btop | `~/.config/btop/btop.conf`, shared `themes/eva01-pastel.theme` | Restart btop |
 | Starship | shared `~/.config/starship.toml` | Open a new Fish shell |
 | Yazi | `~/.config/yazi/yazi.toml`, `keymap.toml`, shared theme/plugins | Restart Yazi |
