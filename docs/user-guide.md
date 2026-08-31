@@ -172,6 +172,12 @@ When a dock or external display is connected, `rice-display-route` prefers the e
 
 ### Yazi keys
 
+Yazi probes local video files with `ffprobe` in the background. The file list
+shows dimensions, frame rate, and duration beside detected videos, and the
+file spot/details view includes the same values plus stream information. Probe
+results are cached by file size and modification time, including failed
+probes, so broken or incomplete videos do not repeatedly launch `ffprobe`.
+
 | Key | Action |
 | --- | --- |
 | `';w` | Mount and open the Windows files partition |
@@ -182,6 +188,7 @@ When a dock or external display is connected, `rice-display-route` prefers the e
 | `;v` / `;V` | Toggle the preview pane, or maximize/restore preview |
 | `;/` / `;p` / `;m` | Smart filter, smart paste into hovered folder, chmod selected files |
 | `;lg` / `;ls` / `;lm` / `;ln` | Switch line mode to Git, size, modified time, or none |
+| `,l` / `,L` | Sort by video length ascending, or reverse |
 
 ## Theme and wallpapers
 

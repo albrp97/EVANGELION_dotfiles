@@ -6,6 +6,10 @@ require("smart-enter"):setup {
 	open_multi = true,
 }
 
+require("video-info"):setup {
+	order = 1600,
+}
+
 require("git"):setup {
 	order = 1500,
 }

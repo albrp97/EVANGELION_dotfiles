@@ -23,7 +23,7 @@ Use this as the quick map for what can be edited by hand and how to reload it.
 | Login banner | `~/.hushlogin` | Open a new terminal window |
 | Region screenshot | `~/.local/bin/rice-region-screenshot` | `Command+Space`, then `S` |
 | Trusted download opener | `~/.local/bin/rice-open-trusted-download` | `rice-open-trusted-download ~/Downloads/file` |
-| Yazi | `~/.config/yazi/yazi.toml`, `~/.config/yazi/keymap.toml`, `~/.config/yazi/theme.toml`, `~/.config/yazi/init.lua`, `~/.config/yazi/package.toml` | Restart Yazi |
+| Yazi | `~/.config/yazi/yazi.toml`, `~/.config/yazi/keymap.toml`, `~/.config/yazi/theme.toml`, `~/.config/yazi/init.lua`, `~/.config/yazi/package.toml`, `~/.config/yazi/plugins/video-info.yazi/` | Restart Yazi; requires `ffprobe` for video metadata |
 | LinearMouse | `~/.config/linearmouse/linearmouse.json` | Restart LinearMouse or change settings in the LinearMouse app |
 | LinearMouse login agent | `~/Library/LaunchAgents/com.macbook-linux-rice.linearmouse.plist` | `launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/com.macbook-linux-rice.linearmouse.plist` |
 | VS Code | `~/Library/Application Support/Code/User/settings.json` | VS Code reload window |
@@ -252,7 +252,38 @@ Yazi customization knobs:
 | Separator borders | `~/.config/yazi/init.lua`, `theme.toml` | `full-border.yazi` draws rounded separators; border colors come from `[mgr].border_style`. |
 | Header prompt | `~/.config/yazi/init.lua`, `~/.config/starship.toml` | `starship.yazi` reuses the rice Starship prompt in Yazi. |
 | Git/file metadata | `yazi.toml`, `theme.toml` | `linemode = "git"` plus `[git]` styles show repo status; `m g`, `m s`, `m m`, `m n` switch modes live. |
+| Video metadata and sorting | `plugins/video-info.yazi/`, `yazi.toml`, `keymap.toml` | `ffprobe` adds dimensions, frame rate, and duration to video lines and spot details; `,l` sorts by duration and `,L` reverses it. |
 | Shortcuts/plugins | `keymap.toml`, `package.toml` | `ya pkg install` restores pinned plugins; edit `keymap.toml` for bookmark/action keys. |
+
+### Yazi video metadata and length sorting
+
+The shared `video-info.yazi` plugin uses `ffprobe` to add dimensions, frame
+rate, and duration to the selected video line while retaining the Git
+linemode. The spot/details view also keeps Yazi's normal video and file
+metadata and adds video stream details. Results are cached by URL, file size,
+and modification time; failed probes are cached as well.
+
+Use these comma-prefix bindings in either platform configuration:
+
+```text
+,l    Sort by video length, shortest first
+,L    Sort by video length, longest first
+```
+
+Directories stay at the top. Videos with a readable duration follow, and
+files without a readable video duration remain at the end in deterministic
+name order. The custom sort applies to the current directory; choose another
+native Yazi sort afterward when you want Yazi to resume its normal sorting
+behavior.
+
+If metadata does not appear, verify that `ffprobe` is installed and that the
+file has a readable local path:
+
+```sh
+command -v ffprobe
+ffprobe -v error -show_entries format=duration:stream=width,height,avg_frame_rate \
+  -of json ~/Videos/example.mp4
+```
 
 ## Main live config choices
 
