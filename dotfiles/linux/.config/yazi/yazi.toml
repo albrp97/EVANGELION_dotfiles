@@ -62,6 +62,9 @@ prepend_rules = [
 ]
 
 [plugin]
+prepend_previewers = [
+  { mime = "video/*", run = "video-info" }
+]
 prepend_fetchers = [
   { mime = "video/*", run = "video-info", group = "video-info" },
   { url = "*", run = "git", group = "git" },

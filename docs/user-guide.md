@@ -190,6 +190,47 @@ probes, so broken or incomplete videos do not repeatedly launch `ffprobe`.
 | `;lg` / `;ls` / `;lm` / `;ln` | Switch line mode to Git, size, modified time, or none |
 | `,l` / `,L` | Sort by video length ascending, or reverse |
 
+### Yazi movie-aware video preview
+
+For recognizable movie filenames, the shared `video-info.yazi` previewer keeps
+Yazi's native video frame at the top of the preview column and places a
+scrollable metadata panel below it. Ordinary videos and extras such as trailers,
+featurettes, interviews, commentaries, and deleted scenes keep the technical
+preview without an online movie match.
+
+The panel can include:
+
+- Technical fields: resolution, frame rate, duration, codec, profile, pixel
+  format, container, and every detected audio track.
+- Audio layout: mono, stereo, 5.1, 7.1, or the reported channel count, plus
+  language and track title when embedded.
+- Movie fields: title, original title, year, FilmAffinity score, runtime,
+  director, genre, cast, composer, cinematography, writer, producer, country,
+  synopsis, IMDb ID, and source identifiers when available.
+
+Movie recognition uses common release names such as `Title (Year)` and
+`Title.Year`; a generic file inside a `Movie (Year)` directory can inherit the
+directory title. The lookup sends only the normalized title and year. The
+media file, its contents, and its path are never uploaded.
+
+Wikidata supplies the identity and credits. FilmAffinity supplies the score
+and additional page details through the `r.jina.ai` text proxy because direct
+FilmAffinity requests are Cloudflare-protected. FilmAffinity is best effort:
+the preview still works with technical metadata and Wikidata if the proxy is
+unavailable or the page format changes.
+
+Use `J` and `K` in the normal Yazi preview to scroll the metadata panel down
+and up. The displayed frame stays fixed while the text moves. To disable all
+online enrichment for a session, start Yazi with:
+
+```sh
+YAZI_VIDEO_INFO_OFFLINE=1 yazi
+```
+
+Restart Yazi after changing this environment variable or the plugin. Technical
+metadata is cached by file URL, size, and modification time; movie results are
+cached only for the current Yazi session.
+
 ## Theme and wallpapers
 
 The active theme is **Pastel EVA-01**: Rosé Pine/Nord softness with EVA-01 identity. The palette reference lives at `docs/eva01-palette.png` and `docs/eva01-palette.svg`.

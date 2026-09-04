@@ -23,7 +23,7 @@ Use this as the quick map for what can be edited by hand and how to reload it.
 | Login banner | `~/.hushlogin` | Open a new terminal window |
 | Region screenshot | `~/.local/bin/rice-region-screenshot` | `Command+Space`, then `S` |
 | Trusted download opener | `~/.local/bin/rice-open-trusted-download` | `rice-open-trusted-download ~/Downloads/file` |
-| Yazi | `~/.config/yazi/yazi.toml`, `~/.config/yazi/keymap.toml`, `~/.config/yazi/theme.toml`, `~/.config/yazi/init.lua`, `~/.config/yazi/package.toml`, `~/.config/yazi/plugins/video-info.yazi/` | Restart Yazi; requires `ffprobe` for video metadata |
+| Yazi | `~/.config/yazi/yazi.toml`, `~/.config/yazi/keymap.toml`, `~/.config/yazi/theme.toml`, `~/.config/yazi/init.lua`, `~/.config/yazi/package.toml`, `~/.config/yazi/plugins/video-info.yazi/` | Restart Yazi; requires `ffprobe` and `ffmpeg` for local video metadata/frame previews, plus `curl` for optional movie enrichment |
 | LinearMouse | `~/.config/linearmouse/linearmouse.json` | Restart LinearMouse or change settings in the LinearMouse app |
 | LinearMouse login agent | `~/Library/LaunchAgents/com.macbook-linux-rice.linearmouse.plist` | `launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/com.macbook-linux-rice.linearmouse.plist` |
 | VS Code | `~/Library/Application Support/Code/User/settings.json` | VS Code reload window |
@@ -253,6 +253,7 @@ Yazi customization knobs:
 | Header prompt | `~/.config/yazi/init.lua`, `~/.config/starship.toml` | `starship.yazi` reuses the rice Starship prompt in Yazi. |
 | Git/file metadata | `yazi.toml`, `theme.toml` | `linemode = "git"` plus `[git]` styles show repo status; `m g`, `m s`, `m m`, `m n` switch modes live. |
 | Video metadata and sorting | `plugins/video-info.yazi/`, `yazi.toml`, `keymap.toml` | `ffprobe` adds dimensions, frame rate, and duration to video lines and spot details; `,l` sorts by duration and `,L` reverses it. |
+| Movie-aware video preview | `plugins/video-info.yazi/`, `yazi.toml` | Keeps the native frame preview and adds technical, audio, Wikidata, and FilmAffinity details below it when the filename identifies a movie. |
 | Shortcuts/plugins | `keymap.toml`, `package.toml` | `ya pkg install` restores pinned plugins; edit `keymap.toml` for bookmark/action keys. |
 
 ### Yazi video metadata and length sorting
@@ -284,6 +285,66 @@ command -v ffprobe
 ffprobe -v error -show_entries format=duration:stream=width,height,avg_frame_rate \
   -of json ~/Videos/example.mp4
 ```
+
+### Yazi movie-aware video preview
+
+The tracked `dotfiles/common/.config/yazi/plugins/video-info.yazi/main.lua`
+extends the technical video preview without replacing Yazi's native frame
+preloader. Linux and macOS register it in their platform
+`[plugin].prepend_previewers` list for `video/*`; the shared
+`dotfiles/common/.config/yazi/init.lua` registers its Linemode callback.
+
+The local dependencies are:
+
+```sh
+command -v ffprobe
+command -v ffmpeg
+command -v curl
+```
+
+`ffprobe` reads the local container and stream metadata. Yazi's native video
+preloader uses `ffmpeg` to generate the frame. `curl` is needed only when a
+recognized movie is enriched from Wikidata and FilmAffinity. No additional
+Yazi package is required for the shared plugin itself.
+
+Apply the tracked configuration with the normal installer:
+
+```sh
+scripts/install-dotfiles.sh linux
+```
+
+Then restart every Yazi process. If the plugin was edited manually, compare
+the live file with
+`dotfiles/common/.config/yazi/plugins/video-info.yazi/main.lua` before
+reinstalling. Third-party pinned plugins remain managed by
+`dotfiles/common/.config/yazi/package.toml`; use `ya pkg install` if a package
+refresh has removed them.
+
+The movie path recognizes `Title (Year)` and `Title.Year` release names and
+can use a `Movie (Year)` parent directory for generic child names. It excludes
+trailers, featurettes, interviews, commentaries, deleted scenes, and similar
+extras from online lookup. Technical metadata and the native frame continue
+to work for those files and for videos that do not match a movie.
+
+To disable network enrichment for a session:
+
+```sh
+YAZI_VIDEO_INFO_OFFLINE=1 yazi
+```
+
+Only a normalized title and year are sent to the public Wikidata API and the
+FilmAffinity text proxy. The media file, its contents, and its local path are
+not sent. Wikidata provides identity and credits; FilmAffinity is best effort
+because direct requests are Cloudflare-protected, so a proxy timeout or page
+change does not prevent the local preview from rendering.
+
+Use `J` and `K` through Yazi's normal preview seek actions to scroll the lower
+metadata panel. The native frame is rendered with a fixed frame offset while
+the text scrolls. Technical probe results are cached by URL, size, and
+modification time, including failed probes. Movie lookup results are held for
+the current Yazi session; restart Yazi to clear them or to change offline
+mode. If a lookup remains in a loading state after a canceled preview, leave
+and reselect the file or restart Yazi so the session can retry it.
 
 ## Main live config choices
 
