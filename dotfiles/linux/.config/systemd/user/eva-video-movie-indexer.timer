@@ -1,0 +1,10 @@
+[Unit]
+Description=Refresh the Yazi video and movie metadata index
+
+[Timer]
+OnBootSec=2min
+OnUnitActiveSec=10min
+Persistent=true
+
+[Install]
+WantedBy=timers.target

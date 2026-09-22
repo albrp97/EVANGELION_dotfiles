@@ -317,6 +317,28 @@ def main():
         else:
             print(status["ready"])
         return
+    for option, due in (("--ready-names", True), ("--waiting-names", False)):
+        if option not in arguments:
+            continue
+        try:
+            source = arguments[arguments.index(option) + 1]
+        except IndexError:
+            print("unknown")
+            return
+        if status["unknown"]:
+            print("unknown")
+            return
+        names = sorted(
+            (
+                package["name"]
+                for package in status["packages"].values()
+                if package["source"] == source and package["due"] == due
+            ),
+            key=str.casefold,
+        )
+        for name in names:
+            print(name)
+        return
     if "--total" in arguments:
         if status["unknown"]:
             print("unknown")

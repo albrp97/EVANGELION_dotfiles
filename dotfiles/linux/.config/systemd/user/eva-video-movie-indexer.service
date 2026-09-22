@@ -1,0 +1,8 @@
+[Unit]
+Description=Index video and movie metadata for Yazi
+After=graphical-session.target
+
+[Service]
+Type=oneshot
+ExecStart=%h/.local/bin/rice-yazi-video-indexer
+Nice=10

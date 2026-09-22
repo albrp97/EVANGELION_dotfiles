@@ -43,28 +43,122 @@ VS Code uses fake transparency instead of Vibrancy Continued. The script injects
 
 | Tool | Config path | Reload/apply |
 | --- | --- | --- |
-| Hyprland | `~/.config/hypr/hyprland.lua` and `~/.config/hypr/config/` | Restart the Hyprland session or reload from the compositor |
+| Hyprland | `~/.config/hypr/hyprland.lua` and `~/.config/hypr/config/` | `hyprctl reload`; `Super+S` sends Ctrl+S to the focused application and `Super+Alt+S` toggles the special workspace |
 | Lofree Flow 2 | `scripts/lofree-flow2-fn.py` | `pkexec python3 scripts/lofree-flow2-fn.py --apply` over USB |
 | Noctalia | `~/.config/noctalia/config.toml` | `~/.local/bin/noctalia msg config-reload` |
 | Noctalia EVA palette/plugin | `~/.config/noctalia/palettes/eva01.json`, `~/.local/share/noctalia/plugins/eva-control-center/`, `~/.local/bin/eva-vclick*` | `~/.local/bin/noctalia msg config-reload`; restart Noctalia after manifest changes |
+| Logitech mouse wheel | `~/.config/solaar/config.yaml`, `solaar` | `solaar config 'MX Master 3S' scroll-ratchet Ratcheted`; Solaar reapplies the saved mode when the mouse reconnects |
+| Login session | `/etc/greetd/config.toml`, `scripts/configure-linux-greetd.sh` | `scripts/install-dotfiles.sh linux`; skips Noctalia Greeter and starts the UWSM-managed Hyprland session automatically after reboot |
 | Fish | `~/.config/fish/config.fish` | `exec fish` |
 | Kitty | `~/.config/kitty/kitty.conf`, shared `themes/eva01.conf` | Open a new Kitty window |
 | Ghostty | `~/.config/ghostty/config` | Open a new Ghostty window |
 | qBittorrent | `~/.config/qBittorrent/themes/eva01/config.json`, `stylesheet.qss` | Restart qBittorrent; enable the custom UI theme in Preferences if needed |
-| SMPlayer | `~/.config/smplayer/smplayer.ini`, `playlist.ini`, `themes/eva01/` (stylesheet and custom playback icons) | Restart SMPlayer; run `scripts/configure-linux-video-defaults.sh` to assign it to video MIME types |
+| SMPlayer | `~/.config/smplayer/smplayer.ini`, `~/.local/bin/rice-smplayer-mpv`, `playlist.ini`, `themes/eva01/` (stylesheet and custom playback icons) | Restart SMPlayer; the default volume is 30%, single-file playback loops, and multi-file/playlist launches are left to advance normally. `smplayer.ini` restores mpv's default keyboard bindings while retaining the custom `q` quit action, and the wrapper removes the obsolete mpv X11 keyboard flag; run `scripts/configure-linux-video-defaults.sh` to assign it to video MIME types, including Matroska aliases |
 | Vivaldi | `~/.config/vivaldi/themes/eva01/eva01.zip` | Settings → Themes → Import Theme; install the preview, then select `EVA-01` |
 | Fastfetch | `~/.config/fastfetch/config.jsonc`, `~/.local/bin/rice-fastfetch-info` | Open a new terminal or run the helper directly |
-| Wallpaper rotation | `~/Pictures/Wallpapers/EVANGELION`, `~/.local/bin/rice-random-wallpaper`, `~/.config/systemd/user/eva-wallpaper-rotation.timer` | `systemctl --user enable --now eva-wallpaper-rotation.timer`; rotates to a different random image every 30 minutes |
+| Wallpaper rotation and transition | `~/.config/noctalia/config.toml`, `~/Pictures/Wallpapers/EVANGELION`, `~/.local/bin/rice-random-wallpaper`, `~/.config/systemd/user/eva-wallpaper-rotation.timer` | `noctalia msg config-reload`; uses a fade transition and rotates to a different random image every 30 minutes |
+| HDMI/Bluetooth audio routing | `~/.local/bin/eva-hdmi-audio`, `~/.config/hypr/config/autostart.lua` | Runs with the graphical session; connected Bluetooth sinks take priority, with HDMI used as the fallback |
 | btop | `~/.config/btop/btop.conf`, shared `themes/eva01-pastel.theme` | Restart btop |
 | Starship | shared `~/.config/starship.toml` | Open a new Fish shell |
 | Yazi | `~/.config/yazi/yazi.toml`, `keymap.toml`, shared theme/plugins | Restart Yazi |
 | Code OSS | `~/bin/code`, `~/.config/Code - OSS/User/settings.json` and `keybindings.json` | `code .` launches without blocking the terminal; use `code --wait` when blocking is intentional |
+| Notes launcher | `~/bin/notes` | Run `notes` from any terminal to open `~/code/notes/txt/Todo.md` in Code OSS; override with `RICE_NOTES_FILE=/path/to/file` |
 | Code OSS EVA extension | `~/.vscode-oss/extensions/macbook-linux-rice-eva01-pastel-0.1.0/` | Reload the Code OSS window |
+| Code OSS PDF viewer | Open VSX extension `tomoki1207.pdf` | `scripts/install-code-extensions.sh`; restart Code OSS after installation, then open a `.pdf` file |
 | Code OSS transparency | `scripts/linux/apply-code-transparency.sh`, `~/.local/share/applications/code-oss.desktop` | Re-run after every Code OSS update; restart Code OSS |
-| LosslessCut EVA theme | `scripts/linux/apply-losslesscut-theme.sh`, `~/.local/share/rice-losslesscut`, `~/.config/losslesscut/eva01.css` | Re-run after every LosslessCut update; restart LosslessCut |
+| LosslessCut launcher and EVA theme | `~/.local/share/applications/losslesscut-bin.desktop`, `~/bin/losslesscut`, `scripts/linux/apply-losslesscut-theme.sh`, `~/.local/share/rice-losslesscut` | Re-run `scripts/install-dotfiles.sh linux` after launcher changes; run `noctalia msg config-reload`; rebuild the theme after every LosslessCut update |
+| Sudo session | `scripts/configure-sudo-session.sh`, `/etc/sudoers.d/90-eva-sudo-session`, `~/.config/fish/config.fish` | Run `scripts/install-dotfiles.sh linux`; the first interactive Fish shell asks once and shares the ticket across terminals until reboot or `sudo -k` |
+| Dolphin video metadata | `baloo`, `kfilemetadata`, `~/.config/systemd/user/kde-baloo.service.d/override.conf` | `balooctl6 enable`; index the media folder with `balooctl6 index "$HOME/Documents"` |
+| DaVinci Resolve | CachyOS package `davinci-resolve`, `/usr/share/applications/DaVinciResolve.desktop` | Reinstall with `sudo pacman -S davinci-resolve`; run `update-desktop-database ~/.local/share/applications` and `noctalia msg config-reload` after package changes |
+| Resolve media preparation TUI | `~/code/resolve-media-tui/resolve_media.py`, `~/bin/resolve-media` | Run `resolve-media`; reinstall the wrapper with `cd ~/code/resolve-media-tui && ./install.sh` |
+| Resolve fast concatenation | `~/code/resolve-media-tui/resolve_concat.py`, `~/bin/resolve-concat` | Run `resolve-concat`; reinstall both wrappers with `cd ~/code/resolve-media-tui && ./install.sh` |
 | Staged updates | `~/bin/update`, `~/.local/bin/rice-update-status` | Run `update` or `update --now` |
 | Zen | detected profile `chrome/` and profile `user.js` | `scripts/configure-zen.sh`, then restart Zen |
 | Clipboard/screenshot | `~/.local/bin/paste-clipboard-smart`, `screenshot-region-clipboard` | Used by Hyprland bindings |
+
+### Sudo session authentication
+
+The Linux setup keeps sudo authentication cached globally across terminals for
+the current user and does not expire it automatically. The first interactive
+Fish shell after a reboot asks for the password; later sudo commands do not.
+`sudo -k` invalidates the ticket immediately. This is safer than granting
+`NOPASSWD: ALL`, which would allow any process running as the user to become
+root without an authentication boundary.
+
+Apply the root-owned sudoers drop-in from a terminal:
+
+```sh
+cd ~/code/EVANGELION_dotfiles
+./scripts/configure-sudo-session.sh
+exec fish
+```
+
+The script validates the generated sudoers file before installing it as
+`/etc/sudoers.d/90-eva-sudo-session`. The Fish startup hook then runs
+`sudo -v` only when no valid global ticket exists.
+
+### Automatic Hyprland login
+
+This Linux setup uses `greetd` to start the graphical session. The default
+CachyOS/Noctalia configuration launches Noctalia Greeter first, but the EVA
+configuration replaces that screen with a direct automatic login for the
+current user:
+
+```text
+/usr/bin/uwsm start -e -D Hyprland hyprland.desktop
+```
+
+The original `/etc/greetd/config.toml` is kept at
+`/etc/greetd/config.toml.eva-noctalia-backup`. Run
+`scripts/install-dotfiles.sh linux` after reinstalling the system, then reboot
+to apply the automatic session. The `noctalia-greeter` package can remain
+installed because it is no longer launched by greetd.
+
+Dolphin's main window is intentionally not forced to float in
+`config/windowrules.lua`, so it participates in the EVA grid alongside
+LosslessCut and Yazi. This keeps both windows available for drag-and-drop. KDE
+dialogs may still float through the common modal rules.
+
+### Dolphin video metadata columns
+
+Dolphin's **Height**, **Width**, and **Frame Rate** columns are populated by
+Baloo through KDE's FFmpeg metadata extractor. The extractor can read MP4
+metadata directly, but the columns remain blank when Baloo has not indexed the
+file.
+
+This Hyprland setup includes a user-service override because the packaged
+`kde-baloo.service` references `kde-systemd-start-condition`, a KDE-only
+helper that is not installed in this session. The override also sets Qt's
+platform to `offscreen`: Baloo's metadata extractor creates a Qt application,
+but the user service does not have a usable display environment. Without this,
+content indexing fails even though `kfilemetadata_dump6` can read the same
+video when run interactively. To repair the service after a reinstall or
+package update:
+
+```sh
+cd ~/code/EVANGELION_dotfiles
+scripts/install-dotfiles.sh linux
+balooctl6 enable
+systemctl --user daemon-reload
+systemctl --user enable kde-baloo.service
+systemctl --user restart kde-baloo.service
+balooctl6 clear "$HOME/Documents/edit"
+balooctl6 index "$HOME/Documents/edit"
+balooctl6 check
+```
+
+`balooctl6 clear` removes only stale metadata entries, not the media files.
+Wait for indexing to finish, then close and reopen Dolphin. Check a specific
+file with:
+
+```sh
+balooctl6 status "$HOME/Documents/edit/file.mp4"
+kfilemetadata_dump6 "$HOME/Documents/edit/file.mp4"
+```
+
+The second command should show `Width`, `Height`, and `Frame Rate`. If it does,
+Dolphin will fill the corresponding details columns after its next directory
+refresh.
 
 Linux Code OSS transparency uses a user-owned runtime overlay rather than relying
 on `--window-transparent` alone. The generator patches Electron's native
@@ -148,6 +242,45 @@ but dependency errors appear, rebuild the overlay and confirm that
 visible through the window with readable text confirms that both the native
 transparency patch and Hyprland blur are active.
 
+Yazi launched through UWSM must also see `~/bin` before `/usr/bin`; otherwise
+`code` resolves to the stock `/usr/bin/code-oss` launcher and bypasses the
+transparent wrapper. The UWSM environment keeps that PATH ordering, and Yazi's
+Code openers use `~/bin/code` explicitly as a second safeguard. Restart Yazi
+after changing the environment. A command typed in Yazi's `:` prompt should
+then resolve with:
+
+```sh
+command -v code
+# /home/<user>/bin/code
+```
+
+### Terminal windows disappearing after launching GUI apps
+
+Hyprland's terminal swallowing was disabled in
+`dotfiles/linux/.config/hypr/config/misc.lua`. When it was enabled, Hyprland
+matched Kitty as a terminal, hid it when a GUI child such as SMPlayer or Code
+OSS opened, and restored it only after that child closed. This affected any
+GUI application launched from a shell or from Yazi; Yazi's `orphan = true`
+setting does not override compositor-level swallowing.
+
+To recreate this fix after reinstalling or replacing the configuration:
+
+```sh
+cd ~/code/EVANGELION_dotfiles
+scripts/install-dotfiles.sh linux
+hyprctl reload
+```
+
+Confirm the installed setting with:
+
+```sh
+grep -n 'enable_swallow' ~/.config/hypr/config/misc.lua
+```
+
+It must report `enable_swallow = false`. If the terminal still disappears,
+also check that no later Hyprland config fragment re-enables
+`enable_swallow` or restores a terminal `swallow_regex`.
+
 ### LosslessCut EVA theme recovery
 
 LosslessCut has no supported user stylesheet setting, so the Linux theme uses a
@@ -177,19 +310,189 @@ The script uses the `asar` command when available, otherwise
 `npx --yes @electron/asar@latest`. It validates the renderer CSS link and main
 process patch points before replacing the user-owned overlay.
 
+If LosslessCut appears in Noctalia search but does not launch, inspect
+`~/.local/share/applications/losslesscut-bin.desktop`. The shell wrapper must
+use one escaped dollar before `HOME` and `@`:
+
+```ini
+Exec=/bin/sh -c "exec \"\$HOME/bin/losslesscut\" \"\$@\"" sh %F
+```
+
+Two backslashes leave the dollar escaped after desktop-entry parsing, producing
+the invalid path `/home/<user>/$HOME/bin/losslesscut`. Reinstall the desktop
+entry and refresh Noctalia with:
+
+```sh
+cd ~/code/EVANGELION_dotfiles
+scripts/install-dotfiles.sh linux
+update-desktop-database ~/.local/share/applications
+noctalia msg config-reload
+```
+
+### DaVinci Resolve installation and launcher recovery
+
+DaVinci Resolve Free 21.0.4 is installed from the CachyOS repository rather
+than through a tracked custom desktop entry. The package installs
+`/usr/share/applications/DaVinciResolve.desktop`, so Noctalia's normal desktop
+application index finds it automatically. Refresh the launcher index with:
+
+```sh
+update-desktop-database ~/.local/share/applications
+noctalia msg config-reload
+```
+
+Search for **DaVinci Resolve** with `Super+Space`. Verify the desktop entry and
+launch path with:
+
+```sh
+desktop-file-validate /usr/share/applications/DaVinciResolve.desktop
+gtk-launch DaVinciResolve
+```
+
+The package launches `/opt/resolve/bin/resolve` and uses XWayland on this
+Wayland session; an XWayland Resolve window is expected. Confirm the installed
+edition and binary with:
+
+```sh
+pacman -Q davinci-resolve
+readlink -f /usr/bin/davinci-resolve
+```
+
+To install or repair the Free package after a system change:
+
+```sh
+sudo pacman -S davinci-resolve
+update-desktop-database ~/.local/share/applications
+noctalia msg config-reload
+```
+
+If the launcher appears in Noctalia but does not start, inspect the user logs:
+
+```sh
+journalctl --user -b --no-pager | grep -i resolve
+```
+
+Do not create a second user desktop entry unless the package's entry is missing;
+duplicating it can produce duplicate Noctalia results.
+
+### Resolve media preparation TUI recovery
+
+`resolve-media` prepares files that Linux Resolve Free cannot decode, such as
+H.264/H.265 video or AAC audio. It lives at
+`~/code/resolve-media-tui/resolve_media.py`, with the global wrapper at
+`~/bin/resolve-media`. The default fast output is verified DNxHR SQ video plus
+PCM audio in MXF beside the source. Audio-only preparation uses Matroska,
+because MXF requires a video stream:
+
+All common Matroska MIME aliases, including `video/matroska`, `video/mkv`, and
+`application/x-matroska`, are mapped to SMPlayer just like `video/mp4`. If a
+generated MKV opens in another application, rerun the video-defaults script.
+
+```sh
+resolve-media --dry-run --root ~/Documents/edit
+resolve-media --root ~/Documents/edit
+```
+
+The TUI starts in `~/Documents/edit`. `Right`/`l` enters a folder,
+`Left`/`h`/`Backspace` goes up, `Space` selects, and `Enter` converts the
+selection or the current folder recursively when nothing is selected. The
+default fast profile uses CPU DNxHR because this system has no GPU DNxHR
+encoder and the tested GPU ProRes path is slower. Ten-bit sources use DNxHR
+HQX. `--profile lossless` remains available for mathematical losslessness;
+there `gpu` mode defaults to `on`, and NVIDIA CUDA decoding plus Vulkan FFV1
+retry with CPU FFV1 when needed. The legacy `--profile dnxhr` name is an alias
+for `fast`.
+
+Fast mode uses bounded parallel conversion automatically. Use
+`--jobs 1` to force sequential processing or `--jobs N` to choose a fixed
+worker count. Performance mode defaults to `auto`: the TUI temporarily selects
+the system `performance` profile through `powerprofilesctl` for the batch, then
+restores the profile that was active before it started. Use
+`--performance-mode off` to leave the system profile unchanged; the TUI `p`
+key cycles performance mode.
+
+Original deletion is enabled by default but always requires confirmation. A
+successful output is verified with `ffprobe`, then that source is immediately
+moved to the desktop Trash with `gio trash` before the next file starts; it is
+never directly unlinked. Use `--keep-originals` for a non-destructive run.
+
+### Fast video concatenation
+
+`resolve-concat` concatenates the videos in `~/Documents/edit/copy` in
+filename order and writes
+`~/Documents/edit/copy-concatenated-<detected-rate>fps.mp4` by default. For the
+current folder this is `copy-concatenated-29.97fps.mp4`. It selects the most
+common resolution and the lowest nominal frame rate. The default output is a
+universal MP4: H.264 High, 8-bit `yuv420p`, BT.709, AAC-LC stereo at 48 kHz and
+192 kb/s, with `faststart` enabled. The default GPU path uses NVENC for speed;
+`--gpu off` selects `libx264 --preset slow --crf 20` for better compression
+efficiency. When normalization is required, the default strategy processes
+each file independently with three bounded workers and then joins the
+identical parts with stream copy. This is faster than the single filter graph
+on the current six-file batch; use `--strategy single` to reproduce that path.
+
+Before encoding, each audio track is decoded and measured. The default
+normalizer chooses one gain that balances mean RMS `-35 dBFS` and median
+absolute sample level `-50 dBFS`, while capping the estimated peak at `-1
+dBFS`. These targets are approximate because one gain cannot independently
+change mean and median or preserve every recording's dynamics. Use
+`--audio-normalization off` to keep source gain; with that option, stream copy
+is allowed only when all video/audio parameters already match the universal
+profile. Mixed parameters such as the current folder's 30 fps plus 29.97 fps
+still require normalization.
+
+```sh
+resolve-concat --dry-run ~/Documents/edit/copy
+resolve-concat ~/Documents/edit/copy
+```
+
+Use `--output /path/file.mp4` to choose a different destination, `--force` to
+replace an existing output, `--mode copy` to require an eligible stream-copy
+run, `--gpu off` to use CPU x264, `--jobs N` to choose the normalization worker
+count, `--strategy single` to use the legacy one-process graph, and
+`--performance-mode off` to leave the system power profile unchanged. The
+original files are never deleted. Temporary normalized parts are removed after
+both successful and failed runs, and the system performance profile is
+restored automatically.
+
+The detailed LosslessCut comparison, benchmark numbers, and measured parallel
+versus single-process run are maintained in
+`~/code/resolve-media-tui/FAST-CONCAT-RESEARCH.md`.
+
+If the command or wrapper becomes stale after editing the project, reinstall it
+and validate the environment:
+
+```sh
+cd ~/code/resolve-media-tui
+./install.sh
+python3 -m py_compile resolve_media.py
+python3 -m unittest discover -s tests
+nvidia-smi
+ffmpeg -hide_banner -decoders | grep cuvid
+ffmpeg -hide_banner -encoders | grep -E 'dnxhd|ffv1_vulkan'
+powerprofilesctl get
+powerprofilesctl list
+```
+
 SMPlayer now starts in a dark EVA-01 minimalist compact mode: the menu and
 toolbars are hidden, and only a small fallback control set is retained if
 compact mode is toggled off. Its stylesheet uses monospaced text, hard-edged
 terminal/TUI panels, lavender and purple controls, and green playback accents
 instead of Qt's blue defaults. Use
-`F` or `Ctrl+T` for fullscreen, `Ctrl+C` to toggle compact mode, double-click
-the video for fullscreen, and right-click for the context menu. Set
-`iconset=` in `smplayer.ini` to disable the EVA stylesheet.
+`F` or `Ctrl+T` for fullscreen, `Ctrl+C` to toggle compact mode, `Q` to close
+the player, double-click the video for fullscreen, and right-click for the
+context menu. Set `iconset=` in `smplayer.ini` to disable the EVA stylesheet.
 
 SMPlayer's compact mode keeps the same window class, so `config/windowrules.lua`
 floats and preserves the size of all SMPlayer windows. This lets compact mode
 remain movable without tiling interference while leaving fullscreen
 transitions to SMPlayer and Hyprland.
+
+The SMPlayer wrapper removes saved volume and OSD arguments, hides mpv's
+top-left pause/time overlay, and starts every standalone media file at 30%.
+It adds `--loop-file=inf` only when the launch does not contain multiple media
+files or a playlist file, so playlist playback can advance to the next item.
+Restart SMPlayer after changing these files.
 
 The Linux Code OSS transparency script copies only the system bundle's
 immutable assets and patches a user-owned `out/main.js`. It does not track or
@@ -240,9 +543,18 @@ scripts/build-noctalia-eva.sh
 ```
 
 The Linux updater reports pacman, AUR, and Flatpak packages in `Ready now` and
-`Waiting for 3 days` sections. A normal update runs full pacman upgrades because
-partial upgrades are not supported on Arch; use `update --now` only when you
-intentionally want to bypass the staged eligibility check.
+`Waiting for 3 days` sections. A normal `update` selects only ready package
+names. AUR and Flatpak waiting packages remain untouched; pacman holds its
+waiting packages with `--ignore`, preflights the ready transaction, and
+promotes only waiting packages that pacman reports as required, or that are
+direct dependencies of those packages, to complete the transaction. This
+allows ABI transitions such as `libbluray` plus `mpv` and `libcdio` to finish
+together without updating unrelated waiting packages. Packages that remain
+unsafe are deferred instead of being installed partially. Before the selected
+pacman packages are installed, their repository databases are refreshed; this
+is required because the report uses a temporary fresh database while pacman
+otherwise reads its persistent sync database. Use `update --now` only when you
+intentionally want to update every pending package.
 
 Yazi customization knobs:
 
@@ -255,6 +567,11 @@ Yazi customization knobs:
 | Video metadata and sorting | `plugins/video-info.yazi/`, `yazi.toml`, `keymap.toml` | `ffprobe` adds dimensions, frame rate, and duration to video lines and spot details; `,l` sorts by duration and `,L` reverses it. |
 | Movie-aware video preview | `plugins/video-info.yazi/`, `yazi.toml` | Keeps the native frame preview and adds technical, audio, Wikidata, and FilmAffinity details below it when the filename identifies a movie. |
 | Shortcuts/plugins | `keymap.toml`, `package.toml` | `ya pkg install` restores pinned plugins; edit `keymap.toml` for bookmark/action keys. |
+
+Yazi's normal theme surfaces use `bg = "reset"` so Kitty's transparent
+background and Hyprland blur remain visible. Selection and status accents keep
+their colored backgrounds. Restart Yazi after changing `theme.toml` or a
+plugin.
 
 ### Yazi video metadata and length sorting
 
@@ -299,13 +616,14 @@ The local dependencies are:
 ```sh
 command -v ffprobe
 command -v ffmpeg
-command -v curl
+command -v python3
 ```
 
 `ffprobe` reads the local container and stream metadata. Yazi's native video
-preloader uses `ffmpeg` to generate the frame. `curl` is needed only when a
-recognized movie is enriched from Wikidata and FilmAffinity. No additional
-Yazi package is required for the shared plugin itself.
+preloader uses `ffmpeg` to generate the frame. The Linux background indexer
+uses Python's standard library to query Wikidata and FilmAffinity and writes
+`~/.cache/yazi/video-info/movie-cache.json`; no additional Yazi package is
+required for the shared plugin itself.
 
 Apply the tracked configuration with the normal installer:
 
@@ -326,25 +644,49 @@ trailers, featurettes, interviews, commentaries, deleted scenes, and similar
 extras from online lookup. Technical metadata and the native frame continue
 to work for those files and for videos that do not match a movie.
 
+On Linux, `eva-video-movie-indexer.timer` scans only `~/Videos` in the
+background. It keeps entries keyed by absolute path plus file size and
+modification time, reprocesses changed videos, caches unavailable results, and
+prunes files that no longer exist. The service is enabled by
+`scripts/install-dotfiles.sh linux`; inspect it with:
+
+```sh
+systemctl --user status eva-video-movie-indexer.timer
+systemctl --user status eva-video-movie-indexer.service
+```
+
+Run a complete refresh when a network lookup previously failed or the
+recognition rules change:
+
+```sh
+~/.local/bin/rice-yazi-video-indexer --refresh
+```
+
 To disable network enrichment for a session:
 
 ```sh
 YAZI_VIDEO_INFO_OFFLINE=1 yazi
 ```
 
+The timer runs every 10 minutes after login, and opening Yazi starts the
+service non-blocking so newly added movies begin indexing immediately. Normal
+service runs batch at most ten online movie lookups so the background task
+does not monopolize the network; `--refresh` explicitly processes every
+matching file.
+
 Only a normalized title and year are sent to the public Wikidata API and the
 FilmAffinity text proxy. The media file, its contents, and its local path are
-not sent. Wikidata provides identity and credits; FilmAffinity is best effort
-because direct requests are Cloudflare-protected, so a proxy timeout or page
-change does not prevent the local preview from rendering.
+not sent. Previewing an already indexed file performs no network request.
+Wikidata provides identity and credits; FilmAffinity is best effort because
+direct requests are Cloudflare-protected, so a proxy timeout or page change
+does not prevent the local preview from rendering.
 
 Use `J` and `K` through Yazi's normal preview seek actions to scroll the lower
 metadata panel. The native frame is rendered with a fixed frame offset while
 the text scrolls. Technical probe results are cached by URL, size, and
-modification time, including failed probes. Movie lookup results are held for
-the current Yazi session; restart Yazi to clear them or to change offline
-mode. If a lookup remains in a loading state after a canceled preview, leave
-and reselect the file or restart Yazi so the session can retry it.
+modification time, including failed probes. On Linux, movie lookup results are
+persisted in the index and survive Yazi restarts. Files outside `~/Videos`
+retain technical metadata but are excluded from online enrichment.
 
 ## Main live config choices
 

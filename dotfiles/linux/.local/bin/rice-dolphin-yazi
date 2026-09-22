@@ -1,0 +1,39 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+if ! command -v hyprctl >/dev/null 2>&1 \
+    || ! command -v jq >/dev/null 2>&1 \
+    || ! command -v gdbus >/dev/null 2>&1; then
+    echo "rice-dolphin-yazi: hyprctl, jq, and gdbus are required" >&2
+    exit 1
+fi
+
+active_window="$(hyprctl activewindow -j)"
+active_class="$(jq -r '.class // empty' <<< "$active_window")"
+active_pid="$(jq -r '.pid // empty' <<< "$active_window")"
+
+case "${active_class,,}" in
+    dolphin|org.kde.dolphin)
+        ;;
+    *)
+        exit 0
+        ;;
+esac
+
+if [[ ! "$active_pid" =~ ^[0-9]+$ ]]; then
+    echo "rice-dolphin-yazi: could not determine Dolphin's process ID" >&2
+    exit 1
+fi
+
+destination="org.kde.dolphin-${active_pid}"
+action="servicemenu_rice-open-in-yazi.desktop::openInYazi"
+
+if ! gdbus call \
+    --session \
+    --dest "$destination" \
+    --object-path "/dolphin/Dolphin_1" \
+    --method org.kde.KMainWindow.activateAction \
+    "$action" >/dev/null; then
+    echo "rice-dolphin-yazi: could not activate Dolphin's Open in Yazi action" >&2
+    exit 1
+fi

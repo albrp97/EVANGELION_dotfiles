@@ -1,30 +1,30 @@
 [app]
-overall = { bg = "#0F1020" }
+overall = { bg = "reset" }
 
 [mgr]
-cwd = { fg = "#F6C177", bg = "#0F1020", bold = true }
+cwd = { fg = "#F6C177", bg = "reset", bold = true }
 find_keyword = { fg = "#F6C177", bold = true }
-find_position = { fg = "#D98BC4", bg = "#0F1020", bold = true }
-symlink_target = { fg = "#9A86B8", bg = "#0F1020" }
-marker_copied = { fg = "#A3D977", bg = "#0F1020", bold = true }
-marker_cut = { fg = "#F6C177", bg = "#0F1020", bold = true }
-marker_marked = { fg = "#C4A7E7", bg = "#0F1020", bold = true }
+find_position = { fg = "#D98BC4", bg = "reset", bold = true }
+symlink_target = { fg = "#9A86B8", bg = "reset" }
+marker_copied = { fg = "#A3D977", bg = "reset", bold = true }
+marker_cut = { fg = "#F6C177", bg = "reset", bold = true }
+marker_marked = { fg = "#C4A7E7", bg = "reset", bold = true }
 marker_selected = { fg = "#0F1020", bg = "#A3D977", bold = true }
-count_copied = { fg = "#A3D977", bg = "#0F1020", bold = true }
-count_cut = { fg = "#F6C177", bg = "#0F1020", bold = true }
-count_selected = { fg = "#F6C177", bg = "#0F1020", bold = true }
+count_copied = { fg = "#A3D977", bg = "reset", bold = true }
+count_cut = { fg = "#F6C177", bg = "reset", bold = true }
+count_selected = { fg = "#F6C177", bg = "reset", bold = true }
 border_symbol = "│"
-border_style = { fg = "#4B3A68", bg = "#0F1020" }
+border_style = { fg = "#4B3A68", bg = "reset" }
 
 [indicator]
-parent = { fg = "#7C5FB8", bg = "#0F1020" }
+parent = { fg = "#7C5FB8", bg = "reset" }
 current = { fg = "#0F1020", bg = "#A3D977", bold = true }
-preview = { fg = "#F6C177", bg = "#0F1020" }
+preview = { fg = "#F6C177", bg = "reset" }
 padding = { open = "", close = "" }
 
 [tabs]
 active = { fg = "#E0DEF4", bg = "#7C5FB8", bold = true }
-inactive = { fg = "#9A86B8", bg = "#0F1020" }
+inactive = { fg = "#9A86B8", bg = "reset" }
 sep_inner = { open = "", close = "" }
 sep_outer = { open = "", close = "" }
 
@@ -37,72 +37,72 @@ unset_main = { fg = "#0F1020", bg = "#D98BC4", bold = true }
 unset_alt = { fg = "#D98BC4", bg = "#26233A" }
 
 [status]
-overall = { fg = "#E0DEF4", bg = "#0F1020" }
+overall = { fg = "#E0DEF4", bg = "reset" }
 sep_left = { open = "", close = "" }
 sep_right = { open = "", close = "" }
-perm_type = { fg = "#C4A7E7", bg = "#0F1020" }
-perm_read = { fg = "#A3D977", bg = "#0F1020" }
-perm_write = { fg = "#F6C177", bg = "#0F1020" }
-perm_exec = { fg = "#D98BC4", bg = "#0F1020" }
-perm_sep = { fg = "#9A86B8", bg = "#0F1020" }
-progress_label = { fg = "#F6C177", bg = "#0F1020", bold = true }
+perm_type = { fg = "#C4A7E7", bg = "reset" }
+perm_read = { fg = "#A3D977", bg = "reset" }
+perm_write = { fg = "#F6C177", bg = "reset" }
+perm_exec = { fg = "#D98BC4", bg = "reset" }
+perm_sep = { fg = "#9A86B8", bg = "reset" }
+progress_label = { fg = "#F6C177", bg = "reset", bold = true }
 progress_normal = { fg = "#F6C177", bg = "#26233A" }
 progress_error = { fg = "#D98BC4", bg = "#26233A" }
 
 [which]
-mask = { fg = "#9A86B8", bg = "#0F1020" }
-cand = { fg = "#C4A7E7", bg = "#0F1020", bold = true }
-rest = { fg = "#9A86B8", bg = "#0F1020" }
-desc = { fg = "#E0DEF4", bg = "#0F1020" }
+mask = { fg = "#9A86B8", bg = "reset" }
+cand = { fg = "#C4A7E7", bg = "reset", bold = true }
+rest = { fg = "#9A86B8", bg = "reset" }
+desc = { fg = "#E0DEF4", bg = "reset" }
 separator = "  "
-separator_style = { fg = "#26233A", bg = "#0F1020" }
+separator_style = { fg = "#26233A", bg = "reset" }
 
 [confirm]
-border = { fg = "#F6C177", bg = "#0F1020" }
-title = { fg = "#F6C177", bg = "#0F1020", bold = true }
-body = { fg = "#E0DEF4", bg = "#0F1020" }
-list = { fg = "#E0DEF4", bg = "#0F1020" }
+border = { fg = "#F6C177", bg = "reset" }
+title = { fg = "#F6C177", bg = "reset", bold = true }
+body = { fg = "#E0DEF4", bg = "reset" }
+list = { fg = "#E0DEF4", bg = "reset" }
 btn_yes = { fg = "#0F1020", bg = "#A3D977", bold = true }
 btn_no = { fg = "#0F1020", bg = "#D98BC4", bold = true }
 
 [spot]
-border = { fg = "#F6C177", bg = "#0F1020" }
-title = { fg = "#F6C177", bg = "#0F1020", bold = true }
-tbl_col = { fg = "#C4A7E7", bg = "#0F1020" }
+border = { fg = "#F6C177", bg = "reset" }
+title = { fg = "#F6C177", bg = "reset", bold = true }
+tbl_col = { fg = "#C4A7E7", bg = "reset" }
 tbl_cell = { fg = "#E0DEF4", bg = "#26233A" }
 
 [pick]
-border = { fg = "#7C5FB8", bg = "#0F1020" }
+border = { fg = "#7C5FB8", bg = "reset" }
 active = { fg = "#0F1020", bg = "#F6C177", bold = true }
-inactive = { fg = "#9A86B8", bg = "#0F1020" }
+inactive = { fg = "#9A86B8", bg = "reset" }
 
 [input]
-border = { fg = "#7C5FB8", bg = "#0F1020" }
-title = { fg = "#C4A7E7", bg = "#0F1020", bold = true }
-value = { fg = "#E0DEF4", bg = "#0F1020" }
+border = { fg = "#7C5FB8", bg = "reset" }
+title = { fg = "#C4A7E7", bg = "reset", bold = true }
+value = { fg = "#E0DEF4", bg = "reset" }
 selected = { fg = "#0F1020", bg = "#C4A7E7" }
 
 [cmp]
-border = { fg = "#7C5FB8", bg = "#0F1020" }
+border = { fg = "#7C5FB8", bg = "reset" }
 active = { fg = "#0F1020", bg = "#F6C177", bold = true }
-inactive = { fg = "#9A86B8", bg = "#0F1020" }
+inactive = { fg = "#9A86B8", bg = "reset" }
 
 [tasks]
-border = { fg = "#F6C177", bg = "#0F1020" }
-title = { fg = "#F6C177", bg = "#0F1020", bold = true }
+border = { fg = "#F6C177", bg = "reset" }
+title = { fg = "#F6C177", bg = "reset", bold = true }
 hovered = { fg = "#E0DEF4", bg = "#7C5FB8", bold = true }
 
 [notify]
-title_info = { fg = "#A3D977", bg = "#0F1020", bold = true }
-title_warn = { fg = "#F6C177", bg = "#0F1020", bold = true }
-title_error = { fg = "#D98BC4", bg = "#0F1020", bold = true }
+title_info = { fg = "#A3D977", bg = "reset", bold = true }
+title_warn = { fg = "#F6C177", bg = "reset", bold = true }
+title_error = { fg = "#D98BC4", bg = "reset", bold = true }
 
 [help]
-on = { fg = "#C4A7E7", bg = "#0F1020", bold = true }
-run = { fg = "#A3D977", bg = "#0F1020" }
-desc = { fg = "#E0DEF4", bg = "#0F1020" }
+on = { fg = "#C4A7E7", bg = "reset", bold = true }
+run = { fg = "#A3D977", bg = "reset" }
+desc = { fg = "#E0DEF4", bg = "reset" }
 hovered = { fg = "#E0DEF4", bg = "#7C5FB8", bold = true }
-footer = { fg = "#9A86B8", bg = "#0F1020" }
+footer = { fg = "#9A86B8", bg = "reset" }
 
 [filetype]
 rules = [

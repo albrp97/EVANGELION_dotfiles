@@ -1,0 +1,851 @@
+#!/usr/bin/env python3
+"""Persist Yazi video and movie metadata for the user's Videos directory."""
+
+from __future__ import annotations
+
+import argparse
+import fcntl
+import json
+import os
+import re
+import shutil
+import subprocess
+import sys
+import tempfile
+import time
+import unicodedata
+from pathlib import Path
+from typing import Any
+from urllib.error import HTTPError, URLError
+from urllib.parse import urlencode
+from urllib.request import Request, urlopen
+
+
+CACHE_VERSION = 1
+INDEXER_VERSION = 6
+LOOKUPS_PER_RUN = 10
+RETRY_AFTER_SECONDS = 6 * 60 * 60
+WIKIDATA_API = "https://www.wikidata.org/w/api.php"
+FILMAFFINITY_URL = "https://r.jina.ai/http://www.filmaffinity.com/en/film%s.html"
+VIDEO_EXTENSIONS = {
+    "3g2",
+    "3gp",
+    "asf",
+    "avi",
+    "divx",
+    "f4v",
+    "flv",
+    "m2ts",
+    "m4v",
+    "mkv",
+    "mov",
+    "mp4",
+    "mpeg",
+    "mpg",
+    "mxf",
+    "ogv",
+    "rm",
+    "rmvb",
+    "ts",
+    "vob",
+    "webm",
+    "wmv",
+}
+MOVIE_EXTRA_PATTERNS = (
+    "behind the scenes",
+    "bonus",
+    "commemoration",
+    "commentary",
+    "deleted scene",
+    "featurette",
+    "interview",
+    "making of",
+    "most powerful man",
+    "old tucson",
+    "q&a",
+    "screen test",
+    "storyboard",
+    "tv spot",
+    "scrapbook",
+    "look of",
+    "intimate chat",
+    "men who made movies",
+    "trailer",
+    "where legends",
+)
+
+
+def cache_paths() -> tuple[Path, Path]:
+    cache_home = Path(os.environ.get("XDG_CACHE_HOME") or (Path.home() / ".cache"))
+    cache_dir = cache_home / "yazi" / "video-info"
+    return cache_dir / "movie-cache.json", cache_dir / ".movie-cache.lock"
+
+
+def load_cache(path: Path) -> dict[str, Any]:
+    try:
+        value = json.loads(path.read_text(encoding="utf-8"))
+    except (FileNotFoundError, OSError, ValueError):
+        return {"version": CACHE_VERSION, "entries": {}}
+    if not isinstance(value, dict) or value.get("version") != CACHE_VERSION:
+        return {"version": CACHE_VERSION, "entries": {}}
+    entries = value.get("entries")
+    if not isinstance(entries, dict):
+        value["entries"] = {}
+    return value
+
+
+def save_cache(path: Path, cache: dict[str, Any]) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    fd, temporary = tempfile.mkstemp(
+        prefix=f".{path.name}.",
+        suffix=".tmp",
+        dir=path.parent,
+        text=True,
+    )
+    try:
+        with os.fdopen(fd, "w", encoding="utf-8") as stream:
+            json.dump(cache, stream, ensure_ascii=False, indent=2, sort_keys=True)
+            stream.write("\n")
+            stream.flush()
+            os.fsync(stream.fileno())
+        os.chmod(temporary, 0o600)
+        os.replace(temporary, path)
+    finally:
+        try:
+            os.unlink(temporary)
+        except FileNotFoundError:
+            pass
+
+
+def file_signature(path: Path) -> tuple[str, int, int]:
+    stat = path.stat()
+    mtime = int(stat.st_mtime)
+    return f"{stat.st_size}:{mtime}", stat.st_size, mtime
+
+
+def is_video(path: Path) -> bool:
+    return path.suffix.lower().lstrip(".") in VIDEO_EXTENSIONS
+
+
+def scan_videos(root: Path) -> list[Path]:
+    if not root.is_dir():
+        return []
+
+    videos: list[Path] = []
+    for directory, dirnames, filenames in os.walk(root, followlinks=False):
+        dirnames[:] = sorted(
+            name for name in dirnames if not (Path(directory) / name).is_symlink()
+        )
+        for name in sorted(filenames):
+            path = Path(directory) / name
+            if path.is_symlink() or not is_video(path):
+                continue
+            videos.append(path.resolve())
+    return videos
+
+
+def run_ffprobe(path: Path) -> tuple[dict[str, Any] | None, str | None]:
+    command = [
+        "ffprobe",
+        "-v",
+        "error",
+        "-show_entries",
+        "format=duration,format_name:format_tags=title,artist,album,genre,date,year,comment:"
+        "stream=index,codec_type,codec_name,width,height,channels,channel_layout,"
+        "avg_frame_rate,r_frame_rate,bit_rate,profile,pix_fmt:stream_tags=title,language",
+        "-of",
+        "json",
+        "--",
+        str(path),
+    ]
+    try:
+        result = subprocess.run(
+            command,
+            capture_output=True,
+            text=True,
+            timeout=60,
+            check=False,
+        )
+    except (OSError, subprocess.TimeoutExpired) as error:
+        return None, str(error)
+    if result.returncode != 0:
+        return None, result.stderr.strip() or f"ffprobe exited with {result.returncode}"
+    try:
+        decoded = json.loads(result.stdout)
+    except ValueError as error:
+        return None, f"invalid ffprobe JSON: {error}"
+    if not isinstance(decoded, dict):
+        return None, "ffprobe returned a non-object JSON value"
+
+    streams = decoded.get("streams")
+    if not isinstance(streams, list):
+        return None, "ffprobe returned no stream list"
+    video_stream = next(
+        (stream for stream in streams if isinstance(stream, dict) and stream.get("codec_type") == "video"),
+        None,
+    )
+    if video_stream is None:
+        return None, "file has no video stream"
+
+    format_data = decoded.get("format")
+    if not isinstance(format_data, dict):
+        format_data = {}
+    audio = [
+        stream
+        for stream in streams
+        if isinstance(stream, dict) and stream.get("codec_type") == "audio"
+    ]
+    return (
+        {
+            "duration": number(format_data.get("duration")),
+            "width": integer(video_stream.get("width")),
+            "height": integer(video_stream.get("height")),
+            "fps": frame_rate(video_stream.get("avg_frame_rate"))
+            or frame_rate(video_stream.get("r_frame_rate")),
+            "format_name": format_data.get("format_name"),
+            "profile": video_stream.get("profile"),
+            "pix_fmt": video_stream.get("pix_fmt"),
+            "video_codec": video_stream.get("codec_name"),
+            "audio": audio,
+            "tags": format_data.get("tags") if isinstance(format_data.get("tags"), dict) else {},
+            "streams": streams,
+        },
+        None,
+    )
+
+
+def number(value: Any) -> float | None:
+    try:
+        result = float(value)
+    except (TypeError, ValueError):
+        return None
+    return result if result == result and result >= 0 else None
+
+
+def integer(value: Any) -> int | None:
+    result = number(value)
+    return int(result) if result is not None else None
+
+
+def frame_rate(value: Any) -> float | None:
+    if not isinstance(value, str):
+        return number(value)
+    match = re.fullmatch(r"\s*([\d.]+)\s*/\s*([\d.]+)\s*", value)
+    if match:
+        numerator = number(match.group(1))
+        denominator = number(match.group(2))
+        if numerator is not None and denominator:
+            return numerator / denominator
+        return None
+    return number(value)
+
+
+def tag_value(tags: Any, name: str) -> str | None:
+    if not isinstance(tags, dict):
+        return None
+    wanted = name.lower()
+    for key, value in tags.items():
+        if str(key).lower() == wanted and value not in (None, ""):
+            return str(value)
+    return None
+
+
+def clean_title(value: str | None) -> str | None:
+    if not value:
+        return None
+    value = re.sub(r"\[[^\]]*\]|\([^)]*\)|\{[^}]*\}", " ", value)
+    value = re.sub(r"[\._]+", " ", value)
+    value = re.sub(r"\s+", " ", value)
+    value = re.sub(
+        r"\b(?:2160|1440|1080|720|576|480|4k|8k|uhd|fhd|hdr10?|dv|"
+        r"x264|x265|h264|h265|hevc|av1|web[- ]?dl|webrip|bluray|brrip|"
+        r"remux|proper|repack|extended|unrated|directors? cut)\b",
+        " ",
+        value,
+        flags=re.IGNORECASE,
+    )
+    value = re.sub(r"\s+", " ", value).strip(" -_")
+    return value or None
+
+
+def is_movie_extra(path: Path) -> bool:
+    lowered = path.name.lower().replace("_", " ").replace(".", " ")
+    parent_parts = {part.lower().replace("_", " ") for part in path.parts[:-1]}
+    if parent_parts.intersection(
+        {"featurettes", "featurette", "extras", "bonus features", "deleted scenes", "special features"}
+    ):
+        return True
+    return any(pattern in lowered for pattern in MOVIE_EXTRA_PATTERNS)
+
+
+def parse_year(value: str | None) -> str | None:
+    if not value:
+        return None
+    match = re.search(r"\b((?:18|19|20)\d{2})\b", value)
+    return match.group(0) if match else None
+
+
+def title_and_year(value: str | None) -> tuple[str | None, str | None]:
+    if not value:
+        return None, None
+    stem = Path(value).stem
+    year_match = re.search(r"\(((?:18|19|20)\d{2})\)", stem)
+    if not year_match:
+        year_match = re.search(r"(?<![xX])((?:18|19|20)\d{2})(?![xXpP])", stem)
+    year = year_match.group(1) if year_match else None
+    title_source = stem[: year_match.start()] if year_match else stem
+    return clean_title(title_source), year
+
+
+def movie_identity(path: Path, metadata: dict[str, Any] | None) -> dict[str, str] | None:
+    if is_movie_extra(path):
+        return None
+
+    title, year = title_and_year(path.name)
+    tags = metadata.get("tags", {}) if isinstance(metadata, dict) else {}
+    tagged_title = clean_title(tag_value(tags, "title"))
+    tagged_year = parse_year(tag_value(tags, "date") or tag_value(tags, "year"))
+    if tagged_title:
+        title = tagged_title
+    year = year or tagged_year
+
+    parent_title, parent_year = title_and_year(path.parent.name)
+    generic = (title or "").lower() in {"", "movie", "film", "main", "video"}
+    if (not year or generic) and parent_title and parent_year:
+        title = parent_title if generic else title
+        year = year or parent_year
+
+    if not title or len(title) < 2 or (not year and not tagged_title):
+        return None
+    return {
+        "title": title,
+        "year": year or "",
+        "key": f"{title.lower()}:{year or 'unknown'}",
+    }
+
+
+def http_text(url: str, query: dict[str, Any] | None = None) -> str | None:
+    if query:
+        url = f"{url}?{urlencode(query)}"
+    request = Request(
+        url,
+        headers={
+            "User-Agent": "EVANGELION_dotfiles/yazi-video-indexer/1.0 (local metadata cache)",
+            "Accept": "application/json,text/plain,*/*",
+        },
+    )
+    for attempt in range(3):
+        try:
+            with urlopen(request, timeout=3) as response:
+                return response.read(2_000_000).decode("utf-8", errors="replace")
+        except HTTPError as error:
+            if error.code not in (429, 500, 502, 503, 504) or attempt == 2:
+                return None
+            retry_after = error.headers.get("Retry-After")
+            try:
+                delay = min(5.0, max(1.0, float(retry_after or 1)))
+            except ValueError:
+                delay = 1.0
+            time.sleep(delay)
+        except (URLError, TimeoutError, OSError):
+            return None
+    return None
+
+
+def http_json(url: str, query: dict[str, Any]) -> dict[str, Any] | None:
+    text = http_text(url, query)
+    if not text:
+        return None
+    try:
+        value = json.loads(text)
+    except ValueError:
+        return None
+    return value if isinstance(value, dict) else None
+
+
+def normalized_title(value: str) -> str:
+    decomposed = unicodedata.normalize("NFKD", value.casefold())
+    without_marks = "".join(character for character in decomposed if not unicodedata.combining(character))
+    return re.sub(r"[^a-z0-9]+", "", without_marks)
+
+
+def claim_values(claims: dict[str, Any], property_id: str, limit: int = 20) -> list[str]:
+    values: list[str] = []
+    statements = claims.get(property_id, [])
+    if not isinstance(statements, list):
+        return values
+    for statement in statements:
+        if not isinstance(statement, dict) or statement.get("rank") == "deprecated":
+            continue
+        datavalue = statement.get("mainsnak", {}).get("datavalue", {})
+        value = datavalue.get("value") if isinstance(datavalue, dict) else None
+        if isinstance(value, dict):
+            value = (
+                value.get("id")
+                or value.get("text")
+                or value.get("amount")
+                or value.get("time")
+            )
+        if value not in (None, ""):
+            values.append(str(value))
+        if len(values) >= limit:
+            break
+    return values
+
+
+def first_claim(claims: dict[str, Any], property_id: str) -> str | None:
+    values = claim_values(claims, property_id, 1)
+    return values[0] if values else None
+
+
+def year_from_wikidata(value: str | None) -> str | None:
+    if not value:
+        return None
+    return parse_year(value)
+
+
+def labels_for(ids: list[str]) -> dict[str, str]:
+    labels: dict[str, str] = {}
+    unique_ids = list(dict.fromkeys(value for value in ids if value.startswith("Q")))
+    for offset in range(0, len(unique_ids), 50):
+        data = http_json(
+            WIKIDATA_API,
+            {
+                "action": "wbgetentities",
+                "ids": "|".join(unique_ids[offset : offset + 50]),
+                "props": "labels",
+                "languages": "en|mul",
+                "format": "json",
+                "origin": "*",
+            },
+        )
+        entities = data.get("entities", {}) if data else {}
+        if not isinstance(entities, dict):
+            continue
+        for entity_id, entity in entities.items():
+            if not isinstance(entity, dict):
+                continue
+            entity_labels = entity.get("labels", {})
+            if not isinstance(entity_labels, dict):
+                continue
+            label_data = entity_labels.get("en") or entity_labels.get("mul")
+            if not isinstance(label_data, dict):
+                label_data = next(
+                    (
+                        value
+                        for value in entity_labels.values()
+                        if isinstance(value, dict) and value.get("value")
+                    ),
+                    None,
+                )
+            label = label_data.get("value") if label_data else None
+            if label:
+                labels[entity_id] = str(label)
+    return labels
+
+
+def search_wikidata_movie(identity: dict[str, str]) -> dict[str, Any] | None:
+    search_term = identity["title"]
+    if identity.get("year"):
+        search_term = f"{search_term} {identity['year']}"
+    query = {
+        "action": "wbsearchentities",
+        "search": search_term,
+        "language": "en",
+        "uselang": "en",
+        "type": "item",
+        "limit": "10",
+        "format": "json",
+        "origin": "*",
+    }
+    data = http_json(WIKIDATA_API, query)
+    search = data.get("search", []) if data else []
+    if not search and identity.get("year"):
+        query["search"] = identity["title"]
+        data = http_json(WIKIDATA_API, query)
+        search = data.get("search", []) if data else []
+    if not isinstance(search, list):
+        return None
+
+    year = identity.get("year")
+    wanted_title = normalized_title(identity["title"])
+    selected = None
+    best_score = -1
+    for result in search:
+        if not isinstance(result, dict):
+            continue
+        label = str(result.get("label", ""))
+        description = str(result.get("description", "")).lower()
+        label_title = normalized_title(label)
+        score = 0
+        if label_title == wanted_title:
+            score += 20
+        elif label_title.startswith(wanted_title) or wanted_title.startswith(label_title):
+            score += 8
+        if year and year in label:
+            score += 10
+        if any(word in description for word in ("film", "movie", "television film")):
+            score += 5
+        if "video game" in description or "soundtrack" in description:
+            score -= 5
+        if score > best_score:
+            selected, best_score = result, score
+    if best_score < 5:
+        return None
+    qid = selected.get("id") if isinstance(selected, dict) else None
+    if not qid:
+        return None
+
+    entity_data = http_json(
+        WIKIDATA_API,
+        {
+            "action": "wbgetentities",
+            "ids": qid,
+            "props": "claims|labels|descriptions",
+            "languages": "en",
+            "format": "json",
+            "origin": "*",
+        },
+    )
+    entity = entity_data.get("entities", {}).get(qid) if entity_data else None
+    if not isinstance(entity, dict):
+        return None
+    claims = entity.get("claims", {})
+    if not isinstance(claims, dict):
+        claims = {}
+
+    ids_to_label = []
+    for property_id in (
+        "P57",
+        "P136",
+        "P161",
+        "P86",
+        "P344",
+        "P58",
+        "P162",
+        "P495",
+        "P272",
+    ):
+        ids_to_label.extend(claim_values(claims, property_id))
+    labels = labels_for(ids_to_label)
+
+    def named(property_id: str, limit: int = 20) -> str | None:
+        values = []
+        for value in claim_values(claims, property_id, limit):
+            label = labels.get(value)
+            if label:
+                values.append(label)
+            elif not re.fullmatch(r"Q\d+", value):
+                values.append(value)
+        return ", ".join(values) if values else None
+
+    original_title = None
+    original_title_claims = claims.get("P1476", [])
+    if isinstance(original_title_claims, list) and original_title_claims:
+        first_statement = original_title_claims[0]
+        if isinstance(first_statement, dict):
+            value = first_statement.get("mainsnak", {}).get("datavalue", {}).get("value", {})
+            if isinstance(value, dict):
+                original_title = value.get("text")
+
+    runtime = first_claim(claims, "P2047")
+    if runtime:
+        runtime_number = runtime.lstrip("+").split(" ")[0]
+        runtime = f"{runtime_number} min"
+
+    return {
+        "title": entity.get("labels", {}).get("en", {}).get("value") or identity["title"],
+        "original_title": original_title,
+        "year": year_from_wikidata(first_claim(claims, "P577")) or identity.get("year"),
+        "runtime": runtime,
+        "director": named("P57"),
+        "genre": named("P136"),
+        "cast": named("P161"),
+        "composer": named("P86"),
+        "cinematography": named("P344"),
+        "writer": named("P58"),
+        "producer": named("P162"),
+        "country": named("P495"),
+        "film_affinity_id": first_claim(claims, "P480"),
+        "imdb_id": first_claim(claims, "P345"),
+        "wikidata_id": qid,
+        "source": "Wikidata",
+    }
+
+
+def markdown_names(section: str) -> str | None:
+    names = re.findall(
+        r"!\[[^\]]*\]\([^)]*\)([^\[\]\n]+)\]\([^)]*name\.php[^)]*\)",
+        section,
+    )
+    names += re.findall(r"\[([^\[\]\n]+)\]\([^)]*name\.php[^)]*\)", section)
+    if not names:
+        names = re.findall(r"\[([^\[\]\n]+)\]\([^)]*\)", section)
+    cleaned = []
+    for name in names:
+        name = re.sub(r"!\[[^\]]*\]\([^)]*\)", "", name)
+        name = re.sub(r"\*\*", "", name)
+        name = re.sub(r"\s+", " ", name).strip()
+        if name and name not in cleaned:
+            cleaned.append(name)
+    return ", ".join(cleaned) if cleaned else None
+
+
+def section(text: str, heading: str, next_headings: tuple[str, ...]) -> str:
+    start = text.lower().find(heading.lower())
+    if start < 0:
+        return ""
+    end = len(text)
+    for next_heading in next_headings:
+        candidate = text.lower().find(next_heading.lower(), start + len(heading))
+        if candidate >= 0:
+            end = min(end, candidate)
+    return text[start:end]
+
+
+def parse_filmaffinity(text: str, movie: dict[str, Any]) -> dict[str, Any] | None:
+    if not text or "Original title" not in text:
+        return None
+    parsed = dict(movie)
+    details_start = text.find("Original title")
+    details = text[details_start:] if details_start >= 0 else text
+    details_end = details.lower().find("about similar movies")
+    if details_end >= 0:
+        details = details[:details_end]
+
+    title_match = re.search(r"(?m)^#\s*(.+?)\s*$", details)
+    if title_match:
+        parsed["title"] = title_match.group(1).strip()
+    original_match = re.search(r"Original title\s+(.+?)\s+Year\s+", details, re.S)
+    if original_match:
+        parsed["original_title"] = re.sub(r"\s+", " ", original_match.group(1)).strip()
+    year_match = re.search(r"\bYear\s+((?:18|19|20)\d{2})\b", details)
+    if year_match:
+        parsed["year"] = year_match.group(1)
+    score_patterns = (
+        r"(?is)!\[[^\]]*\bRating\b[^\n]*\n+\s*([0-9]+(?:[.,][0-9]+)?)\s*\n+\s*[\d,]+\s+Votes\b",
+        r"(?is)\bRating\b.{0,300}?([0-9]+(?:[.,][0-9]+)?)\s*\n+\s*[\d,]+\s+Votes\b",
+    )
+    for score_pattern in score_patterns:
+        score_match = re.search(score_pattern, text)
+        if not score_match:
+            continue
+        score = score_match.group(1).replace(",", ".")
+        if 0 <= float(score) <= 10:
+            parsed["score"] = score
+            break
+    runtime_match = re.search(r"(?im)Running time\s+(\d+(?:\.\d+)?)\s*min\b", details)
+    if runtime_match:
+        parsed["runtime"] = f"{runtime_match.group(1)} min"
+
+    country_match = re.search(
+        r"Country(.*?)(?:\bDirector\b)",
+        details,
+        re.S,
+    )
+    if country_match:
+        country = re.sub(r"!\[[^\]]*\]\([^)]*\)", "", country_match.group(1))
+        country = re.sub(r"\s+", " ", country).strip(" .|")
+        if country:
+            parsed["country"] = country
+
+    genre_section = section(details, "Genre", ("Synopsis",)).split("|", 1)[0]
+    parsed["genre"] = markdown_names(genre_section) or parsed.get("genre")
+    parsed["director"] = markdown_names(
+        section(details, "Director", ("Screenwriter", "Cast"))
+    ) or parsed.get("director")
+    parsed["writer"] = markdown_names(
+        section(details, "Screenwriter", ("Cast", "Music"))
+    ) or parsed.get("writer")
+    parsed["composer"] = markdown_names(
+        section(details, "Music", ("Cinematography", "Producer"))
+    ) or parsed.get("composer")
+    parsed["cinematography"] = markdown_names(
+        section(details, "Cinematography", ("Producer", "Genre"))
+    ) or parsed.get("cinematography")
+    parsed["cast"] = markdown_names(
+        section(details, "Cast", ("Music", "Cinematography"))
+    ) or parsed.get("cast")
+    parsed["producer"] = markdown_names(
+        section(details, "Producer", ("Genre",))
+    ) or parsed.get("producer")
+    synopsis_match = re.search(
+        r"(?is)(?:^|\n)(?:##?\s*)?(?:Synopsis|Plot)\s*\n+(.*?)(?=\n##?\s|\Z)",
+        details,
+    )
+    if synopsis_match:
+        synopsis = re.sub(r"\s+", " ", synopsis_match.group(1)).strip()
+        if synopsis:
+            parsed["synopsis"] = synopsis
+    parsed["source"] = "Wikidata + FilmAffinity"
+    return parsed
+
+
+def enrich_filmaffinity(movie: dict[str, Any]) -> dict[str, Any]:
+    film_id = movie.get("film_affinity_id")
+    if not film_id:
+        return movie
+    for suffix in ("?lang=en", "?output=1"):
+        text = http_text(f"{FILMAFFINITY_URL % film_id}{suffix}")
+        parsed = parse_filmaffinity(text or "", movie)
+        if parsed:
+            return parsed
+    return movie
+
+
+def lookup_movie(identity: dict[str, str], offline: bool) -> tuple[dict[str, Any] | None, str]:
+    if offline:
+        return None, "offline"
+    movie = search_wikidata_movie(identity)
+    if not movie:
+        return None, "unavailable"
+    return enrich_filmaffinity(movie), "ready"
+
+
+def make_entry(
+    path: Path,
+    force: bool,
+    old: dict[str, Any] | None,
+    offline: bool,
+    allow_lookup: bool,
+) -> tuple[dict[str, Any], bool]:
+    signature, size, mtime = file_signature(path)
+    now = int(time.time())
+    old_status = old.get("movie_status") if isinstance(old, dict) else None
+    if (
+        not force
+        and isinstance(old, dict)
+        and old.get("signature") == signature
+        and old.get("indexer_version") == INDEXER_VERSION
+        and old_status != "queued"
+        and not (old_status == "offline" and not offline)
+    ):
+        retry_after = old.get("retry_after")
+        if not retry_after or now < int(retry_after):
+            return old, False
+
+    if (
+        isinstance(old, dict)
+        and old.get("signature") == signature
+        and isinstance(old.get("metadata"), dict)
+        and not force
+    ):
+        metadata = old["metadata"]
+        probe_error = old.get("probe_error")
+        identity = movie_identity(path, metadata)
+    else:
+        metadata, probe_error = run_ffprobe(path)
+        identity = movie_identity(path, metadata)
+    entry: dict[str, Any] = {
+        "indexer_version": INDEXER_VERSION,
+        "path": str(path),
+        "signature": signature,
+        "size": size,
+        "mtime": mtime,
+        "indexed_at": now,
+        "metadata": metadata,
+        "identity": identity,
+        "movie": None,
+        "movie_status": "not_movie",
+    }
+    if probe_error:
+        entry["probe_error"] = probe_error[:500]
+        entry["movie_status"] = "probe_failed"
+        return entry, False
+    if not identity:
+        return entry, False
+
+    if not allow_lookup:
+        entry["movie_status"] = "queued"
+        return entry, False
+
+    movie, status = lookup_movie(identity, offline)
+    entry["movie"] = movie
+    entry["movie_status"] = status
+    if status == "unavailable":
+        entry["retry_after"] = now + RETRY_AFTER_SECONDS
+    return entry, True
+
+
+def run(root: Path, force: bool, offline: bool) -> int:
+    cache_path, lock_path = cache_paths()
+    cache_path.parent.mkdir(parents=True, exist_ok=True)
+    with lock_path.open("w", encoding="utf-8") as lock:
+        try:
+            fcntl.flock(lock.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
+        except BlockingIOError:
+            print("video indexer is already running")
+            return 0
+
+        cache = load_cache(cache_path)
+        old_entries = cache.get("entries", {})
+        if not isinstance(old_entries, dict):
+            old_entries = {}
+        paths = scan_videos(root)
+        entries: dict[str, Any] = {}
+        changed = force or set(old_entries) != {str(path) for path in paths}
+        processed = 0
+        enriched = 0
+        lookup_budget = None if force else LOOKUPS_PER_RUN
+        for path in paths:
+            key = str(path)
+            old = old_entries.get(key)
+            entry, did_lookup = make_entry(
+                path,
+                force,
+                old,
+                offline,
+                lookup_budget is None or lookup_budget > 0,
+            )
+            entries[key] = entry
+            if entry is not old:
+                changed = True
+                processed += 1
+            if did_lookup and lookup_budget is not None:
+                lookup_budget -= 1
+            if entry.get("movie_status") == "ready":
+                enriched += 1
+
+        cache = {
+            "version": CACHE_VERSION,
+            "generated_at": int(time.time()),
+            "root": str(root),
+            "entries": entries,
+        }
+        if changed or not cache_path.exists():
+            save_cache(cache_path, cache)
+
+        print(
+            f"indexed {len(paths)} video(s), refreshed {processed}, "
+            f"movie metadata ready for {enriched}, cache {cache_path}"
+        )
+    return 0
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(
+        description="Persist Yazi video/movie metadata for ~/Videos."
+    )
+    parser.add_argument(
+        "--refresh",
+        action="store_true",
+        help="reprobe and re-query every video instead of using matching cache entries",
+    )
+    parser.add_argument(
+        "--offline",
+        action="store_true",
+        help="record movie identities without making online metadata requests",
+    )
+    args = parser.parse_args()
+
+    if shutil.which("ffprobe") is None:
+        print("ffprobe is required to index videos", file=sys.stderr)
+        return 1
+
+    root = (Path.home() / "Videos").resolve()
+    root.mkdir(parents=True, exist_ok=True)
+    return run(root, args.refresh, args.offline or os.environ.get("YAZI_VIDEO_INFO_OFFLINE") == "1")
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

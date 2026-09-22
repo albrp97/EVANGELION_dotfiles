@@ -43,6 +43,7 @@ PACMAN_PACKAGES=(
   noctalia
   perl
   poppler
+  python
   resvg
   ripgrep
   satty

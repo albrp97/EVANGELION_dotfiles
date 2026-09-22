@@ -1,0 +1,21 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+notes_file="${RICE_NOTES_FILE:-$HOME/code/notes/txt/Todo.md}"
+if [[ ! -f "$notes_file" ]]; then
+    echo "Notes file not found: $notes_file" >&2
+    echo "Set RICE_NOTES_FILE to override the default path." >&2
+    exit 1
+fi
+
+code_launcher="${RICE_CODE_LAUNCHER:-$HOME/bin/code}"
+if [[ ! -x "$code_launcher" ]]; then
+    code_launcher="$(command -v code || true)"
+fi
+
+if [[ -z "$code_launcher" ]]; then
+    echo "Code OSS launcher not found. Install the dotfiles or set RICE_CODE_LAUNCHER." >&2
+    exit 1
+fi
+
+exec "$code_launcher" "$notes_file"

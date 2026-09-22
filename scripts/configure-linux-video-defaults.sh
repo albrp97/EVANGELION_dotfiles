@@ -24,6 +24,8 @@ video_mimes=(
   video/flv
   video/mp2t
   video/mp4
+  video/matroska
+  video/mkv
   video/mpeg
   video/ogg
   video/quicktime
@@ -33,6 +35,9 @@ video_mimes=(
   video/x-flv
   video/x-m4v
   video/x-matroska
+  application/x-matroska
+  audio/matroska
+  audio/x-matroska
   video/x-ms-asf
   video/x-msvideo
   video/x-ms-wmv

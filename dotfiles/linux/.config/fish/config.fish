@@ -8,6 +8,14 @@ if functions -q update
     functions -e update
 end
 
+# Ask once in the first interactive Fish shell when the global sudo ticket is
+# not already valid. The sudoers drop-in is installed by install-dotfiles.sh.
+if status is-interactive; and type -q sudo; and test -e /etc/sudoers.d/90-eva-sudo-session
+    if not command sudo -n -v >/dev/null 2>&1
+        command sudo -v
+    end
+end
+
 function update --description 'Run staged package updates'
     command "$HOME/bin/update" $argv
 end

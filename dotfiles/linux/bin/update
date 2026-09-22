@@ -68,7 +68,68 @@ else
     esac
 fi
 
-printf '\n%sPacman performs full upgrades; approving this also installs waiting packages.%s\n' "$MUTED" "$RESET"
+ready_pacman=()
+ready_aur=()
+ready_flatpak=()
+waiting_pacman=()
+dependency_deferred_pacman=()
+promoted_pacman=()
+pacman_targets=()
+pacman_ignore_args=()
+pacman_preflight_output=''
+
+if [ "$force_now" -eq 0 ]; then
+    read_ready_packages() {
+        local source="$1"
+        local -n destination="$2"
+        local output
+
+        if ! output="$("$status_helper" --ready-names "$source")"; then
+            return 1
+        fi
+        if [ "$output" = "unknown" ]; then
+            return 1
+        fi
+        if [ -n "$output" ]; then
+            mapfile -t destination <<< "$output"
+        fi
+    }
+
+    read_waiting_packages() {
+        local source="$1"
+        local -n destination="$2"
+        local output
+
+        if ! output="$("$status_helper" --waiting-names "$source")"; then
+            return 1
+        fi
+        if [ "$output" = "unknown" ]; then
+            return 1
+        fi
+        if [ -n "$output" ]; then
+            mapfile -t destination <<< "$output"
+        fi
+    }
+
+    if ! read_ready_packages pacman ready_pacman \
+        || ! read_ready_packages aur ready_aur \
+        || ! read_ready_packages flatpak ready_flatpak \
+        || ! read_waiting_packages pacman waiting_pacman; then
+        printf '%sCould not determine the ready package names. Update cancelled.%s\n' "$ROSE$BOLD" "$RESET" >&2
+        exit 1
+    fi
+
+    for package in "${waiting_pacman[@]}"; do
+        pacman_ignore_args+=(--ignore "$package")
+    done
+    pacman_targets=("${ready_pacman[@]}")
+fi
+
+if [ "$force_now" -eq 0 ]; then
+    printf '\n%sOnly packages marked Ready now are selected; pacman may include a waiting package when it is required for a safe dependency transition.%s\n' "$MUTED" "$RESET"
+else
+    printf '\n%sThis updates all pending packages, including those still in the waiting period.%s\n' "$MUTED" "$RESET"
+fi
 printf '%s%sUpdate now? [Y/n] %s' "$BOLD" "$ORANGE" "$RESET"
 if ! IFS= read -r answer; then
     printf '\n%sUpdate cancelled.%s\n' "$MUTED" "$RESET"
@@ -94,9 +155,225 @@ run_step() {
     status=1
 }
 
+contains_package() {
+    local needle="$1"
+    shift
+    local package
+
+    for package in "$@"; do
+        if [ "$package" = "$needle" ]; then
+            return 0
+        fi
+    done
+    return 1
+}
+
+include_waiting_package() {
+    local package="$1"
+
+    if contains_package "$package" "${promoted_pacman[@]}"; then
+        return 1
+    fi
+    promoted_pacman+=("$package")
+    printf '%sIncluding %s because it is required to keep the selected update dependency-safe.%s\n' \
+        "$ORANGE" "$package" "$RESET"
+    return 0
+}
+
+rebuild_pacman_ignore_args() {
+    pacman_ignore_args=()
+    local package
+
+    for package in "${waiting_pacman[@]}"; do
+        if ! contains_package "$package" "${promoted_pacman[@]}"; then
+            pacman_ignore_args+=(--ignore "$package")
+        fi
+    done
+}
+
+candidate_dependencies() {
+    pacman -Si "$1" 2>/dev/null |
+        awk '
+            /^Depends On[[:space:]]*:/ {
+                in_deps = 1
+                sub(/^[^:]*:[[:space:]]*/, "")
+                print
+                next
+            }
+            in_deps && /^[^[:space:]][^:]*[[:space:]]:/ { exit }
+            in_deps { print }
+        ' |
+        tr ' ' '\n' |
+        sed -E 's/[<>=].*$//' |
+        grep -E '^[[:alnum:]][[:alnum:]_.+@:-]*$' || true
+}
+
+pacman_preflight() {
+    local output
+
+    output="$(sudo pacman -S --print --needed \
+        "${pacman_ignore_args[@]}" "$@" 2>&1)" || {
+        pacman_preflight_output="$output"
+        return 1
+    }
+    pacman_preflight_output=''
+    return 0
+}
+
+promote_waiting_dependencies() {
+    local output="$1"
+    local package
+    local found=1
+
+    for package in "${waiting_pacman[@]}"; do
+        if contains_package "$package" "${promoted_pacman[@]}"; then
+            continue
+        fi
+        if printf '%s\n' "$output" | grep -Eq \
+            "required by ${package}([[:space:]]|$)|dependency '${package}(=|')"; then
+            if include_waiting_package "$package"; then
+                found=0
+            fi
+        fi
+    done
+
+    if [ "$found" -eq 0 ]; then
+        rebuild_pacman_ignore_args
+        return 0
+    fi
+    return 1
+}
+
+promote_candidate_dependencies() {
+    local package_name="$1"
+    local dependencies
+    local dependency
+    local found=1
+
+    dependencies="$(candidate_dependencies "$package_name")"
+    while IFS= read -r dependency; do
+        if [ -n "$dependency" ] \
+            && contains_package "$dependency" "${waiting_pacman[@]}" \
+            && include_waiting_package "$dependency"; then
+            found=0
+        fi
+    done <<< "$dependencies"
+
+    if [ "$found" -eq 0 ]; then
+        rebuild_pacman_ignore_args
+        return 0
+    fi
+    return 1
+}
+
+process_promoted_dependencies() {
+    local -n targets_ref="$1"
+    local -n processed_ref="$2"
+    local package
+
+    while [ "$processed_ref" -lt "${#promoted_pacman[@]}" ]; do
+        package="${promoted_pacman[processed_ref]}"
+        if ! contains_package "$package" "${targets_ref[@]}"; then
+            targets_ref+=("$package")
+        fi
+        promote_candidate_dependencies "$package" || true
+        processed_ref=$((processed_ref + 1))
+    done
+}
+
+extract_blocked_package() {
+    local output="$1"
+
+    printf '%s\n' "$output" | sed -nE \
+        -e 's/^:: installing ([^[:space:]]+).*/\1/p' \
+        -e 's/^:: unable to satisfy dependency .* required by ([^[:space:]]+)$/\1/p' |
+        head -n 1
+}
+
+resolve_pacman_packages() {
+    local -n packages_ref="$1"
+    local -n deferred_ref="$2"
+    local -a remaining=("${packages_ref[@]}")
+    local -a next=()
+    local -a trial=()
+    local blocked_name
+    local package
+    local index
+    local processed_promoted_count=0
+
+    for package in "${remaining[@]}"; do
+        promote_candidate_dependencies "$package" || true
+    done
+    process_promoted_dependencies remaining processed_promoted_count
+
+    while [ "${#remaining[@]}" -gt 0 ]; do
+        if pacman_preflight "${remaining[@]}"; then
+            packages_ref=("${remaining[@]}")
+            return 0
+        fi
+
+        if promote_waiting_dependencies "$pacman_preflight_output"; then
+            process_promoted_dependencies remaining processed_promoted_count
+            continue
+        fi
+
+        blocked_name="$(extract_blocked_package "$pacman_preflight_output")"
+        if ! contains_package "$blocked_name" "${remaining[@]}"; then
+            blocked_name=''
+            for index in "${!remaining[@]}"; do
+                trial=(
+                    "${remaining[@]:0:index}"
+                    "${remaining[@]:index+1}"
+                )
+                if [ "${#trial[@]}" -eq 0 ] || pacman_preflight "${trial[@]}"; then
+                    blocked_name="${remaining[index]}"
+                    break
+                fi
+            done
+        fi
+
+        if [ -z "$blocked_name" ]; then
+            printf '%sDependency preflight could not find a safe package subset.%s\n' \
+                "$ROSE$BOLD" "$RESET" >&2
+            printf '%s\n' "$pacman_preflight_output" >&2
+            packages_ref=()
+            deferred_ref+=("${remaining[@]}")
+            return 1
+        fi
+
+        deferred_ref+=("$blocked_name")
+        printf '%sDeferring %s because it cannot be installed without an available dependency transition.%s\n' \
+            "$ORANGE" "$blocked_name" "$RESET"
+        next=()
+        for package in "${remaining[@]}"; do
+            if [ "$package" != "$blocked_name" ]; then
+                next+=("$package")
+            fi
+        done
+        remaining=("${next[@]}")
+    done
+
+    packages_ref=()
+    return 0
+}
+
 if command -v pacman >/dev/null 2>&1; then
     if command -v sudo >/dev/null 2>&1; then
-        run_step "CachyOS and system packages" sudo pacman -Syu
+        if [ "$force_now" -eq 1 ]; then
+            run_step "CachyOS and system packages" sudo pacman -Syu
+        elif [ "${#ready_pacman[@]}" -gt 0 ]; then
+            if run_step "Synchronizing package databases" sudo pacman -Sy; then
+                if resolve_pacman_packages pacman_targets dependency_deferred_pacman; then
+                    if [ "${#pacman_targets[@]}" -gt 0 ]; then
+                        run_step "CachyOS and system packages" \
+                            sudo pacman -S --needed \
+                            "${pacman_ignore_args[@]}" "${pacman_targets[@]}"
+                    fi
+                else
+                    status=1
+                fi
+            fi
+        fi
     else
         printf '%ssudo is required to update system packages.%s\n' "$ROSE" "$RESET" >&2
         status=1
@@ -106,13 +383,25 @@ else
 fi
 
 if command -v paru >/dev/null 2>&1; then
-    run_step "AUR packages" paru -Sua
+    if [ "$force_now" -eq 1 ]; then
+        run_step "AUR packages" paru -Sua
+    elif [ "${#ready_aur[@]}" -gt 0 ]; then
+        run_step "AUR packages" paru -S --needed "${ready_aur[@]}"
+    fi
 elif command -v yay >/dev/null 2>&1; then
-    run_step "AUR packages" yay -Sua
+    if [ "$force_now" -eq 1 ]; then
+        run_step "AUR packages" yay -Sua
+    elif [ "${#ready_aur[@]}" -gt 0 ]; then
+        run_step "AUR packages" yay -S --needed "${ready_aur[@]}"
+    fi
 fi
 
 if command -v flatpak >/dev/null 2>&1; then
-    run_step "Flatpak applications" flatpak update
+    if [ "$force_now" -eq 1 ]; then
+        run_step "Flatpak applications" flatpak update
+    elif [ "${#ready_flatpak[@]}" -gt 0 ]; then
+        run_step "Flatpak applications" flatpak update "${ready_flatpak[@]}"
+    fi
 fi
 
 if [ -x "$status_helper" ]; then
@@ -120,7 +409,17 @@ if [ -x "$status_helper" ]; then
 fi
 
 if [ "$status" -eq 0 ]; then
-    printf '\n%s%sAll available updates finished successfully.%s\n' "$BOLD" "$GREEN" "$RESET"
+    if [ "${#dependency_deferred_pacman[@]}" -gt 0 ]; then
+        printf '\n%s%sUpdates finished; dependency-blocked packages were left untouched:%s\n' \
+            "$BOLD" "$ORANGE" "$RESET"
+        printf '  %s\n' "${dependency_deferred_pacman[*]}"
+    elif [ "${#promoted_pacman[@]}" -gt 0 ]; then
+        printf '\n%s%sAll safe updates finished; required dependency companions were included:%s\n' \
+            "$BOLD" "$GREEN" "$RESET"
+        printf '  %s\n' "${promoted_pacman[*]}"
+    else
+        printf '\n%s%sAll available updates finished successfully.%s\n' "$BOLD" "$GREEN" "$RESET"
+    fi
 else
     printf '\n%sSome update sources reported a failure.%s\n' "$ROSE$BOLD" "$RESET" >&2
 fi

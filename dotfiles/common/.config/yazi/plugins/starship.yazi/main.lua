@@ -18,6 +18,16 @@ local get_current_cwd = ya.sync(function()
     return cx.active.current.cwd
 end)
 
+local url_is_regular = ya.sync(function(_, path)
+    local url = Url(path)
+
+    if url.spec then
+        return url.spec.is_regular
+    end
+
+    return url.is_regular
+end)
+
 -- Helper function for accessing the `config_file` state variable
 ---@return string
 local get_config_file = ya.sync(function(st)
@@ -61,7 +71,7 @@ return {
                     config_file = config_file:gsub("^~", home):gsub("^%$HOME", home)
                 end
 
-                if Url(config_file).is_regular then
+                if url_is_regular(config_file) then
                     st.config_file = config_file
                 end
             end

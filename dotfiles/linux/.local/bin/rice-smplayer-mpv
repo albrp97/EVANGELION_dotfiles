@@ -1,0 +1,80 @@
+#!/usr/bin/env bash
+set -u
+
+filtered_args=()
+skip_next_value=false
+for argument in "$@"; do
+    if [[ "$skip_next_value" == true ]]; then
+        skip_next_value=false
+        continue
+    fi
+
+    case "$argument" in
+        --input-x11-keyboard=*)
+            ;;
+        --volume=*|--osd-level=*|--osd-on-seek=*|--osd-bar=*)
+            ;;
+        --volume|--osd-level|--osd-on-seek)
+            skip_next_value=true
+            ;;
+        --osd-bar)
+            ;;
+        *)
+            filtered_args+=("$argument")
+            ;;
+    esac
+done
+
+playlist_detected=false
+media_count=0
+skip_parent_value=0
+
+if [[ -r "/proc/$PPID/cmdline" ]]; then
+    while IFS= read -r -d '' parent_argument; do
+        if (( skip_parent_value > 0 )); then
+            ((skip_parent_value -= 1))
+            continue
+        fi
+
+        case "$parent_argument" in
+            smplayer|*/smplayer)
+                continue
+                ;;
+        esac
+
+        case "$parent_argument" in
+            -config-path|-sub|-media-title|-actions|-send-action|-start)
+                skip_parent_value=1
+                continue
+                ;;
+            -pos|-size)
+                skip_parent_value=2
+                continue
+                ;;
+            -*)
+                continue
+                ;;
+        esac
+
+        case "${parent_argument,,}" in
+            *.m3u|*.m3u8|*.pls|*.xspf|*.cue|*.asx)
+                playlist_detected=true
+                ;;
+        esac
+
+        if [[ -f "$parent_argument" || "$parent_argument" == *://* ]]; then
+            ((media_count += 1))
+        fi
+    done < "/proc/$PPID/cmdline"
+fi
+
+if (( media_count > 1 )); then
+    playlist_detected=true
+fi
+
+if [[ "$playlist_detected" == false ]]; then
+    filtered_args+=(--loop-file=inf)
+fi
+
+filtered_args+=(--osd-level=0 --osd-on-seek=no --osd-bar=no --volume=30)
+exec /usr/bin/mpv "${filtered_args[@]}"

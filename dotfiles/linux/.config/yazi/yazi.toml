@@ -22,7 +22,7 @@ sixel_fraction = 15
 
 [opener]
 edit = [
-  { run = 'code --reuse-window %s', orphan = true, desc = "VS Code" },
+  { run = '$HOME/bin/code --reuse-window %s', orphan = true, desc = "VS Code" },
   { run = '$EDITOR %s', block = true, desc = "$EDITOR" }
 ]
 open = [
@@ -35,7 +35,7 @@ reveal = [
   { run = 'dolphin --select %s1', orphan = true, desc = "Reveal in Dolphin" }
 ]
 code_dir = [
-  { run = 'code --reuse-window %s1', orphan = true, desc = "Open folder in VS Code" }
+  { run = '$HOME/bin/code --reuse-window %s1', orphan = true, desc = "Open folder in VS Code" }
 ]
 terminal = [
   { run = 'kitty --directory %s1', orphan = true, desc = "Open Kitty here" }

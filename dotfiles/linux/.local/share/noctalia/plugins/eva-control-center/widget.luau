@@ -528,6 +528,8 @@ if printf '%s\n' "$player" | grep -q '^ba{sv} true '; then
     title="$(printf '%s\n' "$player" | sed -n 's/.*"identity" s "\(.*\)" "length_us".*/\1/p')"
   fi
   if [ -n "$title" ]; then
+    # busctl escapes non-ASCII UTF-8 bytes as octal sequences.
+    title="$(printf '%b' "$title")"
     printf 'present\t%s\n' "$title"
     exit 0
   fi

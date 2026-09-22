@@ -10,8 +10,8 @@ hl.config({
             splash = CACHYLGREEN,
         },
         middle_click_paste = false,
-        enable_swallow = true,
-        swallow_regex = "(kitty|ghostty|[Kk]onsole|Alacritty|gnome-terminal|xfce[0-9]?-terminal)",
+        -- Keep the terminal visible when it launches a GUI app from the shell or Yazi.
+        enable_swallow = false,
         vrr = 3,
     },
     xwayland = {

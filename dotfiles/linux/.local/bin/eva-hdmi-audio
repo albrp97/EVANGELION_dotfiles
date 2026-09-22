@@ -24,6 +24,15 @@ get_card() {
     jq -c --arg name "$card_name" '.[] | select(.name == $name)'
 }
 
+find_bluetooth_sink() {
+  pactl -f json list sinks |
+    jq -r '
+      .[]
+      | select((.properties["api.bluez5.address"] // "") != "")
+      | .name
+    ' | head -n 1
+}
+
 profile_is_available() {
   local card_json="$1"
   local profile="$2"
@@ -98,6 +107,20 @@ configure_audio() {
   local current_sink
   local attempt
   local sink_profile
+  local bluetooth_sink
+
+  bluetooth_sink="$(find_bluetooth_sink)"
+  if [[ -n "$bluetooth_sink" ]]; then
+    current_sink="$(pactl get-default-sink 2>/dev/null || true)"
+    if [[ "$current_sink" != "$bluetooth_sink" ]]; then
+      log "Bluetooth sink available; setting default sink to $bluetooth_sink"
+      if ! pactl set-default-sink "$bluetooth_sink"; then
+        log "failed to set default sink to $bluetooth_sink"
+        return 1
+      fi
+    fi
+    return 0
+  fi
 
   card_json="$(get_card)" || {
     log "could not query the NVIDIA audio card"

@@ -157,7 +157,19 @@ install_layer "$COMMON_DIR" yes
 install_layer "$PLATFORM_DIR" no
 
 if [[ "$platform" == "linux" ]]; then
+  "$ROOT_DIR/scripts/configure-sudo-session.sh"
+  "$ROOT_DIR/scripts/configure-linux-greetd.sh"
   install_eva_virtual_click
+  if command -v balooctl6 >/dev/null 2>&1 \
+    && systemctl --user daemon-reload \
+    && systemctl --user enable kde-baloo.service \
+    && systemctl --user restart kde-baloo.service \
+    && balooctl6 enable >/dev/null; then
+    :
+  else
+    echo "Could not enable Baloo video metadata indexing; install the baloo package and run balooctl6 enable." >&2
+  fi
+
   if [[ -f /usr/share/applications/smplayer.desktop ]]; then
     "$ROOT_DIR/scripts/configure-linux-video-defaults.sh"
   else
@@ -170,6 +182,15 @@ if [[ "$platform" == "linux" ]]; then
     :
   else
     echo "Could not enable the EVA wallpaper rotation timer; run systemctl --user enable --now eva-wallpaper-rotation.timer." >&2
+  fi
+
+  if command -v systemctl >/dev/null 2>&1 \
+    && systemctl --user daemon-reload \
+    && systemctl --user enable --now eva-video-movie-indexer.timer \
+    && systemctl --user start --no-block eva-video-movie-indexer.service; then
+    :
+  else
+    echo "Could not enable the Yazi video indexer timer; run systemctl --user enable --now eva-video-movie-indexer.timer." >&2
   fi
 
   if [[ -x /usr/share/losslesscut/losslesscut ]]; then
@@ -192,11 +213,15 @@ if [[ "$platform" == "linux" && -d "$COMMON_DIR/.vscode/extensions" ]]; then
   install_tree_to_root "$COMMON_DIR/.vscode/extensions" "$HOME/.vscode-oss/extensions"
 fi
 
+if [[ "$platform" == "linux" ]]; then
+  "$ROOT_DIR/scripts/install-code-extensions.sh"
+fi
+
 if [[ -d "$COMMON_DIR/zen" ]]; then
   "$ROOT_DIR/scripts/configure-zen.sh" "$COMMON_DIR/zen" "$BACKUP_DIR/zen"
 fi
 
-chmod u+x "$HOME/bin/copilot" "$HOME/bin/code" "$HOME/bin/losslesscut" "$HOME/bin/update" 2>/dev/null || true
+chmod u+x "$HOME/bin/copilot" "$HOME/bin/code" "$HOME/bin/losslesscut" "$HOME/bin/notes" "$HOME/bin/update" 2>/dev/null || true
 find "$HOME/.local/bin" -type f -name 'rice-*' -exec chmod u+x {} + 2>/dev/null || true
 find "$HOME/.local/bin" -type f \( -name 'screenshot-*' -o -name 'paste-*' \) -exec chmod u+x {} + 2>/dev/null || true
 chmod u+x "$HOME/.config/sketchybar/sketchybarrc" "$HOME/.config/sketchybar/plugins/"*.sh 2>/dev/null || true

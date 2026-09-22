@@ -77,7 +77,7 @@ After installation, grant Accessibility/Input Monitoring permissions to the appl
 
 The Linux configuration targets CachyOS/Arch with Hyprland under UWSM, Noctalia, Fish, Kitty or Ghostty, Solaar, Satty, Vivaldi, and the EVA geometry-aware window grid. The bootstrap installs the available repository dependencies and uses `paru` or `yay` for `zen-browser-bin` when possible.
 
-The Linux Code OSS launcher is `~/bin/code`. It uses the system Code OSS CLI and Electron while loading a patched, user-owned main bundle so package updates do not modify `/usr/lib/code`.
+The Linux Code OSS launcher is `~/bin/code`. It uses the system Code OSS CLI and Electron while loading a patched, user-owned main bundle so package updates do not modify `/usr/lib/code`. The Linux installer also adds the `tomoki1207.pdf` Open VSX extension so PDF files render inside Code OSS. From any terminal, run `notes` to open `~/code/notes/txt/Todo.md` in Code OSS.
 
 See [docs/user-guide.md](docs/user-guide.md) for the shared workflow and OS-specific shortcuts. The detailed configuration map is in [docs/manual-config.md](docs/manual-config.md).
 

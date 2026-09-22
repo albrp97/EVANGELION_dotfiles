@@ -39,21 +39,103 @@ local MOVIE_EXTRA_PATTERNS = {
 	"making of",
 	"most powerful man",
 	"old tucson",
+	"q&a",
+	"screen test",
+	"storyboard",
+	"tv spot",
+	"scrapbook",
+	"look of",
+	"intimate chat",
+	"men who made movies",
 	"trailer",
 	"where legends",
 }
 
 local MOVIE_LOOKUP_DISABLED = os.getenv("YAZI_VIDEO_INFO_OFFLINE") == "1"
-local MOVIE_LOOKUP_STALE_AFTER = 15
-local WIKIDATA_API = "https://www.wikidata.org/w/api.php"
-local FILMAFFINITY_URL = "https://r.jina.ai/http://www.filmaffinity.com/en/film%s.html"
+local HOME = os.getenv("HOME") or ""
+local VIDEO_ROOT = HOME .. "/Videos"
+local CACHE_HOME = os.getenv("XDG_CACHE_HOME") or (HOME .. "/.cache")
+local PERSISTENT_CACHE_PATH = CACHE_HOME .. "/yazi/video-info/movie-cache.json"
+
+local function is_under_video_root(path)
+	if not path then
+		return false
+	end
+	local normalized_path = tostring(path):gsub("^file://", ""):gsub("%%(%x%x)", function(hex)
+		return string.char(tonumber(hex, 16))
+	end)
+	local root = VIDEO_ROOT:gsub("/+$", "")
+	return normalized_path == root or normalized_path:sub(1, #root + 1) == root .. "/"
+end
+
+local function persistent_signature_matches(entry, signature)
+	if type(entry) ~= "table" then
+		return false
+	end
+	if tostring(entry.signature or "") == signature then
+		return true
+	end
+
+	local size, mtime = signature:match("^(%d+):(%d+)")
+	return size
+		and tonumber(entry.size) == tonumber(size)
+		and tonumber(entry.mtime) == tonumber(mtime)
+end
+
+local replace_persistent_cache = ya.sync(function(st, entries)
+	local indexed = {}
+	for key, entry in pairs(entries) do
+		indexed[key] = entry
+		local normalized_key = tostring(key):gsub("^file://", ""):gsub("%%(%x%x)", function(hex)
+			return string.char(tonumber(hex, 16))
+		end)
+		indexed[normalized_key] = entry
+		if type(entry) == "table" and entry.path then
+			indexed[tostring(entry.path)] = entry
+		end
+	end
+	st.persistent_entries = indexed
+end)
+
+local function load_persistent_cache()
+	local output = Command("cat"):arg(PERSISTENT_CACHE_PATH):output()
+	local decoded = output and output.status.success and ya.json_decode(output.stdout) or nil
+	replace_persistent_cache(
+		decoded and type(decoded.entries) == "table" and decoded.entries or {}
+	)
+end
+
+local function kick_background_indexer()
+	if ya.target_os() ~= "linux" then
+		return
+	end
+	ya.async(function()
+		local output = Command("systemctl")
+			:arg({ "--user", "start", "--no-block", "eva-video-movie-indexer.service" })
+			:output()
+		if not output or not output.status.success then
+			ya.err("Could not start eva-video-movie-indexer.service")
+		end
+	end)
+end
+
+local get_persistent_entry = ya.sync(function(st, path, signature)
+	if not path then
+		return
+	end
+	local entry = st.persistent_entries and (
+		st.persistent_entries[path]
+		or st.persistent_entries[tostring(path):gsub("^file://", ""):gsub("%%(%x%x)", function(hex)
+			return string.char(tonumber(hex, 16))
+		end)]
+	)
+	if persistent_signature_matches(entry, signature) then
+		return entry
+	end
+end)
 
 local get_cached = ya.sync(function(st, key)
 	return st.cache[key]
-end)
-
-local get_movie_cached = ya.sync(function(st, key)
-	return st.movies[key]
 end)
 
 local put_cached = ya.sync(function(st, key, signature, metadata, render)
@@ -65,22 +147,6 @@ local put_cached = ya.sync(function(st, key, signature, metadata, render)
 	if render then
 		ui.render()
 	end
-end)
-
-local begin_movie_lookup = ya.sync(function(st, key)
-	local cached = st.movies[key]
-	if cached and cached.status ~= "loading" then
-		return false
-	end
-	if cached and cached.started_at and os.time() - cached.started_at < MOVIE_LOOKUP_STALE_AFTER then
-		return false
-	end
-	st.movies[key] = { status = "loading", started_at = os.time() }
-	return true
-end)
-
-local put_movie_cached = ya.sync(function(st, key, value)
-	st.movies[key] = value
 end)
 
 local get_preview_skip = ya.sync(function(st, key)
@@ -123,7 +189,8 @@ end)
 
 local function file_signature(file)
 	local cha = file.cha or {}
-	return string.format("%s:%s", tostring(cha.len or 0), tostring(cha.mtime or 0))
+	local mtime = tostring(cha.mtime or 0):match("^(%d+)") or "0"
+	return string.format("%s:%s", tostring(cha.len or 0), mtime)
 end
 
 local function cache_key(file)
@@ -230,8 +297,14 @@ local function movie_title_and_year(value)
 	return title, year
 end
 
-local function is_movie_extra(name)
+local function is_movie_extra(name, path)
 	local lower = tostring(name or ""):lower()
+	local normalized_path = tostring(path or ""):lower():gsub("\\", "/")
+	for _, directory in ipairs({ "featurettes", "featurette", "extras", "bonus features", "deleted scenes", "special features" }) do
+		if normalized_path:find("/" .. directory .. "/", 1, true) then
+			return true
+		end
+	end
 	for _, pattern in ipairs(MOVIE_EXTRA_PATTERNS) do
 		if lower:find(pattern, 1, true) then
 			return true
@@ -252,7 +325,7 @@ local function tag_value(tags, wanted)
 end
 
 local function movie_identity(snapshot, metadata)
-	if is_movie_extra(snapshot.name) then
+	if is_movie_extra(snapshot.name, snapshot.path) then
 		return
 	end
 
@@ -383,6 +456,14 @@ local function metadata_snapshot(file)
 end
 
 local function metadata_for_snapshot(snapshot, render)
+	if snapshot.local_regular and is_under_video_root(snapshot.path) then
+		local persistent = get_persistent_entry(snapshot.path, snapshot.signature)
+		if persistent then
+			put_cached(snapshot.key, snapshot.signature, persistent.metadata, render)
+			return persistent.metadata
+		end
+	end
+
 	local cached = get_cached(snapshot.key)
 	if cached and cached.signature == snapshot.signature then
 		return cached.ok and cached.metadata or nil
@@ -398,323 +479,6 @@ end
 
 local function metadata_for(st, file, render)
 	return metadata_for_snapshot(metadata_snapshot(file), render)
-end
-
-local function curl(url, query)
-	local args = {
-		"-fsSL",
-		"--connect-timeout",
-		"3",
-		"--max-time",
-		"8",
-		"--user-agent",
-		"yazi-video-info/1.0",
-	}
-
-	if query then
-		args[#args + 1] = "--get"
-		args[#args + 1] = url
-		for key, value in pairs(query) do
-			args[#args + 1] = "--data-urlencode"
-			args[#args + 1] = string.format("%s=%s", key, tostring(value))
-		end
-	else
-		args[#args + 1] = url
-	end
-
-	local output = Command("curl"):arg(args):output()
-	if not output or not output.status.success then
-		return
-	end
-	return output.stdout
-end
-
-local function curl_json(url, query)
-	local output = curl(url, query)
-	if not output then
-		return
-	end
-	local decoded = ya.json_decode(output)
-	return type(decoded) == "table" and decoded or nil
-end
-
-local function normalized_title(value)
-	return tostring(value or ""):lower():gsub("[^%w]+", "")
-end
-
-local function claim_values(claims, property, limit)
-	local values = {}
-	for _, statement in ipairs(claims[property] or {}) do
-		if statement.rank ~= "deprecated" then
-			local snak = statement.mainsnak
-			local datavalue = snak and snak.datavalue
-			local value = datavalue and datavalue.value
-			local result
-			if type(value) == "table" then
-				result = value.id or value.text or value.amount
-			elseif value ~= nil then
-				result = tostring(value)
-			end
-			if result and result ~= "" then
-				values[#values + 1] = tostring(result)
-				if limit and #values >= limit then
-					break
-				end
-			end
-		end
-	end
-	return values
-end
-
-local function first_claim_value(claims, property)
-	return claim_values(claims, property, 1)[1]
-end
-
-local function entity_labels(ids)
-	if #ids == 0 then
-		return {}
-	end
-
-	local data = curl_json(WIKIDATA_API, {
-		action = "wbgetentities",
-		ids = table.concat(ids, "|"),
-		props = "labels",
-		languages = "en",
-		languagefallback = "1",
-		format = "json",
-	})
-	if not data or type(data.entities) ~= "table" then
-		return {}
-	end
-
-	local labels = {}
-	for _, id in ipairs(ids) do
-		local entity = data.entities[id]
-		local label = entity and entity.labels and entity.labels.en and entity.labels.en.value
-		if label then
-			labels[id] = label
-		end
-	end
-	return labels
-end
-
-local function join_claim_labels(ids, labels)
-	local values = {}
-	local seen = {}
-	for _, id in ipairs(ids) do
-		local label = labels[id]
-		if label and not seen[label] then
-			seen[label] = true
-			values[#values + 1] = label
-		end
-	end
-	return #values > 0 and table.concat(values, ", ") or nil
-end
-
-local function search_wikidata_movie(identity)
-	local data = curl_json(WIKIDATA_API, {
-		action = "wbsearchentities",
-		search = identity.title,
-		language = "en",
-		format = "json",
-		limit = "10",
-		type = "item",
-	})
-	if not data or type(data.search) ~= "table" then
-		return
-	end
-
-	local best, best_score = nil, -1
-	for _, result in ipairs(data.search) do
-		local label = tostring(result.label or "")
-		local description = tostring(result.description or "")
-		local lower_description = description:lower()
-		local score = 0
-
-		if lower_description:find("film", 1, true) or lower_description:find("movie", 1, true) then
-			score = score + 4
-		end
-		if identity.year and description:find(identity.year, 1, true) then
-			score = score + 5
-		end
-		if normalized_title(label) == normalized_title(identity.title) then
-			score = score + 3
-		end
-
-		if score > best_score then
-			best, best_score = result, score
-		end
-	end
-
-	if best and best_score >= 4 then
-		return best.id
-	end
-end
-
-local function lookup_wikidata_movie(identity)
-	local qid = search_wikidata_movie(identity)
-	if not qid then
-		return
-	end
-
-	local data = curl_json(WIKIDATA_API, {
-		action = "wbgetentities",
-		ids = qid,
-		props = "claims|labels",
-		languages = "en",
-		languagefallback = "1",
-		format = "json",
-	})
-	local entity = data and data.entities and data.entities[qid]
-	if not entity then
-		return
-	end
-
-	local claims = entity.claims or {}
-	local role_specs = {
-		director = { property = "P57", limit = 4 },
-		genre = { property = "P136", limit = 8 },
-		cast = { property = "P161", limit = 12 },
-		composer = { property = "P86", limit = 5 },
-		cinematography = { property = "P344", limit = 5 },
-		writer = { property = "P58", limit = 5 },
-		producer = { property = "P162", limit = 5 },
-		country = { property = "P495", limit = 5 },
-	}
-	local roles, all_ids, seen_ids = {}, {}, {}
-	for role, spec in pairs(role_specs) do
-		roles[role] = claim_values(claims, spec.property, spec.limit)
-		for _, id in ipairs(roles[role]) do
-			if not seen_ids[id] then
-				seen_ids[id] = true
-				all_ids[#all_ids + 1] = id
-			end
-		end
-	end
-
-	local labels = entity_labels(all_ids)
-	local title = entity.labels and entity.labels.en and entity.labels.en.value or identity.title
-	local release_time = first_claim_value(claims, "P577")
-	local release_year = release_time and release_time:match("(%d%d%d%d)") or nil
-	local original_title = first_claim_value(claims, "P1476")
-	local runtime = first_claim_value(claims, "P2047")
-
-	return {
-		title = title,
-		original_title = original_title,
-		year = release_year or identity.year,
-		runtime = runtime and string.format("%d min", math.floor(tonumber(runtime) or 0)) or nil,
-		director = join_claim_labels(roles.director, labels),
-		genre = join_claim_labels(roles.genre, labels),
-		cast = join_claim_labels(roles.cast, labels),
-		composer = join_claim_labels(roles.composer, labels),
-		cinematography = join_claim_labels(roles.cinematography, labels),
-		writer = join_claim_labels(roles.writer, labels),
-		producer = join_claim_labels(roles.producer, labels),
-		country = join_claim_labels(roles.country, labels),
-		film_affinity_id = first_claim_value(claims, "P480"),
-		imdb_id = first_claim_value(claims, "P345"),
-		wikidata_id = qid,
-	}
-end
-
-local function markdown_names(section)
-	if not section then
-		return
-	end
-
-	section = section:gsub("!%[[^%]]*%]%([^%)]+%)", "")
-	local names, seen = {}, {}
-	for raw_name in section:gmatch("%[([^%]]+)%]%([^%)]+%)") do
-		local name = trim(raw_name)
-		if name and name ~= "" and not seen[name] then
-			seen[name] = true
-			names[#names + 1] = name
-		end
-	end
-	return #names > 0 and table.concat(names, ", ") or nil
-end
-
-local function section_between(text, start_marker, end_marker)
-	local start = text:find(start_marker, 1, true)
-	if not start then
-		return
-	end
-	start = start + #start_marker
-	local finish = end_marker and text:find(end_marker, start, true) or nil
-	return text:sub(start, finish and finish - 1 or #text)
-end
-
-local function parse_film_affinity(text, movie)
-	if not text or not text:find("Original title", 1, true) then
-		return
-	end
-
-	local credits_start = text:find("Original title", 1, true) or 1
-	local credits = text:sub(credits_start)
-	local genre_section = section_between(credits, "Genre", "Synopsis")
-	local writer_section = section_between(credits, "Screenwriter", "Cast")
-
-	local parsed = {
-		title = text:match("\n#%s*(.-)%s*\n") or movie.title,
-		original_title = credits:match("Original title%s+(.-)%s+Year") or nil,
-		year = credits:match("Year%s+(%d%d%d%d)") or nil,
-		runtime = credits:match("Running time%s+(%d+)%s+min") and (credits:match("Running time%s+(%d+)%s+min") .. " min") or nil,
-		score = text:match("Rating[^\n]*\n%s*([%d%.]+)"),
-		director = markdown_names(section_between(credits, "Director", "Screenwriter")),
-		writer = markdown_names(writer_section),
-		cast = markdown_names(section_between(credits, "Cast", "See all credits")),
-		composer = markdown_names(section_between(credits, "Music", "Cinematography")),
-		cinematography = markdown_names(section_between(credits, "Cinematography", "Producer")),
-		producer = markdown_names(section_between(credits, "Producer", "Genre")),
-		genre = markdown_names(genre_section),
-		synopsis = credits:match("Synopsis%s+(.-)%s+About similar"),
-	}
-
-	for key, value in pairs(parsed) do
-		if type(value) == "string" then
-			parsed[key] = trim(value)
-		end
-	end
-	return parsed
-end
-
-local function lookup_film_affinity(movie)
-	if not movie.film_affinity_id then
-		return
-	end
-
-	for _, suffix in ipairs({ "?lang=en", "?output=1" }) do
-		local page = curl(string.format(FILMAFFINITY_URL, movie.film_affinity_id) .. suffix)
-		local parsed = parse_film_affinity(page, movie)
-		if parsed then
-			parsed.url = string.format(
-				"https://www.filmaffinity.com/en/film%s.html?lang=en",
-				movie.film_affinity_id
-			)
-			return parsed
-		end
-	end
-end
-
-local function lookup_movie(identity)
-	local movie = lookup_wikidata_movie(identity)
-	if not movie then
-		return
-	end
-
-	local film_affinity = lookup_film_affinity(movie)
-	if film_affinity then
-		for key, value in pairs(film_affinity) do
-			if value and value ~= "" then
-				movie[key] = value
-			end
-		end
-		movie.source = "FilmAffinity + Wikidata"
-	else
-		movie.source = "Wikidata"
-	end
-	return movie
 end
 
 local function format_duration(seconds)
@@ -797,6 +561,13 @@ local function metadata_label(metadata)
 end
 
 local function cached_metadata_snapshot(snapshot)
+	if snapshot.local_regular and is_under_video_root(snapshot.path) then
+		local persistent = get_persistent_entry(snapshot.path, snapshot.signature)
+		if persistent then
+			return persistent.metadata
+		end
+	end
+
 	local cached = get_cached(snapshot.key)
 	if cached and cached.signature == snapshot.signature and cached.ok then
 		return cached.metadata
@@ -821,7 +592,7 @@ local function video_linemode(st, file)
 	if label == "" then
 		return ""
 	end
-	return ui.Line { " ", ui.Span(label):style(ui.Style():fg("#D98BC4")) }
+	return ui.Line { " ", ui.Span(label):style(ui.Style():fg("#B48DDB")) }
 end
 
 local function video_rows(metadata)
@@ -870,18 +641,110 @@ local function add_heading(lines, text)
 	lines[#lines + 1] = ui.Line { ui.Span(text):fg("green"):bold() }
 end
 
+local DETAIL_LABEL_WIDTH = 18
+local DETAIL_VALUE_WIDTH = 56
+
+local function wrapped_value(value)
+	local wrapped = {}
+	for paragraph in tostring(value):gmatch("[^\n]+") do
+		local line = ""
+		for word in paragraph:gmatch("%S+") do
+			if line == "" then
+				line = word
+			elseif #line + #word + 1 <= DETAIL_VALUE_WIDTH then
+				line = line .. " " .. word
+			else
+				wrapped[#wrapped + 1] = line
+				line = word
+			end
+		end
+		if line ~= "" then
+			wrapped[#wrapped + 1] = line
+		end
+	end
+	return #wrapped > 0 and wrapped or { "" }
+end
+
 local function add_detail(lines, label, value)
 	if value == nil or value == "" then
 		return
 	end
-	lines[#lines + 1] = ui.Line {
-		ui.Span(string.format("%-15s", label .. ":")):fg("#D98BC4"),
-		ui.Span(tostring(value)),
-	}
+	local values = wrapped_value(value)
+	for index, line in ipairs(values) do
+		local prefix = index == 1 and (label .. ":") or ""
+		lines[#lines + 1] = ui.Line {
+			ui.Span(string.format("%-" .. DETAIL_LABEL_WIDTH .. "s", prefix)):fg("#B48DDB"),
+			ui.Span(line),
+		}
+	end
 end
 
-local function preview_text(snapshot, metadata, identity, movie_state, image_error)
-	local lines = {}
+local function movie_display_value(field, value)
+	if value == nil then
+		return
+	end
+
+	local text = tostring(value)
+	if field == "runtime" then
+		return text:match("^%s*(%d+%.?%d*%s*min)") or text
+	end
+
+	text = text:gsub("!%[[^%]]*%]%([^%)]*%)", "")
+	text = text:gsub("%[([^%]]+)%]%([^%)]+%)", "%1")
+	text = text:gsub("%f[%w]Q%d+%f[%W]", "")
+	text = text:gsub("%s+", " ")
+	text = text:gsub("%s*,%s*", ", ")
+	text = text:gsub("^%s*[,|]+%s*", ""):gsub("%s*[,|]+%s*$", "")
+	text = text:gsub(",%s*,+", ",")
+	text = text:gsub("^%s+", ""):gsub("%s+$", "")
+	return text ~= "" and text or nil
+end
+
+local function add_movie_detail(lines, label, movie, field)
+	add_detail(lines, label, movie_display_value(field, movie[field]))
+end
+
+local function add_movie_section(lines, identity, movie_state)
+	if not identity then
+		return
+	end
+
+	add_heading(lines, "MOVIE")
+	if not movie_state or movie_state.status == "loading" or movie_state.status == "indexing" then
+		add_detail(lines, "Matched title", identity.title .. (identity.year and (" (" .. identity.year .. ")") or ""))
+		add_detail(lines, "Lookup", "Indexing in background...")
+	elseif movie_state.status == "offline" then
+		add_detail(lines, "Matched title", identity.title .. (identity.year and (" (" .. identity.year .. ")") or ""))
+		add_detail(lines, "Lookup", "Offline mode enabled")
+	elseif movie_state.status == "unavailable" then
+		add_detail(lines, "Matched title", identity.title .. (identity.year and (" (" .. identity.year .. ")") or ""))
+		add_detail(lines, "Lookup", "No online match found")
+	elseif movie_state.status == "ready" then
+		local movie = movie_state.movie
+		add_movie_detail(lines, "Title", movie, "title")
+		add_detail(lines, "FilmAffinity", movie.score and (movie.score .. "/10") or "-")
+		add_movie_detail(lines, "Year of release", movie, "year")
+		add_movie_detail(lines, "Director", movie, "director")
+		if movie.original_title and movie.original_title ~= movie.title then
+			add_movie_detail(lines, "Original title", movie, "original_title")
+		end
+		add_movie_detail(lines, "Runtime", movie, "runtime")
+		add_movie_detail(lines, "Genre", movie, "genre")
+		add_movie_detail(lines, "Cast", movie, "cast")
+		add_movie_detail(lines, "Composer / Music", movie, "composer")
+		add_movie_detail(lines, "Cinematography", movie, "cinematography")
+		add_movie_detail(lines, "Writer", movie, "writer")
+		add_movie_detail(lines, "Producer", movie, "producer")
+		add_movie_detail(lines, "Country", movie, "country")
+		add_movie_detail(lines, "Source", movie, "source")
+		if movie.synopsis and movie.synopsis ~= "" then
+			lines[#lines + 1] = ui.Line {}
+			add_movie_detail(lines, "Synopsis", movie, "synopsis")
+		end
+	end
+end
+
+local function add_video_section(lines, snapshot, metadata, image_error)
 	add_heading(lines, "VIDEO")
 	add_detail(lines, "File", snapshot.name)
 	add_detail(
@@ -899,84 +762,88 @@ local function preview_text(snapshot, metadata, identity, movie_state, image_err
 	if image_error then
 		add_detail(lines, "Preview", tostring(image_error))
 	end
+end
 
+local function add_audio_section(lines, metadata)
 	local audio = metadata and metadata.audio or {}
-	if #audio > 0 then
-		lines[#lines + 1] = ui.Line {}
-		add_heading(lines, "AUDIO")
-		for index, stream in ipairs(audio) do
-			add_detail(lines, string.format("Track %d", index), audio_description(stream))
-		end
-	end
-
-	if not identity then
-		return ui.Text(lines)
+	if #audio == 0 then
+		return
 	end
 
 	lines[#lines + 1] = ui.Line {}
-	add_heading(lines, "MOVIE")
-	add_detail(lines, "Matched title", identity.title .. (identity.year and (" (" .. identity.year .. ")") or ""))
-
-	if not movie_state or movie_state.status == "loading" then
-		add_detail(lines, "Lookup", "Searching Wikidata and FilmAffinity...")
-	elseif movie_state.status == "offline" then
-		add_detail(lines, "Lookup", "Offline mode enabled")
-	elseif movie_state.status == "unavailable" then
-		add_detail(lines, "Lookup", "No online match found")
-	elseif movie_state.status == "ready" then
-		local movie = movie_state.movie
-		add_detail(lines, "Title", movie.title)
-		add_detail(lines, "Original title", movie.original_title)
-		add_detail(lines, "Year", movie.year)
-		add_detail(lines, "FilmAffinity", movie.score and (movie.score .. "/10") or nil)
-		add_detail(lines, "Runtime", movie.runtime)
-		add_detail(lines, "Director", movie.director)
-		add_detail(lines, "Genre", movie.genre)
-		add_detail(lines, "Cast", movie.cast)
-		add_detail(lines, "Composer / Music", movie.composer)
-		add_detail(lines, "Cinematography", movie.cinematography)
-		add_detail(lines, "Writer", movie.writer)
-		add_detail(lines, "Producer", movie.producer)
-		add_detail(lines, "Country", movie.country)
-		add_detail(lines, "Source", movie.source)
-		if movie.synopsis then
-			lines[#lines + 1] = ui.Line {}
-			add_detail(lines, "Synopsis", movie.synopsis)
-		end
+	add_heading(lines, "AUDIO")
+	for index, stream in ipairs(audio) do
+		add_detail(lines, string.format("Track %d", index), audio_description(stream))
 	end
+end
 
+local function preview_text(snapshot, metadata, identity, movie_state, image_error)
+	local lines = {}
+	if identity then
+		add_movie_section(lines, identity, movie_state)
+		lines[#lines + 1] = ui.Line {}
+	end
+	add_video_section(lines, snapshot, metadata, image_error)
+	add_audio_section(lines, metadata)
 	return ui.Text(lines)
 end
 
 local function movie_preview_state(st, snapshot, metadata)
-	local identity = movie_identity(snapshot, metadata)
+	if not is_under_video_root(snapshot.path) then
+		return
+	end
+
+	local persistent = get_persistent_entry(snapshot.path, snapshot.signature)
+	if persistent and persistent.movie_status == "not_movie" then
+		return
+	end
+	local identity = persistent and persistent.identity or movie_identity(snapshot, metadata)
 	if not identity then
 		return
 	end
-	if MOVIE_LOOKUP_DISABLED then
+
+	if not persistent then
+		if MOVIE_LOOKUP_DISABLED then
+			return identity, { status = "offline" }
+		end
+		return identity, { status = "indexing" }
+	end
+
+	if persistent.movie_status == "ready" and type(persistent.movie) == "table" then
+		return identity, { status = "ready", movie = persistent.movie }
+	elseif persistent.movie_status == "offline" then
 		return identity, { status = "offline" }
+	elseif persistent.movie_status == "unavailable" then
+		return identity, { status = "unavailable" }
 	end
 
-	local cached = get_movie_cached(identity.key)
-	if cached then
-		return identity, cached
-	end
-
-	return identity, { status = "loading" }, begin_movie_lookup(identity.key)
+	return identity, { status = "indexing" }
 end
 
-local function preview_areas(area)
+local function preview_areas(area, metadata)
 	if area.h < 2 then
 		return area
 	end
 
-	local details_height
+	local minimum_details_height
 	if area.h <= 12 then
-		details_height = math.max(3, math.floor(area.h / 2))
+		minimum_details_height = math.max(3, math.floor(area.h / 2))
 	else
-		details_height = math.min(18, math.max(7, math.floor(area.h * 0.4)))
+		minimum_details_height = 7
 	end
-	details_height = math.min(details_height, math.max(1, area.h - 1))
+
+	local details_height = math.min(
+		math.min(18, math.max(minimum_details_height, math.floor(area.h * 0.4))),
+		math.max(1, area.h - 1)
+	)
+	local width = tonumber(metadata and metadata.width)
+	local height = tonumber(metadata and metadata.height)
+	if width and height and width > 0 and height > 0 then
+		-- Terminal cells are normally about twice as tall as they are wide.
+		local image_height = math.floor(area.w * height / width * 0.5)
+		image_height = math.min(math.max(1, image_height), math.max(1, area.h - minimum_details_height))
+		details_height = area.h - image_height
+	end
 
 	local areas = ui.Layout()
 		:direction(ui.Layout.VERTICAL)
@@ -1159,7 +1026,8 @@ end
 
 function M:setup(opts)
 	self.cache = self.cache or {}
-	self.movies = self.movies or {}
+	self.persistent_entries = self.persistent_entries or {}
+	kick_background_indexer()
 	opts = opts or {}
 
 	if not self.linemode_id then
@@ -1174,10 +1042,11 @@ function M:peek(job)
 		return
 	end
 
+	load_persistent_cache()
 	local snapshot = metadata_snapshot(job.file)
 	local metadata = metadata_for_snapshot(snapshot, true)
-	local identity, movie_state, lookup = movie_preview_state(self, snapshot, metadata)
-	local image_area, details_area = preview_areas(job.area)
+	local identity, movie_state = movie_preview_state(self, snapshot, metadata)
+	local image_area, details_area = preview_areas(job.area, metadata)
 	local image_error = details_area and preview_video_frame(job, image_area) or nil
 	local details_skip = get_preview_skip(snapshot.key)
 	local details_job = {
@@ -1187,12 +1056,6 @@ function M:peek(job)
 		sig = job.sig,
 		skip = details_skip,
 	}
-
-	if lookup then
-		local movie = lookup_movie(identity)
-		movie_state = movie and { status = "ready", movie = movie } or { status = "unavailable" }
-		put_movie_cached(identity.key, movie_state)
-	end
 
 	local text = preview_text(snapshot, metadata, identity, movie_state, image_error)
 	ya.preview_widget(details_job, text:area(details_area or job.area):wrap(ui.Wrap.YES):scroll(0, details_skip))

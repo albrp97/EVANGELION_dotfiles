@@ -202,6 +202,9 @@ gpu_poll_seconds = 2
 memory_poll_seconds = 2.0
 network_poll_seconds = 2.0
 
+[wallpaper]
+transition = [ "fade" ]
+
 [theme]
 mode = "dark"
 source = "custom"

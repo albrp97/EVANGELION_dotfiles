@@ -1,0 +1,6 @@
+[terminal]
+vt = 1
+
+[default_session]
+command = "/usr/bin/uwsm start -e -D Hyprland hyprland.desktop"
+user = "__USER__"

@@ -1,14 +1,14 @@
 [
   {
-    "key": "win+comma",
+    "key": "meta+,",
     "command": "workbench.action.toggleSidebarVisibility"
   },
   {
-    "key": "win+slash",
+    "key": "meta+/",
     "command": "workbench.action.toggleAuxiliaryBar"
   },
   {
-    "key": "win+period",
+    "key": "meta+.",
     "command": "workbench.action.toggleStatusbarVisibility"
   }
 ]

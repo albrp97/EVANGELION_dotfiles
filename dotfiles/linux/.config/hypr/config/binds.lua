@@ -70,6 +70,7 @@ hl.bind(mainMod .. " + code:86", function() zoomfunction(0.3) end, { repeating =
 
 hl.bind(mainMod .. " + SHIFT + E",  hl.dsp.exec_cmd(launchPrefix .. FILE_MANAGER))
 hl.bind(mainMod .. " + E",          hl.dsp.exec_cmd(launchPrefix .. YAZI))
+hl.bind(mainMod .. " + SHIFT + Y",  hl.dsp.exec_cmd(home .. "/.local/bin/rice-dolphin-yazi"))
 hl.bind(mainMod .. " + SHIFT + T", hl.dsp.exec_cmd(launchPrefix .. FILE_MANAGER))
 hl.bind(mainMod .. " + T",          hl.dsp.exec_cmd(launchPrefix .. TERMINAL))
 hl.bind(mainMod .. " + ALT + T",    hl.dsp.exec_cmd(launchPrefix .. EDITOR))
@@ -131,6 +132,7 @@ hl.bind(mainMod .. " + SHIFT + V", hl.dsp.exec_cmd(noctCall .. "panel-toggle cli
 -- Ctrl shortcuts expected by Linux applications.
 hl.bind(mainMod .. " + A", hl.dsp.send_shortcut({ mods = "CTRL", key = "A" }))
 hl.bind(mainMod .. " + F", hl.dsp.send_shortcut({ mods = "CTRL", key = "F" }))
+hl.bind(mainMod .. " + S", hl.dsp.send_shortcut({ mods = "CTRL", key = "S" }))
 hl.bind(mainMod .. " + Z", hl.dsp.send_shortcut({ mods = "CTRL", key = "Z" }))
 
 -- Universal copy, paste, and cut. Text uses Kitty's native paste action, while
@@ -173,4 +175,4 @@ hl.bind(mainMod .. " + CONTROL + mouse_down", hl.dsp.focus({ workspace = "m+1" }
 
 -- Special workspace (scratchpad)
 hl.bind(mainMod .. " + SHIFT + S", hl.dsp.window.move({ workspace = "special" }))
-hl.bind(mainMod .. " + S",         hl.dsp.workspace.toggle_special())
+hl.bind(mainMod .. " + ALT + S",   hl.dsp.workspace.toggle_special())

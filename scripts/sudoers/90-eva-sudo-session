@@ -1,0 +1,4 @@
+# Reuse one sudo authentication across all terminals for this login user.
+# The installer replaces __USER__ with the current account name.
+Defaults:__USER__ timestamp_type=global
+Defaults:__USER__ timestamp_timeout=-1
