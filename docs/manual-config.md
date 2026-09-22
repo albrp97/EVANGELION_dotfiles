@@ -41,6 +41,10 @@ VS Code uses fake transparency instead of Vibrancy Continued. The script injects
 
 ## Linux configuration map
 
+For the full behavior contract and complete shortcut list, see
+[Linux Features and Behavior Reference](linux-features.md). This table remains
+the quick edit and reload map.
+
 | Tool | Config path | Reload/apply |
 | --- | --- | --- |
 | Hyprland | `~/.config/hypr/hyprland.lua` and `~/.config/hypr/config/` | `hyprctl reload`; `Super+S` sends Ctrl+S to the focused application and `Super+Alt+S` toggles the special workspace |

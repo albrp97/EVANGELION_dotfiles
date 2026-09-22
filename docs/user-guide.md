@@ -29,6 +29,10 @@ the patched bundle is machine-generated and should not be committed.
 
 ## Linux
 
+The complete Linux behavior inventory, including every Hyprland shortcut,
+wallpaper/service rule, application integration, config owner, and recovery
+command, is maintained in [linux-features.md](linux-features.md).
+
 The Linux layer targets CachyOS/Arch with Hyprland under UWSM and Noctalia.
 Super-arrow focus uses the EVA geometry-aware grid, while Super+Shift moves
 windows. Kitty and Ghostty share the EVA terminal palette; Fish initializes
