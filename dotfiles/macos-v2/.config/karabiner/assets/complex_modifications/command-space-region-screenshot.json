@@ -14,13 +14,20 @@
                 "shift"
               ],
               "optional": [
-                "any"
+                "caps_lock",
+                "fn"
               ]
             }
           },
           "to": [
             {
-              "key_code": "vk_none"
+              "key_code": "3",
+              "modifiers": [
+                "left_command",
+                "left_control",
+                "left_option",
+                "left_shift"
+              ]
             }
           ]
         },

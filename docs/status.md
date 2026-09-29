@@ -59,7 +59,7 @@
    - `R` opens btop in Ghostty.
 - `Command+Space`, then `Space`, opens Raycast search as the Spotlight replacement.
 - Replaced the Ghostty launcher with a script that creates a new window instead of focusing the existing one.
-- Disabled macOS screenshot shortcuts so `Command+Shift+1..9` moves windows without creating screenshots.
+- Disabled native macOS screenshot shortcuts and routed `Command+Shift+3` through Karabiner to AeroSpace so it moves the focused window to workspace 3 without capturing the screen.
 - Deleted Desktop screenshot files, hid Desktop icons, and added `scripts/clean-desktop.sh`.
 - Enabled tap-to-click and set trackpad pointer speed to `1.65`.
 - Added focus/mouse-follow behavior in the active window-manager config.

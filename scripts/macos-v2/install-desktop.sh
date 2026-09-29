@@ -8,6 +8,7 @@ COMMON_STARSHIP_CONFIG="$ROOT_DIR/dotfiles/common/.config/starship.toml"
 COMMON_FASTFETCH_LOGO="$ROOT_DIR/dotfiles/common/.config/fastfetch/eva01-logo.txt"
 COMMON_HUSHLOGIN="$ROOT_DIR/dotfiles/common/.hushlogin"
 VSCODE_SETTINGS_SOURCE="$ROOT_DIR/dotfiles/macos/Library/Application Support/Code/User/settings.json"
+VSCODE_KEYBINDINGS_SOURCE="$ROOT_DIR/dotfiles/macos/Library/Application Support/Code/User/keybindings.json"
 VSCODE_EXTENSION_SOURCE="$ROOT_DIR/dotfiles/common/.vscode/extensions/macbook-linux-rice-eva01-pastel-0.1.0"
 BACKUP_DIR="$HOME/.macbook-rice-v2-backup/desktop-$(date +%Y%m%d-%H%M%S)"
 WALLPAPER_DIR="$HOME/.local/share/macbook-rice-v2/wallpapers"
@@ -106,10 +107,11 @@ if [[ ! -f "$COMMON_HUSHLOGIN" ]]; then
   exit 1
 fi
 if [[ ! -f "$VSCODE_SETTINGS_SOURCE" ||
+  ! -f "$VSCODE_KEYBINDINGS_SOURCE" ||
   ! -f "$VSCODE_EXTENSION_SOURCE/package.json" ||
   ! -f "$VSCODE_EXTENSION_SOURCE/themes/eva01-pastel-color-theme.json" ||
   ! -f "$VSCODE_EXTENSION_SOURCE/icons/eva01-pastel-icon-theme.json" ]]; then
-  echo "Missing the legacy VS Code settings or shared EVA theme sources." >&2
+  echo "Missing the legacy VS Code settings, keybindings, or shared EVA theme sources." >&2
   exit 1
 fi
 if ! command -v code >/dev/null 2>&1; then
@@ -134,6 +136,7 @@ install_file "$COMMON_STARSHIP_CONFIG" ".config/starship.toml"
 install_file "$COMMON_FASTFETCH_LOGO" ".config/fastfetch/eva01-logo.txt"
 install_file "$COMMON_HUSHLOGIN" ".hushlogin"
 install_file "$VSCODE_SETTINGS_SOURCE" "Library/Application Support/Code/User/settings.json"
+install_file "$VSCODE_KEYBINDINGS_SOURCE" "Library/Application Support/Code/User/keybindings.json"
 while IFS= read -r -d '' source_path; do
   relative_path="${source_path#"$VSCODE_EXTENSION_SOURCE"/}"
   install_file "$source_path" ".vscode/extensions/macbook-linux-rice-eva01-pastel-0.1.0/$relative_path"

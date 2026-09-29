@@ -30,13 +30,15 @@ if [[ ! -f "$config" ]]; then
   exit 1
 fi
 
-configured_profile="$(python3 - "$config" <<'PY'
+configured_profile="$(python3 - "$config" "$ROOT_DIR/dotfiles/macos-v2/.aerospace.toml" <<'PY'
 import json
 import plistlib
+import re
 import sys
 from pathlib import Path
 
 config = json.loads(Path(sys.argv[1]).read_text(encoding="utf-8"))
+aerospace_config = Path(sys.argv[2]).read_text(encoding="utf-8")
 selected = [
     profile for profile in config.get("profiles", [])
     if profile.get("selected") is True
@@ -123,7 +125,7 @@ if capture_rule is None or not any(
 if cancel_rule is None:
     sys.exit("Escape is not configured to cancel launcher mode.")
 
-screenshot_blocker = next(
+screenshot_router = next(
     (
         item
         for item in manipulators
@@ -133,12 +135,31 @@ screenshot_blocker = next(
     ),
     None,
 )
+workspace_three_remap = [
+    {
+        "key_code": "3",
+        "modifiers": [
+            "left_command",
+            "left_control",
+            "left_option",
+            "left_shift",
+        ],
+    }
+]
 if (
-    screenshot_blocker is None
-    or screenshot_blocker.get("conditions")
-    or screenshot_blocker.get("to") != [{"key_code": "vk_none"}]
+    screenshot_router is None
+    or screenshot_router.get("conditions")
+    or screenshot_router.get("from", {}).get("modifiers", {}).get("optional")
+    != ["caps_lock", "fn"]
+    or screenshot_router.get("to") != workspace_three_remap
 ):
-    sys.exit("Command+Shift+3 is not consumed by Karabiner.")
+    sys.exit("Command+Shift+3 is not routed to AeroSpace without triggering a screenshot.")
+
+for binding in ("cmd-shift-3", "cmd-alt-ctrl-shift-3"):
+    expected = "move-node-to-workspace --focus-follows-window 3"
+    pattern = rf"(?m)^{re.escape(binding)}\s*=\s*'{re.escape(expected)}'\s*$"
+    if not re.search(pattern, aerospace_config):
+        sys.exit(f"AeroSpace binding '{binding}' does not move and follow the window to workspace 3.")
 
 preferences = Path.home() / "Library/Preferences/com.apple.symbolichotkeys.plist"
 try:
@@ -206,7 +227,7 @@ if (
 PY
 
 if [[ "${1:-}" == "--config-only" ]]; then
-  echo "Screenshot shortcut settings passed: Command+Space P remains configured, native screenshot hotkeys are disabled, and Karabiner consumes Command+Shift+3."
+  echo "Shortcut settings passed: Command+Space P remains configured, native screenshot hotkeys are disabled, and Karabiner routes Command+Shift+3 to AeroSpace workspace 3."
   exit 0
 fi
 

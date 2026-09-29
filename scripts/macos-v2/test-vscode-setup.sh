@@ -31,12 +31,19 @@ fi
 
 settings_source="$ROOT_DIR/dotfiles/macos/Library/Application Support/Code/User/settings.json"
 settings_target="$HOME/Library/Application Support/Code/User/settings.json"
+keybindings_source="$ROOT_DIR/dotfiles/macos/Library/Application Support/Code/User/keybindings.json"
+keybindings_target="$HOME/Library/Application Support/Code/User/keybindings.json"
 extension_dir="$HOME/.vscode/extensions/macbook-linux-rice-eva01-pastel-0.1.0"
 karabiner_config="$HOME/.config/karabiner/karabiner.json"
 
 if [[ ! -f "$settings_target" ]] ||
   ! cmp -s "$settings_source" "$settings_target"; then
   echo "The installed VS Code settings differ from the tracked Mac rice settings. Run scripts/macos-v2/install-desktop.sh." >&2
+  exit 1
+fi
+if [[ ! -f "$keybindings_target" ]] ||
+  ! cmp -s "$keybindings_source" "$keybindings_target"; then
+  echo "The installed VS Code keybindings differ from the tracked Mac rice keybindings. Run scripts/macos-v2/install-desktop.sh." >&2
   exit 1
 fi
 if [[ ! -f "$extension_dir/package.json" ||
@@ -52,13 +59,14 @@ if ! code --list-extensions | grep -Fxq "macbook-linux-rice.macbook-linux-rice-e
   exit 1
 fi
 
-python3 - "$settings_target" "$extension_dir" "$karabiner_config" <<'PY'
+python3 - "$settings_target" "$extension_dir" "$karabiner_config" "$keybindings_target" <<'PY'
 import json
 import sys
 from pathlib import Path
 
-settings_path, extension_path, karabiner_path = map(Path, sys.argv[1:])
+settings_path, extension_path, karabiner_path, keybindings_path = map(Path, sys.argv[1:])
 settings = json.loads(settings_path.read_text(encoding="utf-8"))
+keybindings = json.loads(keybindings_path.read_text(encoding="utf-8"))
 extension_path = extension_path.resolve()
 extension = json.loads((extension_path / "package.json").read_text(encoding="utf-8"))
 color_theme = settings.get("workbench.colorTheme")
@@ -71,6 +79,16 @@ if not any(theme.get("id") == icon_theme for theme in extension["contributes"]["
     sys.exit("The configured EVA-01 icon theme is missing from the extension.")
 if not settings.get("editor.fontFamily", "").startswith("Liga SFMono Nerd Font"):
     sys.exit("VS Code is not configured to use the rice's Nerd Font.")
+
+expected_keybindings = {
+    "cmd+,": "workbench.action.toggleSidebarVisibility",
+    "cmd+/": "workbench.action.toggleAuxiliaryBar",
+    "cmd+.": "workbench.action.toggleStatusbarVisibility",
+}
+for key, command in expected_keybindings.items():
+    matching = [item for item in keybindings if item.get("key") == key]
+    if len(matching) != 1 or matching[0].get("command") != command:
+        sys.exit(f"VS Code shortcut '{key}' is not bound to {command}.")
 
 config = json.loads(karabiner_path.read_text(encoding="utf-8"))
 selected = [profile for profile in config.get("profiles", []) if profile.get("selected") is True]
@@ -127,4 +145,4 @@ if [[ "$running" != true ]]; then
   exit 1
 fi
 
-echo "VS Code functionality passed: app launch, wallpaper background, Nerd Font settings, EVA color/icon themes, Command+Space+V, and HyprMod+V."
+echo "VS Code functionality passed: app launch, wallpaper background, Nerd Font settings, EVA themes, Command+Space+V, HyprMod+V, and primary, secondary, and status-bar shortcuts."

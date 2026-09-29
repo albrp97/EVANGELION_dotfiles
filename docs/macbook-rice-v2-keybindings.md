@@ -30,12 +30,13 @@ For one through four tiled windows it matches the Linux rice's one-window,
 two windows each; AeroSpace otherwise nests larger stacks unevenly. Dialogs
 and floating utility windows remain outside the grid.
 
-Yabai runs in float-only mode with `focus_follows_mouse autofocus` and
-`mouse_follows_focus on`; AeroSpace continues to own tiling and virtual
-workspaces. Hovering focuses the window under the pointer, and changing focus
-moves the pointer to the focused window. Yabai does not load its scripting
-addition, and no SIP change or `sudo` is used. Grant Yabai Accessibility
-permission in System Settings so focus tracking can work.
+Yabai runs in float-only mode with `focus_follows_mouse autoraise` and
+`mouse_follows_focus off`; AeroSpace continues to own tiling and virtual
+workspaces. Hovering focuses and raises the window under the pointer, while
+keyboard-driven focus changes leave the pointer in place. Yabai's LaunchAgent
+starts it at login and loads the persistent `~/.yabairc`. Yabai does not load
+its scripting addition, and no SIP change or `sudo` is used. Grant Yabai
+Accessibility permission in System Settings so focus tracking can work.
 
 ## Workspaces
 
@@ -57,6 +58,8 @@ permission in System Settings so focus tracking can work.
 Workspace offsets wrap across 1–9; offset 1 means the next workspace and
 offset 9 returns to the current workspace. The scratch workspace is not shown
 in the numbered workspace-dot strip in SketchyBar.
+`Command+Shift+3` is routed by Karabiner to AeroSpace's workspace-3 move
+binding, so it moves and follows the focused window without taking a screenshot.
 
 ## Launcher
 
@@ -82,6 +85,17 @@ preserves the old rice's screenshot key; `P` remains an alias. Press `Escape`
 to cancel. Spotlight's conflicting default `Command+Space` shortcut is disabled.
 The Ghostty launcher opens windows through macOS UI automation; if prompted,
 grant Accessibility access to the process running the launcher.
+
+## Visual Studio Code
+
+| Action | Shortcut |
+| --- | --- |
+| Toggle the primary side bar | `Command+,` |
+| Toggle the secondary/auxiliary side bar | `Command+/` |
+| Toggle the Status Bar | `Command+.` |
+
+These are installed as user keybindings from the legacy Mac rice configuration
+and match the Linux Code OSS shortcuts.
 
 ## Top bar and power chooser
 
@@ -157,9 +171,9 @@ the compact, muted timeline used by the Linux setup.
 - `Control+Command+Q` locks the screen, and `Control+Command+Space` opens
   Emoji & Symbols.
 - Native `Command+Shift+3/4/5` screenshot shortcuts and their `Control` copy
-  variants are disabled. Karabiner also consumes `Command+Shift+3` so macOS
-  cannot trigger the built-in full-screen capture; use `Command+Space`, then
-  `P` for the rice capture.
+  variants are disabled. Karabiner routes `Command+Shift+3` to AeroSpace's
+  workspace-3 move binding instead of allowing a full-screen capture; use
+  `Command+Space`, then `P` for the rice capture.
 - `Command+W` and normal copy/paste/edit shortcuts retain their native
   macOS meanings.
 - Hardware media, volume, and brightness keys remain under macOS control.

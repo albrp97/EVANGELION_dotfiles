@@ -1,10 +1,26 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
+ROOT_DIR="$(cd -- "$SCRIPT_DIR/../.." && pwd)"
+
 export PATH="$HOME/.local/bin:$HOME/.homebrew/bin:$HOME/.homebrew/sbin:/opt/homebrew/bin:/usr/bin:/bin:/usr/sbin:/sbin"
+
+source_config="$ROOT_DIR/dotfiles/macos-v2/.yabairc"
+active_config="$HOME/.yabairc"
+launch_agent="$HOME/Library/LaunchAgents/com.asmvik.yabai.plist"
 
 if ! command -v yabai >/dev/null 2>&1; then
   echo "Yabai is missing. Run scripts/macos-v2/bootstrap-tools.sh." >&2
+  exit 1
+fi
+if ! cmp -s "$source_config" "$active_config"; then
+  echo "The installed Yabai config differs from the persistent MacBook Rice v2 config. Run scripts/macos-v2/install-desktop.sh." >&2
+  exit 1
+fi
+if [[ ! -f "$launch_agent" ]] ||
+  [[ "$(/usr/libexec/PlistBuddy -c 'Print :RunAtLoad' "$launch_agent" 2>/dev/null || true)" != true ]]; then
+  echo "Yabai is not configured to start at login. Run scripts/macos-v2/install-desktop.sh." >&2
   exit 1
 fi
 if ! pgrep -x yabai >/dev/null 2>&1; then
@@ -36,12 +52,12 @@ focus_mode="$(yabai -m config focus_follows_mouse)"
 mouse_mode="$(yabai -m config mouse_follows_focus)"
 layout="$(yabai -m config layout)"
 
-if [[ "$focus_mode" != "autofocus" ]]; then
-  echo "Expected focus_follows_mouse=autofocus, got '$focus_mode'." >&2
+if [[ "$focus_mode" != "autoraise" ]]; then
+  echo "Expected focus_follows_mouse=autoraise, got '$focus_mode'." >&2
   exit 1
 fi
-if [[ "$mouse_mode" != "on" ]]; then
-  echo "Expected mouse_follows_focus=on, got '$mouse_mode'." >&2
+if [[ "$mouse_mode" != "off" ]]; then
+  echo "Expected mouse_follows_focus=off, got '$mouse_mode'." >&2
   exit 1
 fi
 if [[ "$layout" != "float" ]]; then
@@ -49,4 +65,4 @@ if [[ "$layout" != "float" ]]; then
   exit 1
 fi
 
-echo "Yabai hover-focus and focus-follows-mouse are enabled; AeroSpace remains the tiling manager."
+echo "Yabai focus-follows-mouse autoraises hovered windows; its login service and persistent config are verified, while AeroSpace remains the tiling manager."

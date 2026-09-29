@@ -68,9 +68,10 @@ Common Linux shortcuts:
 | Clipboard panel | Super+Shift+V |
 | Wallpaper panel | Super+Shift+W |
 
-Within Code OSS, `Super+,` toggles the primary side bar and `Super+/` toggles
-the secondary/auxiliary side bar. The Linux keybindings file uses `meta` with
-literal punctuation (`meta+,` and `meta+/`) for these shortcuts.
+Within Code OSS, `Super+,` toggles the primary side bar, `Super+/` toggles the
+secondary/auxiliary side bar, and `Super+.` toggles the Status Bar. The Linux
+keybindings file uses `meta` with literal punctuation (`meta+,`, `meta+/`, and
+`meta+.`) for these shortcuts.
 
 Linux-specific details and reload commands are in
 [docs/manual-config.md](manual-config.md). The Linux Code OSS wrapper is

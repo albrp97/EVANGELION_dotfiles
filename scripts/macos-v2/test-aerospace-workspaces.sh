@@ -161,6 +161,23 @@ fi
 aerospace move-node-to-workspace --focus-follows-window "$original_workspace"
 assert_workspace "$original_workspace"
 
+if [[ "$original_workspace" == "3" ]]; then
+  aerospace move-node-to-workspace --focus-follows-window 1
+  assert_workspace 1
+fi
+
+aerospace trigger-binding --mode main "cmd-alt-ctrl-shift-3"
+assert_workspace 3
+window_state="$(aerospace list-windows --focused --format '%{window-id} %{workspace}')"
+read -r moved_window_id moved_workspace <<< "$window_state"
+if [[ "$moved_window_id" != "$focused_window_id" || "$moved_workspace" != "3" ]]; then
+  echo "The Command+Shift+3 remap did not move and focus the original window on workspace 3." >&2
+  exit 1
+fi
+
+aerospace move-node-to-workspace --focus-follows-window "$original_workspace"
+assert_workspace "$original_workspace"
+
 if [[ "$original_workspace" =~ ^[1-9]$ ]]; then
   next_workspace=$((original_workspace % 9 + 1))
   aerospace trigger-binding --mode main "cmd-ctrl-right"

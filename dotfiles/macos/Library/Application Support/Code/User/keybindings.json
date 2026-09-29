@@ -1,0 +1,14 @@
+[
+  {
+    "key": "cmd+,",
+    "command": "workbench.action.toggleSidebarVisibility"
+  },
+  {
+    "key": "cmd+/",
+    "command": "workbench.action.toggleAuxiliaryBar"
+  },
+  {
+    "key": "cmd+.",
+    "command": "workbench.action.toggleStatusbarVisibility"
+  }
+]
