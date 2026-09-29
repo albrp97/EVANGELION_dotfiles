@@ -1,0 +1,30 @@
+{
+  "title": "Right Command to HyprMod",
+  "rules": [
+    {
+      "description": "Right Command becomes HyprMod (Command + Option + Control)",
+      "manipulators": [
+        {
+          "type": "basic",
+          "from": {
+            "key_code": "right_command",
+            "modifiers": {
+              "optional": [
+                "any"
+              ]
+            }
+          },
+          "to": [
+            {
+              "key_code": "left_control",
+              "modifiers": [
+                "left_command",
+                "left_option"
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

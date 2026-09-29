@@ -1,0 +1,50 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+export PATH="$HOME/.local/bin:$HOME/.homebrew/bin:$HOME/.homebrew/sbin:/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin"
+
+focused="${AEROSPACE_FOCUSED_WORKSPACE:-}"
+if [[ ! "$focused" =~ ^[[:alnum:]_.-]+$ ]]; then
+  if ! focused="$(aerospace list-workspaces --focused)"; then
+    echo "Could not determine the focused AeroSpace workspace." >&2
+    exit 1
+  fi
+fi
+
+state_dir="${XDG_STATE_HOME:-$HOME/.local/state}/macbook-rice-v2"
+mkdir -p "$state_dir"
+temp_file="$(mktemp "$state_dir/aerospace-focused-workspace.XXXXXX")"
+printf '%s\n' "$focused" > "$temp_file"
+mv -f "$temp_file" "$state_dir/aerospace-focused-workspace"
+
+if pgrep -x sketchybar >/dev/null 2>&1; then
+  if ! workspaces="$(aerospace list-windows --all --format '%{workspace}')"; then
+    echo "Could not determine which AeroSpace workspaces are in use." >&2
+    exit 1
+  fi
+
+  highest_visible=3
+  if [[ "$focused" =~ ^[1-9]$ ]] && ((focused > highest_visible)); then
+    highest_visible="$focused"
+  fi
+  while IFS= read -r workspace; do
+    [[ "$workspace" =~ ^[1-9]$ ]] || continue
+    if ((workspace > highest_visible)); then
+      highest_visible="$workspace"
+    fi
+  done <<< "$workspaces"
+
+  if ! sketchybar --trigger aerospace_workspace_change \
+    FOCUSED_WORKSPACE="$focused" \
+    HIGHEST_VISIBLE_WORKSPACE="$highest_visible"; then
+    echo "Could not update the running SketchyBar workspace indicator." >&2
+    exit 1
+  fi
+fi
+
+if [[ -x "$HOME/.local/bin/rice-v2-grid-layout" ]]; then
+  for workspace in "${AEROSPACE_PREV_WORKSPACE:-}" "$focused"; do
+    [[ -n "$workspace" ]] || continue
+    AEROSPACE_WORKSPACE="$workspace" "$HOME/.local/bin/rice-v2-grid-layout"
+  done
+fi

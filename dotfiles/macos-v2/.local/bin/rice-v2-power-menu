@@ -1,0 +1,133 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+actions=(
+  "Lock Screen"
+  "Display Off"
+  "Sleep"
+  "Toggle 30m Caffeinate"
+  "Restart v2 UI"
+  "Log Out..."
+  "Restart Mac..."
+  "Shut Down Mac..."
+)
+
+if [[ "$#" -eq 1 && "${1:-}" == "--list-actions" ]]; then
+  printf '%s\n' "${actions[@]}"
+  exit 0
+fi
+if [[ "$#" -gt 1 ]]; then
+  echo "usage: rice-v2-power-menu [--list-actions|--reboot|--shutdown]" >&2
+  exit 2
+fi
+
+case "${1:-}" in
+  --reboot)
+    selection="Restart Mac..."
+    ;;
+  --shutdown)
+    selection="Shut Down Mac..."
+    ;;
+  "")
+    selection="$(
+      /usr/bin/osascript -e '
+set powerActions to {"Lock Screen", "Display Off", "Sleep", "Toggle 30m Caffeinate", "Restart v2 UI", "Log Out...", "Restart Mac...", "Shut Down Mac..."}
+set selectedAction to choose from list powerActions with title "EVA-01 POWER" with prompt "Select a system action" with empty selection allowed
+if selectedAction is false then return "Cancel"
+if (count of selectedAction) is 0 then return "Cancel"
+return item 1 of selectedAction
+'
+    )"
+    ;;
+  *)
+    echo "usage: rice-v2-power-menu [--list-actions|--reboot|--shutdown]" >&2
+    exit 2
+    ;;
+esac
+
+confirm_action() {
+  local action="$1"
+  local response
+
+  response="$(
+    /usr/bin/osascript -e '
+on run argv
+  set actionName to item 1 of argv
+  try
+    set dialogResult to display dialog ("Confirm " & actionName & "?") with title "EVA-01 POWER" buttons {"Cancel", "Confirm"} default button "Cancel" cancel button "Cancel"
+    return button returned of dialogResult
+  on error errorMessage number errorNumber
+    if errorNumber is -128 then return "Cancel"
+    error errorMessage number errorNumber
+  end try
+end run
+' "$action"
+  )"
+  [[ "$response" == "Confirm" ]]
+}
+
+toggle_caffeinate() {
+  local state_dir="$HOME/.local/state/macbook-rice-v2"
+  local pid_file="$state_dir/caffeinate.pid"
+  local pid=""
+  local process_name=""
+
+  if [[ -f "$pid_file" ]]; then
+    IFS= read -r pid < "$pid_file" || true
+    if [[ "$pid" =~ ^[0-9]+$ ]] && kill -0 "$pid" 2>/dev/null; then
+      process_name="$(ps -p "$pid" -o comm= || true)"
+      if [[ "$process_name" == *caffeinate* ]]; then
+        kill "$pid"
+        rm -f "$pid_file"
+        return
+      fi
+    fi
+    rm -f "$pid_file"
+  fi
+
+  mkdir -p "$state_dir"
+  /usr/bin/caffeinate -dimsu -t 1800 >/tmp/macbook-rice-v2-caffeinate.log 2>&1 </dev/null &
+  printf '%s\n' "$!" > "$pid_file"
+}
+
+case "$selection" in
+  "Lock Screen")
+    /System/Library/CoreServices/Menu\ Extras/User.menu/Contents/Resources/CGSession -suspend
+    ;;
+  "Display Off")
+    /usr/bin/pmset displaysleepnow
+    ;;
+  "Sleep")
+    /usr/bin/pmset sleepnow
+    ;;
+  "Toggle 30m Caffeinate")
+    toggle_caffeinate
+    ;;
+  "Restart v2 UI")
+    launch_domain="gui/$(id -u)"
+    launchctl kickstart -k "$launch_domain/com.macbook-rice-v2.sketchybar"
+    launchctl kickstart -k "$launch_domain/com.macbook-rice-v2.borders"
+    ;;
+  "Log Out...")
+    if confirm_action "logging out"; then
+      /usr/bin/osascript -e 'tell application "System Events" to log out'
+    fi
+    ;;
+  "Restart Mac...")
+    if confirm_action "restarting the Mac"; then
+      /usr/bin/osascript -e 'tell application "System Events" to restart'
+    fi
+    ;;
+  "Shut Down Mac...")
+    if confirm_action "shutting down the Mac"; then
+      /usr/bin/osascript -e 'tell application "System Events" to shut down'
+    fi
+    ;;
+  Cancel)
+    exit 0
+    ;;
+  *)
+    echo "Unexpected power-menu choice: $selection" >&2
+    exit 1
+    ;;
+esac

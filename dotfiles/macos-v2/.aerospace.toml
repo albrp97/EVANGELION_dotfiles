@@ -1,0 +1,146 @@
+# Use config v2 for persistent-workspaces and current AeroSpace semantics.
+config-version = 2
+start-at-login = true
+auto-reload-config = true
+after-startup-command = [
+  'exec-and-forget /bin/bash -c "$HOME/.local/bin/rice-v2-start-desktop"',
+]
+exec-on-workspace-change = [
+  '/bin/bash',
+  '-c',
+  '"$HOME/.local/bin/rice-v2-workspace-changed"',
+]
+on-window-detected = [
+  { if = 'true', run = 'exec-and-forget /bin/bash -c "$HOME/.local/bin/rice-v2-grid-layout"' },
+]
+on-focus-changed = [
+  'exec-and-forget /bin/bash -c "$HOME/.local/bin/rice-v2-grid-layout"',
+]
+
+persistent-workspaces = ['1', '2', '3', '4', '5', '6', '7', '8', '9', 'scratch']
+default-root-container-layout = 'tiles'
+default-root-container-orientation = 'horizontal'
+enable-normalization-flatten-containers = true
+accordion-padding = 24
+
+[key-mapping]
+preset = 'qwerty'
+
+[gaps]
+inner.horizontal = 10
+inner.vertical = 10
+outer.left = 10
+outer.bottom = 10
+outer.right = 10
+outer.top = 12
+
+[mode.main.binding]
+cmd-esc = 'close'
+cmd-alt-space = 'layout floating tiling'
+cmd-d = 'fullscreen'
+cmd-j = 'layout tiles horizontal vertical'
+alt-tab = 'focus dfs-next'
+
+cmd-1 = 'workspace 1'
+cmd-2 = 'workspace 2'
+cmd-3 = 'workspace 3'
+cmd-4 = 'workspace 4'
+cmd-5 = 'workspace 5'
+cmd-6 = 'workspace 6'
+cmd-7 = 'workspace 7'
+cmd-8 = 'workspace 8'
+cmd-9 = 'workspace 9'
+
+cmd-ctrl-left = 'workspace --wrap-around prev'
+cmd-ctrl-right = 'workspace --wrap-around next'
+cmd-ctrl-up = 'workspace-back-and-forth'
+cmd-ctrl-down = 'exec-and-forget /bin/bash -c "$HOME/.local/bin/rice-v2-workspace-empty"'
+cmd-ctrl-1 = 'exec-and-forget /bin/bash -c "$HOME/.local/bin/rice-v2-workspace-offset 1"'
+cmd-ctrl-2 = 'exec-and-forget /bin/bash -c "$HOME/.local/bin/rice-v2-workspace-offset 2"'
+cmd-ctrl-3 = 'exec-and-forget /bin/bash -c "$HOME/.local/bin/rice-v2-workspace-offset 3"'
+cmd-ctrl-4 = 'exec-and-forget /bin/bash -c "$HOME/.local/bin/rice-v2-workspace-offset 4"'
+cmd-ctrl-5 = 'exec-and-forget /bin/bash -c "$HOME/.local/bin/rice-v2-workspace-offset 5"'
+cmd-ctrl-6 = 'exec-and-forget /bin/bash -c "$HOME/.local/bin/rice-v2-workspace-offset 6"'
+cmd-ctrl-7 = 'exec-and-forget /bin/bash -c "$HOME/.local/bin/rice-v2-workspace-offset 7"'
+cmd-ctrl-8 = 'exec-and-forget /bin/bash -c "$HOME/.local/bin/rice-v2-workspace-offset 8"'
+cmd-ctrl-9 = 'exec-and-forget /bin/bash -c "$HOME/.local/bin/rice-v2-workspace-offset 9"'
+
+cmd-ctrl-shift-1 = 'exec-and-forget /bin/bash -c "$HOME/.local/bin/rice-v2-workspace-offset --move 1"'
+cmd-ctrl-shift-2 = 'exec-and-forget /bin/bash -c "$HOME/.local/bin/rice-v2-workspace-offset --move 2"'
+cmd-ctrl-shift-3 = 'exec-and-forget /bin/bash -c "$HOME/.local/bin/rice-v2-workspace-offset --move 3"'
+cmd-ctrl-shift-4 = 'exec-and-forget /bin/bash -c "$HOME/.local/bin/rice-v2-workspace-offset --move 4"'
+cmd-ctrl-shift-5 = 'exec-and-forget /bin/bash -c "$HOME/.local/bin/rice-v2-workspace-offset --move 5"'
+cmd-ctrl-shift-6 = 'exec-and-forget /bin/bash -c "$HOME/.local/bin/rice-v2-workspace-offset --move 6"'
+cmd-ctrl-shift-7 = 'exec-and-forget /bin/bash -c "$HOME/.local/bin/rice-v2-workspace-offset --move 7"'
+cmd-ctrl-shift-8 = 'exec-and-forget /bin/bash -c "$HOME/.local/bin/rice-v2-workspace-offset --move 8"'
+cmd-ctrl-shift-9 = 'exec-and-forget /bin/bash -c "$HOME/.local/bin/rice-v2-workspace-offset --move 9"'
+
+cmd-shift-1 = 'move-node-to-workspace --focus-follows-window 1'
+cmd-shift-2 = 'move-node-to-workspace --focus-follows-window 2'
+cmd-shift-3 = 'move-node-to-workspace --focus-follows-window 3'
+cmd-shift-4 = 'move-node-to-workspace --focus-follows-window 4'
+cmd-shift-5 = 'move-node-to-workspace --focus-follows-window 5'
+cmd-shift-6 = 'move-node-to-workspace --focus-follows-window 6'
+cmd-shift-7 = 'move-node-to-workspace --focus-follows-window 7'
+cmd-shift-8 = 'move-node-to-workspace --focus-follows-window 8'
+cmd-shift-9 = 'move-node-to-workspace --focus-follows-window 9'
+cmd-ctrl-shift-left = 'move-node-to-workspace --focus-follows-window --wrap-around prev'
+cmd-ctrl-shift-right = 'move-node-to-workspace --focus-follows-window --wrap-around next'
+
+cmd-left = 'focus left'
+cmd-down = 'focus down'
+cmd-up = 'focus up'
+cmd-right = 'focus right'
+
+cmd-shift-left = 'move left'
+cmd-shift-down = 'move down'
+cmd-shift-up = 'move up'
+cmd-shift-right = 'move right'
+
+cmd-equal = 'resize smart +80'
+cmd-minus = 'resize smart -80'
+cmd-q = 'close'
+
+# Right Command becomes Command+Option+Control when the optional Karabiner rule is enabled.
+cmd-alt-ctrl-esc = 'close'
+cmd-alt-ctrl-q = 'close'
+cmd-alt-ctrl-h = 'focus left'
+cmd-alt-ctrl-j = 'focus down'
+cmd-alt-ctrl-k = 'focus up'
+cmd-alt-ctrl-l = 'focus right'
+cmd-alt-ctrl-shift-h = 'swap --swap-focus left'
+cmd-alt-ctrl-shift-j = 'swap --swap-focus down'
+cmd-alt-ctrl-shift-k = 'swap --swap-focus up'
+cmd-alt-ctrl-shift-l = 'swap --swap-focus right'
+cmd-alt-ctrl-f = 'layout floating tiling'
+cmd-alt-ctrl-shift-f = 'fullscreen'
+cmd-alt-ctrl-b = 'balance-sizes'
+cmd-alt-ctrl-equal = 'resize smart +80'
+cmd-alt-ctrl-minus = 'resize smart -80'
+
+cmd-alt-ctrl-0 = 'workspace scratch'
+cmd-alt-ctrl-shift-0 = 'move-node-to-workspace scratch'
+cmd-alt-ctrl-s = 'exec-and-forget /bin/bash -c "$HOME/.local/bin/rice-v2-toggle-scratch"'
+cmd-alt-ctrl-shift-s = 'move-node-to-workspace scratch'
+cmd-alt-ctrl-shift-1 = 'move-node-to-workspace --focus-follows-window 1'
+cmd-alt-ctrl-shift-2 = 'move-node-to-workspace --focus-follows-window 2'
+cmd-alt-ctrl-shift-3 = 'move-node-to-workspace --focus-follows-window 3'
+cmd-alt-ctrl-shift-4 = 'move-node-to-workspace --focus-follows-window 4'
+cmd-alt-ctrl-shift-5 = 'move-node-to-workspace --focus-follows-window 5'
+cmd-alt-ctrl-shift-6 = 'move-node-to-workspace --focus-follows-window 6'
+cmd-alt-ctrl-shift-7 = 'move-node-to-workspace --focus-follows-window 7'
+cmd-alt-ctrl-shift-8 = 'move-node-to-workspace --focus-follows-window 8'
+cmd-alt-ctrl-shift-9 = 'move-node-to-workspace --focus-follows-window 9'
+
+cmd-alt-ctrl-t = 'exec-and-forget /usr/bin/open -na Ghostty'
+cmd-alt-ctrl-enter = 'exec-and-forget /usr/bin/open -na Ghostty'
+cmd-alt-ctrl-e = 'exec-and-forget /usr/bin/open -a Finder'
+cmd-alt-ctrl-shift-e = 'exec-and-forget /usr/bin/open -a Finder'
+cmd-alt-ctrl-shift-y = 'exec-and-forget /usr/bin/open -a Finder'
+cmd-alt-ctrl-z = 'exec-and-forget /usr/bin/open -a Zen'
+cmd-alt-ctrl-w = 'exec-and-forget /usr/bin/open -a Zen'
+cmd-alt-ctrl-v = 'exec-and-forget /usr/bin/open -a "Visual Studio Code"'
+cmd-alt-ctrl-shift-t = 'exec-and-forget /usr/bin/open -a "Visual Studio Code"'
+cmd-alt-ctrl-r = 'exec-and-forget /usr/bin/open -a "Activity Monitor"'
+cmd-alt-ctrl-shift-c = 'exec-and-forget /usr/bin/open -a Calculator'
+ctrl-shift-esc = 'exec-and-forget /usr/bin/open -a "Activity Monitor"'

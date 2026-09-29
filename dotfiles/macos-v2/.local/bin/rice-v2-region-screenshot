@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+if [[ "$#" -ne 0 ]]; then
+  echo "Usage: rice-v2-region-screenshot" >&2
+  exit 64
+fi
+
+/usr/sbin/screencapture -i -s -c -x
+/usr/bin/osascript -e 'display notification "Region screenshot copied to clipboard." with title "MacBook Rice v2"'

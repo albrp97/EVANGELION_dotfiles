@@ -1,0 +1,54 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+export PATH="$HOME/.local/bin:$HOME/.homebrew/bin:$HOME/.homebrew/sbin:/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin"
+
+action="focus"
+offset="${1:-}"
+if [[ "$offset" == "--move" ]]; then
+  action="move"
+  offset="${2:-}"
+fi
+if [[ ! "$offset" =~ ^[1-9]$ ]]; then
+  echo "Usage: $0 [--move] <relative workspace offset 1-9>" >&2
+  exit 2
+fi
+if [[ "$action" == "focus" && "$#" -ne 1 ]] ||
+  [[ "$action" == "move" && "$#" -ne 2 ]]; then
+  echo "Usage: $0 [--move] <relative workspace offset 1-9>" >&2
+  exit 2
+fi
+
+workspaces=()
+while IFS= read -r workspace; do
+  [[ "$workspace" =~ ^[1-9]$ ]] && workspaces+=("$workspace")
+done < <(aerospace list-workspaces --all --format '%{workspace}' | sort -n)
+
+if [[ "${#workspaces[@]}" -ne 9 ]]; then
+  echo "Expected AeroSpace workspaces 1-9, found ${#workspaces[@]}." >&2
+  exit 1
+fi
+
+focused_workspace="$(aerospace list-workspaces --focused)"
+current="$focused_workspace"
+if [[ ! "$current" =~ ^[1-9]$ ]]; then
+  state_file="${XDG_STATE_HOME:-$HOME/.local/state}/macbook-rice-v2/scratch-return-workspace"
+  if [[ -f "$state_file" ]]; then
+    current="$(cat "$state_file")"
+  fi
+  if [[ ! "$current" =~ ^[1-9]$ ]]; then
+    current="1"
+  fi
+fi
+
+current_index=$((current - 1))
+target_index=$(((current_index + offset) % 9))
+target="${workspaces[target_index]}"
+if [[ "$action" == "move" ]]; then
+  if [[ "$target" == "$focused_workspace" ]]; then
+    exit 0
+  fi
+  exec aerospace move-node-to-workspace --focus-follows-window "$target"
+fi
+
+exec aerospace workspace "$target"

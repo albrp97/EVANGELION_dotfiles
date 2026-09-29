@@ -1,0 +1,8 @@
+#!/usr/bin/env sh
+
+export PATH="$HOME/.local/bin:$HOME/.homebrew/bin:$HOME/.homebrew/sbin:/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin"
+
+# AeroSpace remains the tiling/workspace manager; Yabai only supplies hover focus.
+yabai -m config layout float
+yabai -m config focus_follows_mouse autofocus
+yabai -m config mouse_follows_focus on

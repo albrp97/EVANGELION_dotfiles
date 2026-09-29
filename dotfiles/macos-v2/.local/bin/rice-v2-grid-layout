@@ -1,0 +1,176 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+export PATH="$HOME/.local/bin:$HOME/.homebrew/bin:$HOME/.homebrew/sbin:/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin"
+
+state_dir="${XDG_STATE_HOME:-$HOME/.local/state}/macbook-rice-v2"
+mkdir -p "$state_dir"
+exec 2>>"$state_dir/grid-layout.log"
+
+if ! command -v aerospace >/dev/null 2>&1; then
+  echo "Grid reflow requires AeroSpace; install it with scripts/macos-v2/bootstrap-tools.sh." >&2
+  exit 1
+fi
+
+workspace="${AEROSPACE_WORKSPACE:-${AEROSPACE_FOCUSED_WORKSPACE:-}}"
+if [[ -z "$workspace" ]]; then
+  workspace="$(aerospace list-workspaces --focused)"
+fi
+if [[ ! "$workspace" =~ ^[[:alnum:]_.-]+$ ]]; then
+  echo "Grid reflow received an invalid workspace name: $workspace" >&2
+  exit 1
+fi
+
+safe_workspace="${workspace//[^[:alnum:]_.-]/_}"
+lock_dir="$state_dir/grid-layout-$safe_workspace.lock"
+state_file="$state_dir/grid-workspace-$safe_workspace.windows"
+sleep 0.1
+
+lock_acquired=false
+for ((attempt = 0; attempt < 100; attempt++)); do
+  if mkdir "$lock_dir" 2>/dev/null; then
+    lock_acquired=true
+    break
+  fi
+  sleep 0.05
+done
+if [[ "$lock_acquired" != true ]]; then
+  echo "Grid reflow lock is busy for workspace $workspace: $lock_dir" >&2
+  exit 1
+fi
+trap 'rmdir "$lock_dir"' EXIT
+
+window_rows="$(aerospace list-windows --workspace "$workspace" --format '%{window-id}|%{window-layout}')"
+window_ids=()
+while IFS='|' read -r window_id layout; do
+  [[ -n "$window_id" ]] || continue
+  if [[ ! "$window_id" =~ ^[0-9]+$ ]]; then
+    echo "AeroSpace returned an invalid window ID for workspace $workspace: $window_id" >&2
+    exit 1
+  fi
+  if [[ "$layout" != floating ]]; then
+    window_ids+=("$window_id")
+  fi
+done <<< "$window_rows"
+
+sorted_window_ids=()
+if [[ "${#window_ids[@]}" -eq 0 ]]; then
+  rm -f "$state_file"
+  exit 0
+fi
+
+signature="$(printf '%s\n' "${window_ids[@]}" | sort -n | paste -sd ',' -)"
+if [[ -f "$state_file" ]] && [[ "$(cat "$state_file")" == "$signature" ]]; then
+  exit 0
+fi
+
+run_aerospace() {
+  if ! aerospace "$@"; then
+    echo "Grid reflow failed for workspace $workspace: aerospace $*" >&2
+    exit 1
+  fi
+}
+
+count="${#window_ids[@]}"
+column_sizes=()
+if [[ "$count" -le 4 ]]; then
+  case "$count" in
+    1) column_sizes=(1) ;;
+    2) column_sizes=(1 1) ;;
+    3) column_sizes=(1 2) ;;
+    4) column_sizes=(2 2) ;;
+  esac
+else
+  for ((remaining = count; remaining > 0; remaining -= 2)); do
+    if [[ "$remaining" -ge 2 ]]; then
+      column_sizes+=(2)
+    else
+      column_sizes+=(1)
+    fi
+  done
+fi
+
+column_count="${#column_sizes[@]}"
+column_starts=()
+start=0
+for ((column = 0; column < column_count; column++)); do
+  column_starts+=("$start")
+  start=$((start + column_sizes[column]))
+done
+
+window_frame_helper="$HOME/.local/bin/rice-v2-window-frames"
+if [[ ! -x "$window_frame_helper" ]]; then
+  echo "Missing window-frame helper; reinstall with scripts/macos-v2/install-desktop.sh." >&2
+  exit 1
+fi
+if ! "$window_frame_helper" --window-order "${window_ids[@]}" >/dev/null; then
+  echo "Grid reflow skipped because not all tiled windows are currently visible in workspace $workspace." >&2
+  exit 1
+fi
+
+run_aerospace flatten-workspace-tree --workspace "$workspace"
+run_aerospace layout --workspace "$workspace" --root h_tiles
+
+if ! ordered_window_ids="$("$window_frame_helper" --window-order "${window_ids[@]}")"; then
+  echo "Could not determine on-screen window order for workspace $workspace." >&2
+  exit 1
+fi
+
+sorted_window_ids=()
+while IFS= read -r window_id; do
+  [[ -n "$window_id" ]] || continue
+  if [[ ! "$window_id" =~ ^[0-9]+$ ]]; then
+    echo "Window-frame helper returned an invalid window ID: $window_id" >&2
+    exit 1
+  fi
+  sorted_window_ids+=("$window_id")
+done <<< "$ordered_window_ids"
+if [[ "${#sorted_window_ids[@]}" -ne "$count" ]]; then
+  echo "Expected $count visible tiled windows in workspace $workspace, found ${#sorted_window_ids[@]}." >&2
+  exit 1
+fi
+
+printf '%s workspace=%s reflow-order=%s\n' \
+  "$(date '+%Y-%m-%dT%H:%M:%S')" "$workspace" "$(printf '%s\n' "${sorted_window_ids[@]}" | paste -sd ',' -)" >&2
+
+for ((column = column_count - 1; column >= 0; column--)); do
+  start="${column_starts[column]}"
+  size="${column_sizes[column]}"
+  for ((index = start + size - 2; index >= start; index--)); do
+    run_aerospace join-with --window-id "${sorted_window_ids[index]}" right
+  done
+done
+
+run_aerospace balance-sizes --workspace "$workspace"
+
+layout_rows="$(aerospace list-windows --workspace "$workspace" --format '%{window-id}|%{window-parent-container-layout}|%{workspace-root-container-layout}')"
+for ((index = 0; index < count; index++)); do
+  expected_parent=""
+  for ((column = 0; column < column_count; column++)); do
+    start="${column_starts[column]}"
+    end=$((start + column_sizes[column]))
+    if [[ "$index" -ge "$start" && "$index" -lt "$end" ]]; then
+      if [[ "${column_sizes[column]}" -gt 1 ]]; then
+        expected_parent="v_tiles"
+      else
+        expected_parent="h_tiles"
+      fi
+      break
+    fi
+  done
+
+  window_id="${sorted_window_ids[index]}"
+  actual="$(
+    awk -F '|' -v id="$window_id" '$1 == id { print $2 "|" $3; exit }' <<< "$layout_rows"
+  )"
+  if [[ "$actual" != "$expected_parent|h_tiles" ]]; then
+    echo "Grid verification failed for window $window_id in workspace $workspace: expected $expected_parent|h_tiles, got ${actual:-missing}." >&2
+    exit 1
+  fi
+done
+
+temp_file="$(mktemp "$state_dir/grid-workspace-$safe_workspace.XXXXXX")"
+printf '%s\n' "$signature" > "$temp_file"
+mv -f "$temp_file" "$state_file"
+printf '%s workspace=%s windows=%s columns=%s\n' \
+  "$(date '+%Y-%m-%dT%H:%M:%S')" "$workspace" "$count" "$(printf '%s\n' "${column_sizes[@]}" | paste -sd ':' -)" >&2

@@ -1,0 +1,14 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+export PATH="$HOME/.local/bin:$HOME/.homebrew/bin:$HOME/.homebrew/sbin:/opt/homebrew/bin:/opt/homebrew/sbin:/usr/local/bin:/usr/local/sbin:/usr/bin:/bin:/usr/sbin:/sbin"
+
+for tool in fish tmux fastfetch; do
+  if ! command -v "$tool" >/dev/null 2>&1; then
+    echo "rice-v2-open-fastfetch-console: $tool is missing; run scripts/macos-v2/bootstrap-tools.sh." >&2
+    exit 127
+  fi
+done
+
+"$HOME/.local/bin/rice-v2-new-ghostty-window"
+"$HOME/.local/bin/rice-v2-send-ghostty-command" rice-v2-fastfetch-console

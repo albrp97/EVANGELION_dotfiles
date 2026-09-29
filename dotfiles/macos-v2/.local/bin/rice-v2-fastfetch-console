@@ -1,0 +1,46 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+start_path="${1:-$HOME}"
+if [[ ! -d "$start_path" ]]; then
+  echo "rice-v2-fastfetch-console: not a directory: $start_path" >&2
+  exit 1
+fi
+
+export PATH="$HOME/.local/bin:$HOME/.homebrew/bin:$HOME/.homebrew/sbin:/opt/homebrew/bin:/opt/homebrew/sbin:/usr/local/bin:/usr/local/sbin:/usr/bin:/bin:/usr/sbin:/sbin"
+tmux_binary="$(command -v tmux || true)"
+fastfetch_binary="$(command -v fastfetch || true)"
+fish_binary="$(command -v fish || true)"
+if [[ -z "$tmux_binary" || -z "$fastfetch_binary" || -z "$fish_binary" ]]; then
+  echo "rice-v2-fastfetch-console: tmux, Fastfetch, and Fish are required; run scripts/macos-v2/bootstrap-tools.sh." >&2
+  exit 127
+fi
+
+pin_lines="${RICE_V2_FASTFETCH_PIN_LINES:-20}"
+if [[ ! "$pin_lines" =~ ^[1-9][0-9]*$ ]]; then
+  echo "rice-v2-fastfetch-console: RICE_V2_FASTFETCH_PIN_LINES must be a positive integer." >&2
+  exit 2
+fi
+
+session="rice-v2-fetch-$$"
+printf -v shell_command 'env FASTFETCH_DISABLE=1 %q -l -i' "$fish_binary"
+shell_pane="$(
+  "$tmux_binary" new-session -d -P -F '#{pane_id}' \
+    -s "$session" \
+    -c "$start_path" \
+    "$shell_command"
+)"
+
+"$tmux_binary" set-option -t "$session" status off
+"$tmux_binary" set-option -t "$session" pane-border-style "fg=#7C5FB8"
+"$tmux_binary" set-option -t "$session" pane-active-border-style "fg=#C4A7E7"
+"$tmux_binary" set-option -t "$session" mouse on
+
+printf -v panel_command '%q --config %q; while :; do sleep 3600; done' \
+  "$fastfetch_binary" \
+  "$HOME/.config/fastfetch/config.jsonc"
+"$tmux_binary" split-window -d -b -v -l "$pin_lines" \
+  -t "$shell_pane" \
+  "$panel_command"
+"$tmux_binary" select-pane -t "$shell_pane"
+"$tmux_binary" attach-session -t "$session"

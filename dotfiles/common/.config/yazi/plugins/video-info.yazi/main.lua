@@ -716,6 +716,9 @@ local function add_movie_section(lines, identity, movie_state)
 	elseif movie_state.status == "offline" then
 		add_detail(lines, "Matched title", identity.title .. (identity.year and (" (" .. identity.year .. ")") or ""))
 		add_detail(lines, "Lookup", "Offline mode enabled")
+	elseif movie_state.status == "unsupported" then
+		add_detail(lines, "Matched title", identity.title .. (identity.year and (" (" .. identity.year .. ")") or ""))
+		add_detail(lines, "Lookup", "Online movie indexer is Linux-only")
 	elseif movie_state.status == "unavailable" then
 		add_detail(lines, "Matched title", identity.title .. (identity.year and (" (" .. identity.year .. ")") or ""))
 		add_detail(lines, "Lookup", "No online match found")
@@ -800,6 +803,10 @@ local function movie_preview_state(st, snapshot, metadata)
 	local identity = persistent and persistent.identity or movie_identity(snapshot, metadata)
 	if not identity then
 		return
+	end
+
+	if ya.target_os() ~= "linux" then
+		return identity, { status = "unsupported" }
 	end
 
 	if not persistent then

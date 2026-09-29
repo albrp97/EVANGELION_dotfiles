@@ -1,0 +1,69 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+wallpaper_dir="${RICE_WALLPAPER_DIR:-$HOME/.local/share/macbook-rice-v2/wallpapers}"
+state_dir="${XDG_STATE_HOME:-$HOME/.local/state}/macbook-rice-v2"
+current_wallpaper_file="$state_dir/current-wallpaper"
+wallpaper_setter="$HOME/.local/bin/rice-v2-set-wallpaper"
+requested_wallpaper="${1:-}"
+
+if [[ $# -gt 1 ]]; then
+  echo "Usage: $0 [wallpaper-file]" >&2
+  exit 2
+fi
+
+if [[ -n "$requested_wallpaper" ]]; then
+  if [[ ! -f "$requested_wallpaper" ]]; then
+    echo "Requested wallpaper does not exist: $requested_wallpaper" >&2
+    exit 66
+  fi
+  wallpaper="$requested_wallpaper"
+else
+  if [[ ! -d "$wallpaper_dir" ]]; then
+    echo "Wallpaper directory does not exist: $wallpaper_dir" >&2
+    exit 66
+  fi
+
+  wallpapers=()
+  while IFS= read -r wallpaper; do
+    wallpapers+=("$wallpaper")
+  done < <(
+    find "$wallpaper_dir" -maxdepth 1 -type f \
+      \( -iname '*.jpg' -o -iname '*.jpeg' -o -iname '*.png' -o -iname '*.webp' \) \
+      -print | LC_ALL=C sort
+  )
+
+  if (( ${#wallpapers[@]} == 0 )); then
+    echo "No wallpaper files found in: $wallpaper_dir" >&2
+    exit 66
+  fi
+
+  current_wallpaper=""
+  if [[ -f "$current_wallpaper_file" ]]; then
+    IFS= read -r current_wallpaper < "$current_wallpaper_file" || true
+  fi
+
+  alternatives=()
+  for candidate in "${wallpapers[@]}"; do
+    if [[ "${#wallpapers[@]}" -eq 1 || "$candidate" != "$current_wallpaper" ]]; then
+      alternatives+=("$candidate")
+    fi
+  done
+
+  wallpaper="${alternatives[RANDOM % ${#alternatives[@]}]}"
+fi
+
+if [[ ! -x "$wallpaper_setter" ]]; then
+  echo "Wallpaper setter is missing or not executable: $wallpaper_setter" >&2
+  echo "Run scripts/macos-v2/install-desktop.sh to build and install it." >&2
+  exit 1
+fi
+
+"$wallpaper_setter" "$wallpaper"
+
+mkdir -p "$state_dir"
+temp_file="$(mktemp "$current_wallpaper_file.XXXXXX")"
+printf '%s\n' "$wallpaper" > "$temp_file"
+mv -f "$temp_file" "$current_wallpaper_file"
+
+printf '%s\n' "$wallpaper"

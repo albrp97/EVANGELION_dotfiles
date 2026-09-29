@@ -1,0 +1,65 @@
+command = @RICE_V2_FISH_BINARY@ -l -i
+
+font-family = "Liga SFMono Nerd Font"
+font-size = 14
+font-feature = -calt
+font-feature = -liga
+font-thicken = true
+font-thicken-strength = 120
+
+custom-shader = ~/.config/ghostty/shaders/eva-cursor-trail.glsl
+custom-shader-animation = true
+
+working-directory = home
+window-inherit-working-directory = false
+
+background = #0F1020
+foreground = #F2EAFF
+selection-background = #7C5FB8
+selection-foreground = #F7EFFF
+cursor-color = #F6C177
+cursor-text = #0F1020
+
+palette = 0=#151126
+palette = 1=#7C5FB8
+palette = 2=#A3D977
+palette = 3=#F6C177
+palette = 4=#9A86B8
+palette = 5=#C4A7E7
+palette = 6=#6FAF6E
+palette = 7=#F2EAFF
+palette = 8=#8F7BC4
+palette = 9=#C4A7E7
+palette = 10=#D3F6A3
+palette = 11=#F6C177
+palette = 12=#A889E6
+palette = 13=#B78CFF
+palette = 14=#B9A7D9
+palette = 15=#FFFFFF
+
+window-theme = ghostty
+window-padding-x = 12
+window-padding-y = 12
+background-opacity = 0.70
+background-opacity-cells = true
+background-blur = 76
+unfocused-split-opacity = 1
+confirm-close-surface = false
+resize-overlay = never
+macos-titlebar-style = hidden
+macos-option-as-alt = true
+mouse-hide-while-typing = true
+mouse-scroll-multiplier = 0.95
+
+cursor-style = block
+cursor-style-blink = false
+shell-integration-features = no-cursor,ssh-env
+
+keybind = shift+insert=paste_from_clipboard
+keybind = control+insert=copy_to_clipboard
+keybind = super+control+shift+alt+arrow_down=resize_split:down,100
+keybind = super+control+shift+alt+arrow_up=resize_split:up,100
+keybind = super+control+shift+alt+arrow_left=resize_split:left,100
+keybind = super+control+shift+alt+arrow_right=resize_split:right,100
+keybind = super+q=close_window
+keybind = super+arrow_right=text:\x1b[1;9C

@@ -1,0 +1,26 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+export PATH="$HOME/.local/bin:$HOME/.homebrew/bin:$HOME/.homebrew/sbin:/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin"
+
+scratch_workspace="scratch"
+state_dir="${XDG_STATE_HOME:-$HOME/.local/state}/macbook-rice-v2"
+state_file="$state_dir/scratch-return-workspace"
+current="$(aerospace list-workspaces --focused)"
+
+if [[ "$current" == "$scratch_workspace" ]]; then
+  if [[ -f "$state_file" ]]; then
+    target="$(cat "$state_file")"
+    if [[ "$target" != "$scratch_workspace" ]] &&
+      aerospace list-workspaces --all --format '%{workspace}' | grep -Fxq "$target"; then
+      exec aerospace workspace "$target"
+    fi
+  fi
+  exec aerospace workspace-back-and-forth
+fi
+
+mkdir -p "$state_dir"
+temp_file="$(mktemp "$state_dir/scratch-return-workspace.XXXXXX")"
+printf '%s\n' "$current" > "$temp_file"
+mv -f "$temp_file" "$state_file"
+exec aerospace workspace "$scratch_workspace"

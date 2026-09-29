@@ -1,0 +1,40 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+if [[ -z "${AZ_PYTHON:-}" ]]; then
+  for candidate in \
+    /Library/Frameworks/Python.framework/Versions/3.14/bin/python3.14 \
+    "$HOME/.homebrew/opt/python@3.14/libexec/bin/python3" \
+    "$HOME/.homebrew/bin/python3.14" \
+    /opt/homebrew/opt/python@3.14/libexec/bin/python3 \
+    /opt/homebrew/bin/python3.14 \
+    /usr/local/opt/python@3.14/libexec/bin/python3 \
+    /usr/local/bin/python3.14; do
+    if [[ -x "$candidate" ]]; then
+      AZ_PYTHON="$candidate"
+      break
+    fi
+  done
+fi
+
+if [[ -z "${AZ_PYTHON:-}" ]]; then
+  AZ_PYTHON="$(command -v python3.14 || true)"
+fi
+
+if [[ -z "${AZ_PYTHON:-}" || ! -x "$AZ_PYTHON" ]]; then
+  echo "Azure CLI requires Python 3.14. Run scripts/macos-v2/bootstrap-tools.sh to install it." >&2
+  exit 1
+fi
+if ! "$AZ_PYTHON" -c 'import sys; raise SystemExit(0 if sys.version_info[:2] == (3, 14) else 1)' >/dev/null 2>&1; then
+  echo "Azure CLI requires a usable Python 3.14 runtime at $AZ_PYTHON." >&2
+  exit 1
+fi
+
+export AZ_PYTHON
+CLI_LAUNCHER="$HOME/.local/opt/azure-cli/current/bin/az"
+if [[ ! -x "$CLI_LAUNCHER" ]]; then
+  echo "Azure CLI is not installed at $CLI_LAUNCHER. Run scripts/macos-v2/bootstrap-tools.sh." >&2
+  exit 1
+fi
+
+exec "$CLI_LAUNCHER" "$@"

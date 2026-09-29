@@ -1,0 +1,31 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+command_file="${1:-}"
+if [[ "$#" -ne 1 || -z "$command_file" || ! -f "$command_file" ]]; then
+  echo "rice-v2-open-command-file: provide an existing .command file." >&2
+  exit 64
+fi
+if [[ "${command_file##*.}" != "command" ]]; then
+  echo "rice-v2-open-command-file: only .command files are supported." >&2
+  exit 64
+fi
+if [[ ! -x "$command_file" ]]; then
+  echo "rice-v2-open-command-file: the .command file must be executable." >&2
+  exit 126
+fi
+
+if [[ "$command_file" != /* ]]; then
+  command_file="$PWD/$command_file"
+fi
+command_directory="$(cd "$(dirname "$command_file")" && pwd -P)"
+command_file="$command_directory/$(basename "$command_file")"
+
+export PATH="$HOME/.local/bin:$HOME/.homebrew/bin:$HOME/.homebrew/sbin:/opt/homebrew/bin:/opt/homebrew/sbin:/usr/local/bin:/usr/local/sbin:/usr/bin:/bin:/usr/sbin:/sbin"
+
+if ! /usr/bin/open -na Ghostty --args \
+  "--working-directory=$command_directory" \
+  -e /bin/bash -c 'exec "$1"' rice-v2-command-file "$command_file"; then
+  echo "rice-v2-open-command-file: could not run the command file in Ghostty." >&2
+  exit 1
+fi

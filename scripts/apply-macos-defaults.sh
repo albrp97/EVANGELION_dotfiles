@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
 echo "Applying Linux-style macOS UI defaults..."
 
 # Safe system-wide Pastel EVA-01 appearance knobs.
@@ -30,23 +32,10 @@ defaults write NSGlobalDomain AppleMenuBarVisibleInFullscreen -bool false
 # Hide Desktop icons for a clean Linux-rice desktop.
 defaults write com.apple.finder CreateDesktop -bool false
 
-# Disable macOS screenshot shortcuts that conflict with Command+Shift+workspace.
-# Disable native Spotlight shortcuts so Karabiner can own Command+Space on
-# built-in and Bluetooth keyboards.
-defaults write com.apple.symbolichotkeys AppleSymbolicHotKeys -dict-add 28 "{ enabled = 0; value = { parameters = (51, 20, 1179648); type = standard; }; }"
-defaults write com.apple.symbolichotkeys AppleSymbolicHotKeys -dict-add 29 "{ enabled = 0; value = { parameters = (51, 20, 1441792); type = standard; }; }"
-defaults write com.apple.symbolichotkeys AppleSymbolicHotKeys -dict-add 30 "{ enabled = 0; value = { parameters = (52, 21, 1179648); type = standard; }; }"
-defaults write com.apple.symbolichotkeys AppleSymbolicHotKeys -dict-add 31 "{ enabled = 0; value = { parameters = (52, 21, 1441792); type = standard; }; }"
-defaults write com.apple.symbolichotkeys AppleSymbolicHotKeys -dict-add 64 "{ enabled = 0; value = { parameters = (32, 49, 1048576); type = standard; }; }"
-defaults write com.apple.symbolichotkeys AppleSymbolicHotKeys -dict-add 65 "{ enabled = 0; value = { parameters = (32, 49, 1572864); type = standard; }; }"
-defaults write com.apple.symbolichotkeys AppleSymbolicHotKeys -dict-add 184 "{ enabled = 0; value = { parameters = (53, 23, 1179648); type = standard; }; }"
-
-# Keep native Control+1..9 Desktop switching disabled; workspace switching is
-# handled by skhd/yabai. Native shortcuts were tested for slide animation but
-# added delay without visible animation on this setup.
-for shortcut_id in 118 119 120 121 122 123 124 125 126; do
-  defaults write com.apple.symbolichotkeys AppleSymbolicHotKeys -dict-add "$shortcut_id" "{ enabled = 0; }"
-done
+# Disable native screenshot/recording shortcuts, Spotlight's Command+Space,
+# and native Control+1..9 Desktop switching with correctly typed plist values.
+python3 "$SCRIPT_DIR/macos-v2/configure-disabled-hotkeys.py" \
+  28 29 30 31 64 65 118 119 120 121 122 123 124 125 126 184
 
 # Keep workspaces predictable for tiling.
 defaults write com.apple.dock mru-spaces -bool false

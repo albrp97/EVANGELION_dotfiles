@@ -1,0 +1,17 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+export PATH="$HOME/.local/bin:$HOME/.homebrew/bin:$HOME/.homebrew/sbin:/opt/homebrew/bin:/opt/homebrew/sbin:/usr/local/bin:/usr/local/sbin:/usr/bin:/bin:/usr/sbin:/sbin"
+
+fish_binary="$(command -v fish || true)"
+if [[ -z "$fish_binary" ]]; then
+  echo "rice-v2-open-yazi: Fish is not installed; run scripts/macos-v2/bootstrap-tools.sh." >&2
+  exit 127
+fi
+if ! command -v yazi >/dev/null 2>&1; then
+  echo "rice-v2-open-yazi: Yazi is not installed; run scripts/macos-v2/bootstrap-tools.sh." >&2
+  exit 127
+fi
+
+"$HOME/.local/bin/rice-v2-new-ghostty-window"
+"$HOME/.local/bin/rice-v2-send-ghostty-command" y

@@ -1,0 +1,26 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+if [[ "$#" -ne 1 || -z "$1" || "$1" == *$'\n'* ]]; then
+  echo "Usage: rice-v2-send-ghostty-command 'single-line command'" >&2
+  exit 64
+fi
+
+if ! /usr/bin/osascript - "$1" <<'APPLESCRIPT'
+on run argv
+  set commandText to item 1 of argv
+  tell application "System Events"
+    tell process "Ghostty"
+      set frontmost to true
+      delay 0.3
+      if frontmost is false then error "Ghostty did not become frontmost."
+      keystroke commandText
+      key code 36
+    end tell
+  end tell
+end run
+APPLESCRIPT
+then
+  echo "rice-v2-send-ghostty-command: could not send a command to Ghostty." >&2
+  exit 1
+fi

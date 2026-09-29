@@ -1,0 +1,16 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+export PATH="$HOME/.homebrew/bin:$HOME/.homebrew/sbin:/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin"
+
+if [[ $# -ne 1 || ! "$1" =~ ^[1-9]$ ]]; then
+  echo "Usage: $0 <workspace 1-9>" >&2
+  exit 2
+fi
+
+if ! command -v aerospace >/dev/null 2>&1; then
+  echo "AeroSpace CLI not found. Run scripts/macos-v2/bootstrap-tools.sh." >&2
+  exit 1
+fi
+
+exec aerospace workspace "$1"

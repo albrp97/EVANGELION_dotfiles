@@ -1,0 +1,30 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+target="${1:-$HOME}"
+if [[ -f "$target" ]]; then
+  target="$(dirname "$target")"
+fi
+
+if [[ ! -d "$target" ]]; then
+  echo "rice-v2-open-terminal: not a directory: $target" >&2
+  exit 1
+fi
+
+export PATH="$HOME/.local/bin:$HOME/.homebrew/bin:$HOME/.homebrew/sbin:/opt/homebrew/bin:/opt/homebrew/sbin:/usr/local/bin:/usr/local/sbin:/usr/bin:/bin:/usr/sbin:/sbin"
+
+fish_binary="$(command -v fish || true)"
+if [[ -z "$fish_binary" ]]; then
+  echo "rice-v2-open-terminal: Fish is not installed; run scripts/macos-v2/bootstrap-tools.sh." >&2
+  exit 127
+fi
+
+"$HOME/.local/bin/rice-v2-new-ghostty-window"
+if [[ "$target" != "$HOME" ]]; then
+  fish_target="$("$fish_binary" -c 'string escape -- "$argv[1]"' "$target")"
+  if [[ -z "$fish_target" ]]; then
+    echo "rice-v2-open-terminal: could not prepare the requested directory." >&2
+    exit 1
+  fi
+  "$HOME/.local/bin/rice-v2-send-ghostty-command" "cd -- $fish_target"
+fi

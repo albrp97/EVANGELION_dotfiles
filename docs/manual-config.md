@@ -16,6 +16,7 @@ Use this as the quick map for what can be edited by hand and how to reload it.
 | Borders | `~/Library/LaunchAgents/com.macbook-linux-rice.borders.plist` | `scripts/start-services.sh` |
 | Karabiner | `~/.config/karabiner/karabiner.json` | Karabiner reloads automatically; otherwise restart Karabiner-Elements |
 | Ghostty | `~/.config/ghostty/config` | Open a new Ghostty window |
+| MacBook Rice v2 power commands | `dotfiles/macos-v2/.config/fish/config.fish`, `rice-v2-power-menu` | `shutdown` and `reboot` use the confirmed macOS power actions without sudo; bare `sleep` sleeps the Mac, while `sleep <seconds>` retains the normal delay command |
 | btop | `~/.config/btop/btop.conf`, `~/.config/btop/themes/eva01-pastel.theme` | Restart btop or open a new `top`/`btop` session |
 | fastfetch splash | `~/.config/fastfetch/config.jsonc`, `~/.config/fastfetch/eva01-logo.txt`, `~/.local/bin/rice-fastfetch-info` | Open a new terminal or run `unset RICE_FASTFETCH_SHOWN; fastfetch --config ~/.config/fastfetch/config.jsonc` |
 | Starship | `~/.config/starship.toml` | Open a new shell or run `exec zsh` |
@@ -24,10 +25,17 @@ Use this as the quick map for what can be edited by hand and how to reload it.
 | Region screenshot | `~/.local/bin/rice-region-screenshot` | `Command+Space`, then `S` |
 | Trusted download opener | `~/.local/bin/rice-open-trusted-download` | `rice-open-trusted-download ~/Downloads/file` |
 | Yazi | `~/.config/yazi/yazi.toml`, `~/.config/yazi/keymap.toml`, `~/.config/yazi/theme.toml`, `~/.config/yazi/init.lua`, `~/.config/yazi/package.toml`, `~/.config/yazi/plugins/video-info.yazi/` | Restart Yazi; requires `ffprobe` and `ffmpeg` for local video metadata/frame previews, plus `curl` for optional movie enrichment |
+| MacBook Rice v2 Yazi | `dotfiles/macos-v2/.config/yazi/` plus shared `dotfiles/common/.config/yazi/` | Run `scripts/macos-v2/install-desktop.sh`; `scripts/macos-v2/test-terminal-setup.sh` verifies plugins, video bindings, and FFmpeg |
+| MacBook Rice v2 screenshot | `dotfiles/macos-v2/.local/bin/rice-v2-region-screenshot`, Karabiner Command+Space and screenshot-blocking rules | `Command+Space`, then `P`; the installer disables native screenshot shortcuts and Karabiner consumes `Command+Shift+3` as a backstop |
+| MacBook Rice v2 VS Code | Legacy Mac rice `settings.json`, EVA color/icon extension, and blurred wallpaper-backed editor surface | Run `scripts/macos-v2/install-desktop.sh`; settings are backed up before replacement; run `scripts/macos-v2/test-vscode-setup.sh` to verify |
+| MacBook Rice v2 VS Code shortcuts | `dotfiles/macos-v2/.config/karabiner/assets/complex_modifications/command-space-region-screenshot.json`, `dotfiles/macos-v2/.aerospace.toml` | `Command+Space`, then `V`; or `HyprMod+V` / `HyprMod+Shift+T` |
+| MacBook Rice v2 Zen | Installed to `~/Applications/Zen.app`; browser shortcuts are in the Karabiner launcher rule and AeroSpace config | Run `scripts/macos-v2/bootstrap-tools.sh` to install; `Command+Space`, then `Z`, or `HyprMod+Z` / `HyprMod+W` |
+| MacBook Rice v2 Microsoft Teams | Installed to `/Applications/Microsoft Teams.app` | Run `scripts/macos-v2/bootstrap-tools.sh`; the bootstrap skips reinstalling Teams when the app is already present |
+| MacBook Rice v2 Azure CLI | `~/.local/bin/az`, `~/.local/opt/azure-cli/current/`; Python 3.14 runtime | Run `scripts/macos-v2/bootstrap-tools.sh`, then sign in with `az login` |
 | LinearMouse | `~/.config/linearmouse/linearmouse.json` | Restart LinearMouse or change settings in the LinearMouse app |
 | LinearMouse login agent | `~/Library/LaunchAgents/com.macbook-linux-rice.linearmouse.plist` | `launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/com.macbook-linux-rice.linearmouse.plist` |
 | VS Code | `~/Library/Application Support/Code/User/settings.json` | VS Code reload window |
-| VS Code fake transparency | `scripts/apply-vscode-background.sh`, default `wallpapers/09.jpg` | Run script, then restart VS Code; the script re-signs the modified app bundle and clears quarantine |
+| VS Code fake transparency | `scripts/apply-vscode-background.sh`, default `wallpapers/09.jpg` | The v2 desktop installer applies it; restart VS Code after applying; this app-bundle patch triggers VS Code's built-in installation-integrity warning |
 | Zen | `/Applications/Zen.app` or detected profile directories | `scripts/configure-zen.sh`; restart Zen |
 | macOS defaults | `scripts/apply-macos-defaults.sh` | Run script; some menu/keyboard changes may need logout/login |
 | Desktop cleanup | `scripts/clean-desktop.sh` | Run script |
@@ -35,9 +43,21 @@ Use this as the quick map for what can be edited by hand and how to reload it.
 | Wallpaper rotation | `~/.local/bin/rice-random-wallpaper`, `~/.config/sketchybar/plugins/wallpaper_rotation.sh`, `~/.local/share/macbook-linux-rice/wallpapers/` | `scripts/start-services.sh`, `sketchybar --reload`, or run `rice-random-wallpaper` manually; override with `RICE_WALLPAPER_DIR` |
 | VS Code EVA theme | `~/.vscode/extensions/macbook-linux-rice-eva01-pastel-0.1.0/` | Reload VS Code window |
 | VS Code EVA icons | same local extension, `icons/eva01-pastel-icon-theme.json` | Reload VS Code window |
-| VS Code wallpaper background | app-bundle CSS generated by `scripts/apply-vscode-background.sh` | Re-run after VS Code updates |
+| VS Code wallpaper background | app-bundle CSS and image generated by `scripts/apply-vscode-background.sh` | Re-run `scripts/macos-v2/install-desktop.sh` after VS Code updates |
 
-VS Code uses fake transparency instead of Vibrancy Continued. The script injects `macbook-linux-rice-vscode-background.css` and `macbook-linux-rice-vscode-bg.png` into `/Applications/Visual Studio Code.app/Contents/Resources/app/out/vs/workbench/`, then links the CSS from VS Code's workbench HTML. Re-run it after VS Code updates because updates replace app-bundle files.
+VS Code uses fake transparency instead of Vibrancy Continued. The script injects `macbook-linux-rice-vscode-background.css` and `macbook-linux-rice-vscode-bg.png` into the installed app bundle (`~/Applications/Visual Studio Code.app` by default, or `VSCODE_APP`), then links the CSS from VS Code's workbench HTML. Re-run `scripts/macos-v2/install-desktop.sh` after VS Code updates because updates replace app-bundle files.
+
+### Azure CLI sign-in (MacBook Rice v2)
+
+Run `az login` to open the browser-based sign-in flow. For an organization
+that requires a specific tenant, use `az login --tenant <tenant-id>`. After
+sign-in, use `az account list --output table` to view available subscriptions
+and `az account set --subscription "<name-or-id>"` to select one. Confirm the
+active account with `az account show --output table`.
+
+The bootstrap installs the verified Azure CLI release under `~/.local/opt`
+and uses the signed Python 3.14 runtime from python.org. It requests macOS
+administrator authorization only if that runtime is not already available.
 
 ## Linux configuration map
 
@@ -710,7 +730,7 @@ retain technical metadata but are excluded from online enrichment.
 - zsh completion stack: `zsh-autocomplete` provides the clean live menu, `zsh-autosuggestions` provides grey ghost text, `carapace` expands command-specific completions, and `zsh-syntax-highlighting` colors valid/invalid commands. Completion colors are controlled in `~/.zshrc` plus `~/Library/Application Support/carapace/styles.json`.
 - fastfetch is shown once per new interactive terminal via `RICE_FASTFETCH_SHOWN`; set `FASTFETCH_DISABLE=1` before launching zsh to suppress it.
 - `copilot` is wrapped in zsh to launch as `copilot --allow-all`, and `COPILOT_ALLOW_ALL=true` is exported for tool approvals.
-- SketchyBar is topmost with a transparent bar background, solid EVA widget bubbles, a left-side workspace circle pill beside compact date/time, and right-side volume, brightness, weather, and rightmost battery bubbles. Workspace circles are purple except the active one, which is green. Wi-Fi, CPU, and RAM are intentionally hidden. Battery text is green at 70% or higher, orange while charging below 95% or below 30%, and purple otherwise. Plug/unplug changes trigger the battery script immediately through SketchyBar's `power_source_change` event, with a 10-second fallback poll.
+- SketchyBar uses a transparent bar background and solid EVA widget bubbles at the `window` layer, above app windows but below macOS system UI, so the auto-hidden native menu bar can reveal above it and receive clicks. Its layout has a left-side workspace circle pill beside compact date/time and right-side volume, brightness, weather, and rightmost battery bubbles. Workspace circles are purple except the active one, which is green. Wi-Fi, CPU, and RAM are intentionally hidden. Battery text is green at 70% or higher, orange while charging below 95% or below 30%, and purple otherwise. Plug/unplug changes trigger the battery script immediately through SketchyBar's `power_source_change` event, with a 10-second fallback poll.
 - The top-left power bubble opens `~/.local/bin/rice-power-dashboard`, a Ghostty EVA terminal grid with status telemetry, lock, display off, sleep, caffeinate 30 minutes, restart rice services, armed logout/restart/shutdown confirmations, tile clicks, letter shortcuts, Escape/Q close, toggle close from the power bubble, and outside-close through a temporary yabai focus signal.
 - Power-menu design references live in `docs/inspiration/`; implementation notes live in `docs/developer-guide.md`.
 - Pastel EVA-01 palette is applied to Ghostty, btop, Starship, SketchyBar, focused borders, VS Code, and wallpaper rotation.

@@ -1,0 +1,252 @@
+#!/usr/bin/env python3
+import json
+import os
+import re
+import shutil
+import subprocess
+import sys
+import unicodedata
+
+
+RESET = "\033[0m"
+BOLD = "\033[1m"
+TEXT = "\033[38;2;242;234;255m"
+GREEN = "\033[38;2;163;217;119m"
+ORANGE = "\033[38;2;246;193;119m"
+BORDER = "\033[38;2;196;167;231m"
+
+LEFT_WIDTH = 36
+RIGHT_WIDTH = 36
+GAP = "  "
+
+
+def run_json():
+    fastfetch = shutil.which("fastfetch")
+    if not fastfetch:
+        raise RuntimeError("fastfetch is not installed")
+
+    raw = subprocess.check_output(
+        [
+            fastfetch,
+            "--format",
+            "json",
+            "--logo",
+            "none",
+            "--structure",
+            "Host:CPU:Memory:Disk:OS:Uptime:Terminal:Battery:Weather",
+        ],
+        text=True,
+        stderr=subprocess.DEVNULL,
+        timeout=15,
+    )
+    return {entry["type"]: entry.get("result") for entry in json.loads(raw)}
+
+
+def format_size(bytes_value):
+    if bytes_value is None:
+        return "n/a"
+    gib = float(bytes_value) / (1024**3)
+    if abs(gib - round(gib)) < 0.05:
+        return f"{round(gib):.0f}G"
+    return f"{gib:.1f}G"
+
+
+def format_percent(used, total):
+    if not total:
+        return "n/a"
+    return f"{round(used / total * 100):.0f}%"
+
+
+def format_uptime(milliseconds):
+    minutes = int((milliseconds or 0) // 60000)
+    hours, minutes = divmod(minutes, 60)
+    days, hours = divmod(hours, 24)
+    if days:
+        return f"{days}d {hours}h"
+    if hours:
+        return f"{hours}h {minutes}m"
+    return f"{minutes}m"
+
+
+def format_time_left(seconds):
+    if not seconds or seconds < 0:
+        return ""
+    minutes = int(seconds // 60)
+    hours, minutes = divmod(minutes, 60)
+    if hours:
+        return f" {hours}h left"
+    return f" {minutes}m left"
+
+
+def clean_weather(value):
+    if not value:
+        return "n/a"
+    return re.sub(r"\s*\([^)]*\)\s*$", "", str(value)).replace(" - ", " ")
+
+
+def short_host(value):
+    if "MacBook Air" in value or "MacBook Pro" in value:
+        match = re.search(r"\bM\d+(?:\s+(?:Pro|Max|Ultra))?\b", value)
+        suffix = f" {match.group(0)}" if match else ""
+        model = "MacBook Air" if "MacBook Air" in value else "MacBook Pro"
+        return f"{model}{suffix}"
+    return value
+
+
+def command_version(command, pattern):
+    try:
+        output = subprocess.check_output(
+            command,
+            text=True,
+            stderr=subprocess.DEVNULL,
+            timeout=1,
+        )
+    except (FileNotFoundError, subprocess.CalledProcessError, subprocess.TimeoutExpired):
+        return ""
+    match = re.search(pattern, output)
+    return match.group(1) if match else ""
+
+
+def shell_info():
+    shell_path = os.environ.get("SHELL", "")
+    shell_name = os.path.basename(shell_path) if shell_path else "shell"
+    version = ""
+    if shell_path:
+        version = command_version([shell_path, "--version"], r"\b(\d+(?:\.\d+)+)\b")
+    return f"{shell_name} {version}".strip()
+
+
+def terminal_info(terminal_result):
+    name = os.environ.get("TERM_PROGRAM", "")
+    if not name:
+        name = (terminal_result or {}).get("prettyName") or "terminal"
+    version = os.environ.get("TERM_PROGRAM_VERSION", "")
+    if version and version not in name:
+        return f"{name} {version}"
+    return name
+
+
+def collect():
+    data = run_json()
+    host = data.get("Host") or {}
+    cpu = data.get("CPU") or {}
+    memory = data.get("Memory") or {}
+    disks = data.get("Disk") or []
+    os_info = data.get("OS") or {}
+    uptime = data.get("Uptime") or {}
+    terminal = data.get("Terminal") or {}
+    batteries = data.get("Battery") or []
+    if isinstance(batteries, dict):
+        batteries = [batteries]
+    battery = batteries[0] if batteries else {}
+
+    data_disk = next(
+        (disk for disk in disks if disk.get("mountpoint") == "/System/Volumes/Data"),
+        disks[0] if disks else {},
+    )
+    disk_bytes = data_disk.get("bytes") or {}
+    disk_free = format_size(disk_bytes.get("free"))
+    disk_percent = format_percent(disk_bytes.get("used", 0), disk_bytes.get("total", 0))
+
+    memory_total = memory.get("total", 0)
+    memory_percent = format_percent(memory.get("used", 0), memory_total)
+    cpu_name = (cpu.get("cpu") or "n/a").replace("Apple ", "")
+    cpu_cores = (cpu.get("cores") or {}).get("physical")
+    if cpu_cores:
+        cpu_name = f"{cpu_name} {cpu_cores}-core"
+
+    capacity = battery.get("capacity")
+    battery_percent = f"{capacity:.0f}%" if isinstance(capacity, (int, float)) else "n/a"
+    battery_value = battery_percent + format_time_left(battery.get("timeRemaining", 0))
+    os_name = os_info.get("prettyName") or os_info.get("name") or "macOS"
+    os_name = re.sub(r"\s+\([A-Z0-9]+\)$", "", os_name)
+
+    left = [
+        (" mac", short_host(host.get("name") or "n/a")),
+        (" cpu", cpu_name),
+        (" ram", f"{format_size(memory_total)} ({memory_percent})"),
+        ("󰋊 disk", f"{disk_free} free ({disk_percent})"),
+        (" batt", battery_value),
+    ]
+    right = [
+        (" os", os_name),
+        ("󱫐 up", format_uptime(uptime.get("uptime", 0))),
+        (" sh", shell_info()),
+        (" term", terminal_info(terminal)),
+    ]
+    if data.get("Weather"):
+        right.append(("󰖕 sky", clean_weather(data["Weather"])))
+    return left, right
+
+
+def visible_length(value):
+    plain = re.sub(r"\x1b\[[0-9;]*m", "", value)
+    return sum(2 if unicodedata.east_asian_width(char) in "WF" else 1 for char in plain)
+
+
+def cell(key, value):
+    return f"{GREEN}{key}{RESET} {ORANGE}󰇙{RESET} {TEXT}{value}{RESET}"
+
+
+def pad_ansi(value, width):
+    return value + " " * max(0, width - visible_length(value))
+
+
+def truncate(value, width):
+    if visible_length(value) <= width:
+        return value
+    plain = re.sub(r"\x1b\[[0-9;]*m", "", value)
+    output = []
+    used = 0
+    for char in plain:
+        char_width = 2 if unicodedata.east_asian_width(char) in "WF" else 1
+        if used + char_width > width - 1:
+            break
+        output.append(char)
+        used += char_width
+    return "".join(output) + "…"
+
+
+def border(title, width):
+    left = "─" * 12
+    right = "─" * max(0, width - len(title) - len(left) - 2)
+    return f"{BORDER}┌{left} {title} {right}┐{RESET}"
+
+
+def bottom(width):
+    return f"{BORDER}└{'─' * width}┘{RESET}"
+
+
+def main():
+    try:
+        left, right = collect()
+    except (
+        FileNotFoundError,
+        json.JSONDecodeError,
+        subprocess.CalledProcessError,
+        subprocess.TimeoutExpired,
+        RuntimeError,
+    ) as error:
+        print(f"rice-v2-fastfetch-info: {error}", file=sys.stderr)
+        return 1
+
+    rows = max(len(left), len(right))
+    print(pad_ansi(border("Hardware", LEFT_WIDTH), LEFT_WIDTH + 2) + GAP + border("Software", RIGHT_WIDTH))
+    for index in range(rows):
+        left_value = truncate(cell(*left[index]), LEFT_WIDTH - 1) if index < len(left) else ""
+        right_value = truncate(cell(*right[index]), RIGHT_WIDTH - 1) if index < len(right) else ""
+        print(
+            f"{BORDER}│{RESET}"
+            + pad_ansi(f" {left_value}", LEFT_WIDTH)
+            + f"{BORDER}│{RESET}"
+            + GAP
+            + f"{BORDER}│{RESET}"
+            + pad_ansi(f" {right_value}", RIGHT_WIDTH)
+            + f"{BORDER}│{RESET}"
+        )
+    print(pad_ansi(bottom(LEFT_WIDTH), LEFT_WIDTH + 2) + GAP + bottom(RIGHT_WIDTH))
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

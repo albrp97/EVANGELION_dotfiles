@@ -1,0 +1,388 @@
+{
+  "title": "MacBook Rice v2 Command+Space Launcher Shortcuts",
+  "rules": [
+    {
+      "description": "MacBook Rice v2: Command+Space launcher actions",
+      "manipulators": [
+        {
+          "type": "basic",
+          "from": {
+            "key_code": "3",
+            "modifiers": {
+              "mandatory": [
+                "command",
+                "shift"
+              ],
+              "optional": [
+                "any"
+              ]
+            }
+          },
+          "to": [
+            {
+              "key_code": "vk_none"
+            }
+          ]
+        },
+        {
+          "type": "basic",
+          "from": {
+            "key_code": "spacebar",
+            "modifiers": {
+              "mandatory": [
+                "command"
+              ],
+              "optional": [
+                "any"
+              ]
+            }
+          },
+          "to": [
+            {
+              "set_variable": {
+                "name": "rice_v2_launcher",
+                "value": 1
+              }
+            }
+          ],
+          "conditions": [
+            {
+              "type": "variable_unless",
+              "name": "rice_v2_launcher",
+              "value": 1
+            }
+          ],
+          "to_delayed_action": {
+            "to_if_invoked": [
+              {
+                "set_variable": {
+                  "name": "rice_v2_launcher",
+                  "value": 0
+                }
+              }
+            ]
+          },
+          "parameters": {
+            "basic.to_delayed_action_delay_milliseconds": 1500
+          }
+        },
+        {
+          "type": "basic",
+          "from": {
+            "key_code": "spacebar",
+            "modifiers": {
+              "optional": [
+                "any"
+              ]
+            }
+          },
+          "conditions": [
+            {
+              "type": "variable_if",
+              "name": "rice_v2_launcher",
+              "value": 1
+            }
+          ],
+          "to": [
+            {
+              "shell_command": "/usr/bin/open -a Raycast"
+            },
+            {
+              "set_variable": {
+                "name": "rice_v2_launcher",
+                "value": 0
+              }
+            }
+          ]
+        },
+        {
+          "type": "basic",
+          "from": {
+            "key_code": "t",
+            "modifiers": {
+              "optional": [
+                "any"
+              ]
+            }
+          },
+          "conditions": [
+            {
+              "type": "variable_if",
+              "name": "rice_v2_launcher",
+              "value": 1
+            }
+          ],
+          "to": [
+            {
+              "shell_command": "/bin/bash -lc '$HOME/.local/bin/rice-v2-open-terminal'"
+            },
+            {
+              "set_variable": {
+                "name": "rice_v2_launcher",
+                "value": 0
+              }
+            }
+          ]
+        },
+        {
+          "type": "basic",
+          "from": {
+            "key_code": "return_or_enter",
+            "modifiers": {
+              "optional": [
+                "any"
+              ]
+            }
+          },
+          "conditions": [
+            {
+              "type": "variable_if",
+              "name": "rice_v2_launcher",
+              "value": 1
+            }
+          ],
+          "to": [
+            {
+              "shell_command": "/bin/bash -lc '$HOME/.local/bin/rice-v2-open-terminal'"
+            },
+            {
+              "set_variable": {
+                "name": "rice_v2_launcher",
+                "value": 0
+              }
+            }
+          ]
+        },
+        {
+          "type": "basic",
+          "from": {
+            "key_code": "e",
+            "modifiers": {
+              "optional": [
+                "any"
+              ]
+            }
+          },
+          "conditions": [
+            {
+              "type": "variable_if",
+              "name": "rice_v2_launcher",
+              "value": 1
+            }
+          ],
+          "to": [
+            {
+              "shell_command": "/bin/bash -lc '$HOME/.local/bin/rice-v2-open-yazi'"
+            },
+            {
+              "set_variable": {
+                "name": "rice_v2_launcher",
+                "value": 0
+              }
+            }
+          ]
+        },
+        {
+          "type": "basic",
+          "from": {
+            "key_code": "y",
+            "modifiers": {
+              "optional": [
+                "any"
+              ]
+            }
+          },
+          "conditions": [
+            {
+              "type": "variable_if",
+              "name": "rice_v2_launcher",
+              "value": 1
+            }
+          ],
+          "to": [
+            {
+              "shell_command": "/bin/bash -lc '$HOME/.local/bin/rice-v2-open-fastfetch-console'"
+            },
+            {
+              "set_variable": {
+                "name": "rice_v2_launcher",
+                "value": 0
+              }
+            }
+          ]
+        },
+        {
+          "type": "basic",
+          "from": {
+            "key_code": "z",
+            "modifiers": {
+              "optional": [
+                "any"
+              ]
+            }
+          },
+          "conditions": [
+            {
+              "type": "variable_if",
+              "name": "rice_v2_launcher",
+              "value": 1
+            }
+          ],
+          "to": [
+            {
+              "shell_command": "/usr/bin/open -a Zen"
+            },
+            {
+              "set_variable": {
+                "name": "rice_v2_launcher",
+                "value": 0
+              }
+            }
+          ]
+        },
+        {
+          "type": "basic",
+          "from": {
+            "key_code": "v",
+            "modifiers": {
+              "optional": [
+                "any"
+              ]
+            }
+          },
+          "conditions": [
+            {
+              "type": "variable_if",
+              "name": "rice_v2_launcher",
+              "value": 1
+            }
+          ],
+          "to": [
+            {
+              "shell_command": "/usr/bin/open -a 'Visual Studio Code'"
+            },
+            {
+              "set_variable": {
+                "name": "rice_v2_launcher",
+                "value": 0
+              }
+            }
+          ]
+        },
+        {
+          "type": "basic",
+          "from": {
+            "key_code": "r",
+            "modifiers": {
+              "optional": [
+                "any"
+              ]
+            }
+          },
+          "conditions": [
+            {
+              "type": "variable_if",
+              "name": "rice_v2_launcher",
+              "value": 1
+            }
+          ],
+          "to": [
+            {
+              "shell_command": "/usr/bin/open -a 'Activity Monitor'"
+            },
+            {
+              "set_variable": {
+                "name": "rice_v2_launcher",
+                "value": 0
+              }
+            }
+          ]
+        },
+        {
+          "type": "basic",
+          "from": {
+            "key_code": "s",
+            "modifiers": {
+              "optional": [
+                "any"
+              ]
+            }
+          },
+          "conditions": [
+            {
+              "type": "variable_if",
+              "name": "rice_v2_launcher",
+              "value": 1
+            }
+          ],
+          "to": [
+            {
+              "shell_command": "/bin/bash -lc '$HOME/.local/bin/rice-v2-region-screenshot'"
+            },
+            {
+              "set_variable": {
+                "name": "rice_v2_launcher",
+                "value": 0
+              }
+            }
+          ]
+        },
+        {
+          "type": "basic",
+          "from": {
+            "key_code": "p",
+            "modifiers": {
+              "optional": [
+                "any"
+              ]
+            }
+          },
+          "conditions": [
+            {
+              "type": "variable_if",
+              "name": "rice_v2_launcher",
+              "value": 1
+            }
+          ],
+          "to": [
+            {
+              "shell_command": "/bin/bash -lc '$HOME/.local/bin/rice-v2-region-screenshot'"
+            },
+            {
+              "set_variable": {
+                "name": "rice_v2_launcher",
+                "value": 0
+              }
+            }
+          ]
+        },
+        {
+          "type": "basic",
+          "from": {
+            "key_code": "escape",
+            "modifiers": {
+              "optional": [
+                "any"
+              ]
+            }
+          },
+          "conditions": [
+            {
+              "type": "variable_if",
+              "name": "rice_v2_launcher",
+              "value": 1
+            }
+          ],
+          "to": [
+            {
+              "set_variable": {
+                "name": "rice_v2_launcher",
+                "value": 0
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

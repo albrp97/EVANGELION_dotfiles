@@ -1,0 +1,23 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+export PATH="$HOME/.local/bin:$HOME/.homebrew/bin:$HOME/.homebrew/sbin:/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin"
+
+if ! command -v aerospace >/dev/null 2>&1; then
+  echo "AeroSpace CLI not found. Run scripts/macos-v2/bootstrap-tools.sh." >&2
+  exit 1
+fi
+
+current="$(aerospace list-workspaces --focused)"
+workspaces="$(aerospace list-workspaces --all --format '%{workspace}')"
+while IFS= read -r workspace; do
+  [[ -n "$workspace" ]] || continue
+  [[ "$workspace" == "$current" || "$workspace" == scratch ]] && continue
+  window_count="$(aerospace list-windows --workspace "$workspace" --count)"
+  if [[ "$window_count" -eq 0 ]]; then
+    exec aerospace workspace "$workspace"
+  fi
+done <<< "$workspaces"
+
+echo "No empty numbered AeroSpace workspace is available." >&2
+exit 1

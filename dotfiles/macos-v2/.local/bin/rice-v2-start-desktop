@@ -1,0 +1,53 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+export PATH="$HOME/.local/bin:$HOME/.homebrew/bin:$HOME/.homebrew/sbin:/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin"
+
+config="$HOME/.config/macbook-rice-v2/sketchybar/sketchybarrc"
+if [[ ! -x "$config" ]]; then
+  echo "SketchyBar configuration is missing or not executable: $config" >&2
+  exit 1
+fi
+
+if ! command -v sketchybar >/dev/null 2>&1; then
+  echo "SketchyBar is not installed. Run scripts/macos-v2/bootstrap-tools.sh." >&2
+  exit 1
+fi
+
+launch_agent_label="com.macbook-rice-v2.sketchybar"
+launch_domain="gui/$(id -u)"
+if ! launchctl print "$launch_domain/$launch_agent_label" >/dev/null 2>&1; then
+  echo "SketchyBar LaunchAgent is not loaded. Run scripts/macos-v2/install-desktop.sh." >&2
+  exit 1
+fi
+
+if pgrep -x sketchybar >/dev/null 2>&1; then
+  if ! sketchybar --reload "$config"; then
+    echo "Could not reload the v2 SketchyBar configuration." >&2
+    exit 1
+  fi
+else
+  if ! launchctl kickstart "$launch_domain/$launch_agent_label"; then
+    echo "Could not start the v2 SketchyBar LaunchAgent." >&2
+    exit 1
+  fi
+fi
+
+responsive=false
+for ((attempt = 0; attempt < 50; attempt++)); do
+  if pgrep -x sketchybar >/dev/null 2>&1 &&
+    sketchybar --query workspace.1 >/dev/null 2>&1; then
+    responsive=true
+    break
+  fi
+  sleep 0.1
+done
+if [[ "$responsive" != true ]]; then
+  echo "SketchyBar did not become responsive with the v2 configuration." >&2
+  exit 1
+fi
+
+if ! "$HOME/.local/bin/rice-v2-workspace-changed"; then
+  echo "The bar started, but its AeroSpace workspace indicator could not initialize." >&2
+  exit 1
+fi

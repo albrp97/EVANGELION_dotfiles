@@ -1,0 +1,89 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+ghostty_app="$HOME/Applications/Ghostty.app"
+if [[ ! -d "$ghostty_app" ]]; then
+  ghostty_app="/Applications/Ghostty.app"
+fi
+if [[ ! -d "$ghostty_app" ]]; then
+  echo "rice-v2-new-ghostty-window: Ghostty.app is missing." >&2
+  exit 127
+fi
+
+window_count() {
+  local app_running
+  app_running="$(/usr/bin/osascript -e 'application "Ghostty" is running')" || return 1
+  if [[ "$app_running" != "true" ]]; then
+    echo 0
+    return
+  fi
+  /usr/bin/osascript \
+    -e 'tell application "System Events" to tell process "Ghostty" to count windows'
+}
+
+wait_for_window_count() {
+  local minimum_count="$1"
+  local current_count
+  for _ in {1..50}; do
+    current_count="$(window_count 2>/dev/null || true)"
+    if [[ "$current_count" =~ ^[0-9]+$ ]] && ((current_count >= minimum_count)); then
+      return 0
+    fi
+    sleep 0.1
+  done
+  return 1
+}
+
+if ! app_running="$(/usr/bin/osascript -e 'application "Ghostty" is running')"; then
+  echo "rice-v2-new-ghostty-window: could not query Ghostty's app state." >&2
+  exit 1
+fi
+
+if [[ "$app_running" == "true" ]]; then
+  before_count="$(window_count)" || {
+    echo "rice-v2-new-ghostty-window: could not inspect Ghostty windows." >&2
+    exit 1
+  }
+  if ! /usr/bin/osascript >/dev/null <<'APPLESCRIPT'
+tell application "System Events"
+  tell process "Ghostty"
+    set frontmost to true
+    delay 0.2
+    click menu item "New Window" of menu 1 of menu bar item "File" of menu bar 1
+  end tell
+end tell
+APPLESCRIPT
+  then
+    if ! /usr/bin/osascript >/dev/null <<'APPLESCRIPT'
+tell application "System Events"
+  tell process "Ghostty"
+    set frontmost to true
+    delay 0.2
+    keystroke "n" using {command down}
+  end tell
+end tell
+APPLESCRIPT
+    then
+      echo "rice-v2-new-ghostty-window: could not create a Ghostty window." >&2
+      exit 1
+    fi
+  fi
+  required_count=$((before_count + 1))
+else
+  if ! /usr/bin/open -na "$ghostty_app"; then
+    echo "rice-v2-new-ghostty-window: could not open Ghostty." >&2
+    exit 1
+  fi
+  required_count=1
+fi
+
+if ! wait_for_window_count "$required_count"; then
+  echo "rice-v2-new-ghostty-window: Ghostty did not create a new window." >&2
+  exit 1
+fi
+
+if ! /usr/bin/osascript \
+  -e 'tell application "System Events" to tell process "Ghostty" to set frontmost to true'; then
+  echo "rice-v2-new-ghostty-window: could not focus Ghostty." >&2
+  exit 1
+fi
