@@ -222,11 +222,12 @@ The measured speed comparison and implemented parallel design are documented in
 
 ## macOS
 
-The macOS layer uses yabai/skhd for tiling and bindings, Karabiner for
-right-Command HyprMod and the `Command+Space` launcher, SketchyBar for the top
-bar, JankyBorders for focus borders, LinearMouse for external mouse tuning,
-and Ghostty for the terminal. It also applies the closest supported dark,
-purple, and wallpaper-tinted macOS system settings.
+The legacy macOS layer uses yabai/skhd for tiling and bindings. MacBook Rice v2
+uses AeroSpace for tiling and virtual workspaces, float-only Yabai for hover
+focus, Karabiner for right-Command HyprMod and the `Command+Space` launcher,
+SketchyBar for the top bar, JankyBorders for focus borders, LinearMouse for
+external mouse tuning, and Ghostty for the terminal. It also applies the
+closest supported dark, purple, and wallpaper-tinted macOS system settings.
 
 ## HyprMod
 
@@ -471,15 +472,20 @@ See `docs/manual-config.md` for each configurable tool, its config path, and rel
 ## Manual activation
 
 - Install packages first with `scripts/bootstrap.sh`. If standard Homebrew cannot install without administrator authentication, the script uses user-local Homebrew under `~/.homebrew`.
+- For MacBook Rice v2, use `scripts/macos-v2/bootstrap-tools.sh` followed by `scripts/macos-v2/install-desktop.sh`. The v2 installer removes the legacy `skhd` service and backs up any removed LaunchAgent under `~/.macbook-rice-v2-backup/`.
 - Run `scripts/install-dotfiles.sh` after package installation if configs need to be refreshed.
 - Run `scripts/apply-macos-defaults.sh` after changing macOS UI defaults.
-- Run `scripts/start-services.sh` after package installation to start SketchyBar, borders, yabai, skhd, and Karabiner.
+- Run `scripts/start-services.sh` only for the legacy macOS layer. It starts SketchyBar, borders, yabai, and skhd. The v2 installer manages AeroSpace, float-only Yabai, SketchyBar, and borders separately.
 - Zen is installed by `scripts/bootstrap.sh`; the rice only maps `HyprMod+Z` and `Command+Space`, then `Z`, to open `/Applications/Zen.app`.
 - Karabiner is preconfigured with the `MacBook Linux Rice` profile and `Right Command to HyprMod`.
-- Grant Accessibility permissions to yabai, skhd, Karabiner-Elements, SketchyBar, and borders.
+- Grant Accessibility permissions to AeroSpace, Yabai, Karabiner-Elements, SketchyBar, and borders for v2. Grant skhd only when using the legacy macOS layer.
 - Grant Input Monitoring to Karabiner-Elements.
 - See `docs/yabai-migration.md` for the yabai Accessibility and partial-SIP animation steps.
 
 ## Current status
 
-The dotfiles, Homebrew packages, app installs, macOS defaults, Karabiner profile, SketchyBar, borders, and yabai/skhd configs have been applied. The Dock and native menu bar are hidden. yabai/skhd still need macOS Accessibility permission before their services can stay running.
+The legacy dotfiles, Homebrew packages, app installs, macOS defaults,
+Karabiner profile, SketchyBar, borders, and yabai/skhd configs are retained as
+a fallback. The active MacBook Rice v2 profile uses AeroSpace and float-only
+Yabai, and removes the legacy skhd service so AeroSpace owns
+`Command+1..9`.

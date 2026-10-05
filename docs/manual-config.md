@@ -9,9 +9,10 @@ Use this as the quick map for what can be edited by hand and how to reload it.
 
 | Tool | Config path | Reload/apply |
 | --- | --- | --- |
-| yabai | `~/.yabairc` | `yabai --restart-service` or `scripts/start-services.sh` |
+| AeroSpace (v2) | `~/.aerospace.toml` | `aerospace reload-config` |
+| Yabai hover focus (v2) | `~/.yabairc` | `yabai --restart-service` or `scripts/macos-v2/install-desktop.sh` |
 | Dock/external display routing | `~/.local/bin/rice-display-route` | Prefers the external display, moves normal windows there, and keeps focus there on display changes without disabling the laptop panel |
-| skhd | `~/.skhdrc` | `skhd --reload` or `scripts/start-services.sh` |
+| Legacy yabai/skhd | `~/.yabairc`, `~/.skhdrc` | Use only with the legacy `dotfiles/macos` layer; never start it alongside v2 |
 | SketchyBar | `~/.config/sketchybar/sketchybarrc`, `~/.config/sketchybar/plugins/` | `sketchybar --reload` or `scripts/start-services.sh`; workspace dots only draw up to the highest in-use space on the primary display |
 | Borders | `~/Library/LaunchAgents/com.macbook-linux-rice.borders.plist` | `scripts/start-services.sh` |
 | Karabiner | `~/.config/karabiner/karabiner.json` | Karabiner reloads automatically; otherwise restart Karabiner-Elements |

@@ -37,6 +37,10 @@ keyboard-driven focus changes leave the pointer in place. Yabai's LaunchAgent
 starts it at login and loads the persistent `~/.yabairc`. Yabai does not load
 its scripting addition, and no SIP change or `sudo` is used. Grant Yabai
 Accessibility permission in System Settings so focus tracking can work.
+The v2 installer removes the legacy `skhd` LaunchAgent and formula. Do not
+run the legacy `scripts/start-services.sh` after applying v2, because its
+`skhd` bindings target native Yabai Spaces and can steal the
+`Command+1..9` shortcuts from AeroSpace.
 
 Ghostty's automatic Secure Input on detected terminal password prompts is
 disabled so AeroSpace shortcuts remain usable during those prompts. This
@@ -139,7 +143,9 @@ on this Mac use their closest installed macOS equivalents for now.
 The v2 installer configures the Command+Space launcher in Karabiner's selected
 profile and stores its importable rule under
 `~/.config/karabiner/assets/complex_modifications/`. Grant Karabiner-Elements
-the required macOS input permissions when prompted. The optional
+the required macOS input permissions when prompted. The installer removes the
+legacy v1 Command+Space leader from the selected profile so it cannot intercept
+the v2 launcher. The optional
 right-Command-to-HyprMod rule remains available; until it is enabled, hold
 `Command+Option+Control` directly for HyprMod bindings.
 

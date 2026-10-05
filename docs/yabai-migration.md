@@ -1,6 +1,11 @@
 # yabai migration
 
-## Current state
+> This document describes the legacy `yabai + skhd` profile. MacBook Rice v2
+> uses AeroSpace for tiling and virtual workspaces, keeps Yabai in float-only
+> hover-focus mode, and removes the legacy `skhd` service. Do not apply the
+> commands below while v2 is active.
+
+## Legacy profile state
 
 - AeroSpace has been stopped, uninstalled, and removed from the active dotfiles.
 - `yabai` and `skhd` are installed from `asmvik/formulae`.

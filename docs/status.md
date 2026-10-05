@@ -1,5 +1,12 @@
 # Live setup status
 
+## MacBook Rice v2 runtime
+
+- AeroSpace owns tiling, virtual workspaces, and workspace keyboard bindings.
+- Yabai remains in float-only mode for hover focus.
+- The v2 installer removes the legacy skhd formula and LaunchAgent because
+  its native-Space bindings conflict with AeroSpace workspace indicators.
+
 ## Done
 
 - Added automatic dock/external-display routing that prefers the external display and moves normal windows there without force-disabling the MacBook panel.

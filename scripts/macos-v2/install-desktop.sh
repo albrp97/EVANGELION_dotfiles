@@ -26,6 +26,11 @@ if [[ ! -d "$DOTFILES_DIR" ]]; then
   exit 1
 fi
 
+if ! bash "$ROOT_DIR/scripts/macos-v2/disable-legacy-skhd.sh"; then
+  echo "Could not disable the legacy skhd shortcut service before applying v2." >&2
+  exit 1
+fi
+
 backup_target() {
   local target_path="$1"
   local relative_path="$2"

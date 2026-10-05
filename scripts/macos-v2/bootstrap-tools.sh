@@ -47,6 +47,11 @@ fi
 
 mkdir -p "$HOME/Applications" "$HOME/Library/Fonts" "$HOME/.local/bin"
 
+if ! "$SCRIPT_DIR/disable-legacy-skhd.sh"; then
+  echo "Could not disable the legacy skhd shortcut service before installing v2." >&2
+  exit 1
+fi
+
 echo "Installing the v2 terminal, shell, fetch, file-manager, and macOS integration tools."
 "$brew_bin" install fish starship yazi sevenzip duti tmux ffmpeg imagemagick
 "$SCRIPT_DIR/install-azure-cli.sh"

@@ -146,18 +146,19 @@ yabai + skhd + SketchyBar + JankyBorders
 
 Do not delete the yabai option from the project. It remains the power-user alternative, but not the safest first implementation.
 
-## Current migration update
+## Current v2 state
 
-The project has now migrated to:
+MacBook Rice v2 uses:
 
 ```text
-yabai + skhd + SketchyBar + JankyBorders
+AeroSpace + float-only Yabai + SketchyBar + JankyBorders
 ```
 
-Reason:
-- The current target explicitly wants yabai animation and scripting-addition capabilities.
-- The first AeroSpace implementation proved the base rice, but yabai is now the power-user path.
+AeroSpace owns tiling, virtual workspaces, and all v2 keyboard bindings.
+Yabai is retained only for hover focus with a float-only layout, so it does
+not compete with AeroSpace for window placement or workspace switching. The
+v2 installer removes the legacy `skhd` service and formula because its old
+Yabai `Command+1..9` bindings would intercept the v2 workspace shortcuts.
 
-Caveat:
-- Basic yabai tiling and skhd hotkeys can run after macOS Accessibility permission is granted.
-- Animation and scripting-addition features require partial SIP changes from Recovery. Those steps are documented in `docs/yabai-migration.md`.
+The `yabai + skhd + SketchyBar + JankyBorders` setup remains documented as a
+legacy fallback in `docs/yabai-migration.md`, not as a v2 runtime.

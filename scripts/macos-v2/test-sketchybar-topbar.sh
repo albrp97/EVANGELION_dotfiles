@@ -247,19 +247,29 @@ PY
 system_usage_plugin="$HOME/.config/macbook-rice-v2/sketchybar/plugins/system_usage.sh"
 warning_test_dir="$(mktemp -d)"
 trap 'rm -rf "$warning_test_dir"' EXIT
-cat > "$warning_test_dir/df" <<'EOF'
+cat > "$warning_test_dir/diskutil" <<'EOF'
 #!/bin/sh
-printf '%s\n' \
-  'Filesystem 1024-blocks Used Available Capacity Mounted on' \
-  '/dev/mock 100 85 15 85% /'
+cat <<'PLIST'
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>APFSContainerSize</key>
+  <integer>1000</integer>
+  <key>APFSContainerFree</key>
+  <integer>150</integer>
+</dict>
+</plist>
+PLIST
 EOF
 cat > "$warning_test_dir/sketchybar" <<'EOF'
 #!/bin/sh
 printf '%s\n' "$*"
 EOF
-chmod u+x "$warning_test_dir/df" "$warning_test_dir/sketchybar"
+chmod u+x "$warning_test_dir/diskutil" "$warning_test_dir/sketchybar"
 warning_output="$(
-  DF_BIN="$warning_test_dir/df" \
+  DISKUTIL_BIN="$warning_test_dir/diskutil" \
+  PLUTIL_BIN="/usr/bin/plutil" \
   SKETCHYBAR_BIN="$warning_test_dir/sketchybar" \
   NAME=ssd \
   CONFIG_DIR="$HOME/.config/macbook-rice-v2/sketchybar" \

@@ -17,6 +17,21 @@ if ! command -v python3 >/dev/null 2>&1; then
   echo "Python 3 is required to verify SketchyBar item state." >&2
   exit 1
 fi
+if command -v skhd >/dev/null 2>&1; then
+  echo "Legacy skhd is still installed and can reclaim AeroSpace workspace shortcuts." >&2
+  exit 1
+fi
+if pgrep -x skhd >/dev/null 2>&1; then
+  echo "Legacy skhd is still running and can steal AeroSpace workspace shortcuts." >&2
+  exit 1
+fi
+launch_domain="gui/$(id -u)"
+for legacy_label in com.koekeishiya.skhd com.asmvik.skhd homebrew.mxcl.skhd; do
+  if launchctl print "$launch_domain/$legacy_label" >/dev/null 2>&1; then
+    echo "Legacy skhd LaunchAgent is still loaded: $legacy_label" >&2
+    exit 1
+  fi
+done
 
 restore_state() {
   local result=$?

@@ -7,8 +7,10 @@ Reproducible Pastel EVA-01 dotfiles for macOS and Arch-based Linux, with a share
 ```text
 dotfiles/common/   Shared Starship, Yazi, btop, Fastfetch, Kitty, Copilot,
                    VS Code theme/icons, and Zen browser styling.
-dotfiles/macos/    yabai, skhd, SketchyBar, Karabiner, macOS helpers,
+dotfiles/macos/    legacy yabai/skhd, SketchyBar, Karabiner, macOS helpers,
                    macOS application settings, and launch agents.
+dotfiles/macos-v2/ AeroSpace, float-only Yabai hover focus, SketchyBar,
+                   JankyBorders, and the v2 desktop installer.
 dotfiles/linux/    Hyprland, Noctalia, Fish, Kitty/Ghostty, Code OSS,
                    qBittorrent, Vivaldi, staged updates,
                    clipboard/screenshot helpers, and UWSM.
@@ -69,7 +71,14 @@ Zen profiles are detected automatically by the installer. If Zen was installed a
 
 ## macOS layer
 
-The macOS configuration uses yabai/skhd for tiling and bindings, Karabiner for the right-Command HyprMod, SketchyBar for the top bar, JankyBorders for focus borders, and Ghostty for the terminal.
+The legacy macOS configuration uses yabai/skhd for tiling and bindings.
+MacBook Rice v2 uses AeroSpace for tiling and virtual workspaces, keeps Yabai
+in float-only mode for hover focus, and uses Karabiner for the right-Command
+HyprMod, SketchyBar for the top bar, JankyBorders for focus borders, and
+Ghostty for the terminal. Apply v2 with
+`scripts/macos-v2/bootstrap-tools.sh` and
+`scripts/macos-v2/install-desktop.sh`; v2 removes the legacy skhd service so
+the old Yabai workspace bindings cannot compete with AeroSpace.
 
 After installation, grant Accessibility/Input Monitoring permissions to the applications macOS requests. See [docs/user-guide.md](docs/user-guide.md), [docs/manual-config.md](docs/manual-config.md), and [docs/yabai-migration.md](docs/yabai-migration.md).
 

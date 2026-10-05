@@ -58,6 +58,21 @@ rule = next(
 )
 if rule is None:
     sys.exit("The selected Karabiner profile has no Command+Space launcher rule.")
+conflicting_leaders = [
+    item.get("description", "<unnamed rule>")
+    for item in rules
+    if item is not rule
+    and any(
+        manipulator.get("from", {}).get("key_code") == "spacebar"
+        and manipulator.get("from", {}).get("modifiers", {}).get("mandatory") == ["command"]
+        for manipulator in item.get("manipulators", [])
+    )
+]
+if conflicting_leaders:
+    sys.exit(
+        "The selected Karabiner profile has another Command+Space leader rule: "
+        + ", ".join(conflicting_leaders)
+    )
 manipulators = rule.get("manipulators", [])
 
 def launcher_actions(key_code):

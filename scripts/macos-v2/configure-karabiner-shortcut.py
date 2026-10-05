@@ -17,6 +17,7 @@ RULES_PATH = (
 RULE_DESCRIPTION = "MacBook Rice v2: Command+Space launcher actions"
 LEGACY_RULE_DESCRIPTIONS = {
     "MacBook Rice v2: Command+Space, then P copies a screen region",
+    "Command+Space leader launcher",
     RULE_DESCRIPTION,
 }
 
