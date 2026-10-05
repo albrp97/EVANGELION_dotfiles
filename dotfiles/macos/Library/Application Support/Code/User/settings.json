@@ -16,6 +16,19 @@
   "terminal.integrated.cursorStyle": "block",
   "terminal.integrated.cursorBlinking": false,
   "terminal.integrated.smoothScrolling": true,
+  "terminal.integrated.profiles.osx": {
+    "Fish": {
+      "path": "${env:HOME}/.homebrew/bin/fish",
+      "args": [
+        "-l",
+        "-i"
+      ]
+    }
+  },
+  "terminal.integrated.defaultProfile.osx": "Fish",
+  "terminal.integrated.env.osx": {
+    "FASTFETCH_DISABLE": "1"
+  },
   "window.commandCenter": false,
   "window.titleBarStyle": "custom",
   "breadcrumbs.enabled": false,

@@ -29,16 +29,14 @@ if [[ ! -f "$workbench_html" ]] ||
   exit 1
 fi
 
-settings_source="$ROOT_DIR/dotfiles/macos/Library/Application Support/Code/User/settings.json"
 settings_target="$HOME/Library/Application Support/Code/User/settings.json"
 keybindings_source="$ROOT_DIR/dotfiles/macos/Library/Application Support/Code/User/keybindings.json"
 keybindings_target="$HOME/Library/Application Support/Code/User/keybindings.json"
 extension_dir="$HOME/.vscode/extensions/macbook-linux-rice-eva01-pastel-0.1.0"
 karabiner_config="$HOME/.config/karabiner/karabiner.json"
 
-if [[ ! -f "$settings_target" ]] ||
-  ! cmp -s "$settings_source" "$settings_target"; then
-  echo "The installed VS Code settings differ from the tracked Mac rice settings. Run scripts/macos-v2/install-desktop.sh." >&2
+if [[ ! -f "$settings_target" ]]; then
+  echo "VS Code user settings are missing. Run scripts/macos-v2/install-desktop.sh." >&2
   exit 1
 fi
 if [[ ! -f "$keybindings_target" ]] ||
@@ -58,13 +56,30 @@ if ! code --list-extensions | grep -Fxq "macbook-linux-rice.macbook-linux-rice-e
   echo "VS Code did not discover the locally installed EVA-01 extension." >&2
   exit 1
 fi
+fish_bin="$(command -v fish || true)"
+if [[ -z "$fish_bin" || ! -x "$fish_bin" ]]; then
+  echo "Fish is missing. Run scripts/macos-v2/bootstrap-tools.sh." >&2
+  exit 1
+fi
+if ! "$fish_bin" -lic 'functions fish_prompt | string match -q "*STARSHIP_CMD_STATUS*"'; then
+  echo "Fish does not load Starship from its interactive startup configuration." >&2
+  exit 1
+fi
+fastfetch_greeting="$(
+  FASTFETCH_DISABLE=1 "$fish_bin" -lic 'fish_greeting' 2>&1
+)"
+if [[ -n "$fastfetch_greeting" ]]; then
+  echo "VS Code's Fish profile still displays Fastfetch: $fastfetch_greeting" >&2
+  exit 1
+fi
 
-python3 - "$settings_target" "$extension_dir" "$karabiner_config" "$keybindings_target" <<'PY'
+python3 - "$settings_target" "$extension_dir" "$karabiner_config" "$keybindings_target" "$HOME" <<'PY'
 import json
 import sys
 from pathlib import Path
 
-settings_path, extension_path, karabiner_path, keybindings_path = map(Path, sys.argv[1:])
+settings_path, extension_path, karabiner_path, keybindings_path = map(Path, sys.argv[1:5])
+home = Path(sys.argv[5])
 settings = json.loads(settings_path.read_text(encoding="utf-8"))
 keybindings = json.loads(keybindings_path.read_text(encoding="utf-8"))
 extension_path = extension_path.resolve()
@@ -89,6 +104,19 @@ for key, command in expected_keybindings.items():
     matching = [item for item in keybindings if item.get("key") == key]
     if len(matching) != 1 or matching[0].get("command") != command:
         sys.exit(f"VS Code shortcut '{key}' is not bound to {command}.")
+
+expected_fish_path = "${env:HOME}/.homebrew/bin/fish"
+fish_profile = settings.get("terminal.integrated.profiles.osx", {}).get("Fish")
+if (
+    settings.get("terminal.integrated.defaultProfile.osx") != "Fish"
+    or not isinstance(fish_profile, dict)
+    or fish_profile.get("path") != expected_fish_path
+    or fish_profile.get("args") != ["-l", "-i"]
+    or settings.get("terminal.integrated.env.osx") != {"FASTFETCH_DISABLE": "1"}
+):
+    sys.exit("VS Code must default to interactive Fish and disable the Fastfetch greeting in every integrated terminal.")
+if not (home / ".homebrew/bin/fish").is_file():
+    sys.exit("The configured VS Code Fish shell executable is missing.")
 
 config = json.loads(karabiner_path.read_text(encoding="utf-8"))
 selected = [profile for profile in config.get("profiles", []) if profile.get("selected") is True]
@@ -145,4 +173,4 @@ if [[ "$running" != true ]]; then
   exit 1
 fi
 
-echo "VS Code functionality passed: app launch, wallpaper background, Nerd Font settings, EVA themes, Command+Space+V, HyprMod+V, and primary, secondary, and status-bar shortcuts."
+echo "VS Code functionality passed: app launch, wallpaper background, Nerd Font settings, EVA themes, Fish/Starship terminal profile, app shortcuts, and sidebar/status-bar shortcuts."

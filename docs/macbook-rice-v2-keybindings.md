@@ -38,6 +38,13 @@ starts it at login and loads the persistent `~/.yabairc`. Yabai does not load
 its scripting addition, and no SIP change or `sudo` is used. Grant Yabai
 Accessibility permission in System Settings so focus tracking can work.
 
+Ghostty's automatic Secure Input on detected terminal password prompts is
+disabled so AeroSpace shortcuts remain usable during those prompts. This
+reduces protection against other apps reading keystrokes while entering
+passwords in Ghostty. You can still enable Ghostty > Secure Keyboard Entry
+manually when needed; other apps and macOS can also activate Secure Input,
+which will temporarily block AeroSpace shortcuts by design.
+
 ## Workspaces
 
 | Action | Shortcut |
@@ -96,16 +103,24 @@ grant Accessibility access to the process running the launcher.
 
 These are installed as user keybindings from the legacy Mac rice configuration
 and match the Linux Code OSS shortcuts.
+New integrated terminals use the tracked Fish profile, which loads the shared
+Starship prompt from the Fish interactive configuration. VS Code disables
+Fastfetch's startup greeting for all its integrated terminals; Ghostty
+continues to show Fastfetch.
 
 ## Top bar and power chooser
 
 The top bar follows the older Mac rice layout and EVA palette: power icon,
-clock, AeroSpace workspace dots, plus volume, weather, and battery pills from
+clock, AeroSpace workspace dots, plus CPU/RAM/SSD, weather, and battery pills from
 left to right. Dots 1–3 always show; higher-numbered dots appear through the
-highest focused or occupied workspace. The old brightness item is intentionally
-omitted. The power icon opens a native macOS chooser for locking, display sleep,
-system sleep, 30-minute caffeinate, and restarting the v2 UI services. Logging
-out, restarting, or shutting down requires a second confirmation.
+highest focused or occupied workspace. Brightness, network traffic, and volume
+items are intentionally omitted. The CPU/RAM/SSD capsule uses 56-column metric
+cells with equal outer margins and approximately four-pixel visible inter-cell
+spacing. Any
+metric at 80% or higher turns orange. The power icon opens a
+native macOS chooser for locking, display sleep, system sleep, 30-minute
+caffeinate, and restarting the v2 UI services. Logging out, restarting, or
+shutting down requires a second confirmation.
 
 ## HyprMod app and utility actions
 

@@ -14,7 +14,7 @@ if [[ ! -x "$power_menu" ]]; then
   echo "The v2 native power chooser is missing or not executable." >&2
   exit 1
 fi
-if grep -qi brightness "$config"; then
+if grep -qiE 'brightness|network_usage|download|upload|volume' "$config"; then
   echo "The legacy brightness item must remain excluded from the v2 bar." >&2
   exit 1
 fi
@@ -49,7 +49,13 @@ expected = {
     "spaces",
     "battery",
     "weather",
-    "volume",
+    "cpu",
+    "ram",
+    "ssd",
+    "cpu_ram_gap",
+    "ram_ssd_gap",
+    "system_weather_gap",
+    "system_usage",
     "wallpaper_rotation",
     *(f"workspace.{number}" for number in range(1, 10)),
 }
@@ -78,7 +84,7 @@ if item.get("name") != "power" or icon.get("value") != "⏻" or icon.get("drawin
     sys.exit("The legacy-style power icon is not visible.")
 PY
 
-for item in clock battery weather volume; do
+for item in clock battery weather cpu ram ssd; do
   item_json="$(sketchybar --query "$item")"
   BAR_ITEM_JSON="$item_json" python3 - "$item" <<'PY'
 import json
@@ -92,36 +98,181 @@ if item.get("name") != name or not (item.get("label") or {}).get("value"):
 PY
 done
 
-volume_json="$(sketchybar --query volume)"
+cpu_json="$(sketchybar --query cpu)"
+ram_json="$(sketchybar --query ram)"
+ssd_json="$(sketchybar --query ssd)"
+cpu_ram_gap_json="$(sketchybar --query cpu_ram_gap)"
+ram_ssd_gap_json="$(sketchybar --query ram_ssd_gap)"
+system_weather_gap_json="$(sketchybar --query system_weather_gap)"
+system_usage_json="$(sketchybar --query system_usage)"
 weather_json="$(sketchybar --query weather)"
-BAR_VOLUME_JSON="$volume_json" BAR_WEATHER_JSON="$weather_json" python3 - <<'PY'
+power_json="$(sketchybar --query power)"
+clock_json="$(sketchybar --query clock)"
+spaces_json="$(sketchybar --query spaces)"
+battery_json="$(sketchybar --query battery)"
+BAR_SYSTEM_USAGE_JSON="$system_usage_json" \
+BAR_CPU_JSON="$cpu_json" \
+BAR_RAM_JSON="$ram_json" \
+BAR_SSD_JSON="$ssd_json" \
+BAR_CPU_RAM_GAP_JSON="$cpu_ram_gap_json" \
+BAR_RAM_SSD_GAP_JSON="$ram_ssd_gap_json" \
+BAR_SYSTEM_WEATHER_GAP_JSON="$system_weather_gap_json" \
+BAR_WEATHER_JSON="$weather_json" \
+BAR_POWER_JSON="$power_json" \
+BAR_CLOCK_JSON="$clock_json" \
+BAR_SPACES_JSON="$spaces_json" \
+BAR_BATTERY_JSON="$battery_json" \
+python3 - <<'PY'
 import json
 import os
+import re
 import sys
 
-volume = json.loads(os.environ["BAR_VOLUME_JSON"])
+cpu = json.loads(os.environ["BAR_CPU_JSON"])
+ram = json.loads(os.environ["BAR_RAM_JSON"])
+ssd = json.loads(os.environ["BAR_SSD_JSON"])
+cpu_ram_gap = json.loads(os.environ["BAR_CPU_RAM_GAP_JSON"])
+ram_ssd_gap = json.loads(os.environ["BAR_RAM_SSD_GAP_JSON"])
+system_weather_gap = json.loads(os.environ["BAR_SYSTEM_WEATHER_GAP_JSON"])
+system_usage = json.loads(os.environ["BAR_SYSTEM_USAGE_JSON"])
 weather = json.loads(os.environ["BAR_WEATHER_JSON"])
-volume_geometry = volume.get("geometry") or {}
-volume_background = volume_geometry.get("background") or {}
-if volume_background.get("drawing") != "on":
-  sys.exit("The volume item is missing its rounded pill background.")
-if (
-  volume_background.get("corner_radius") != 12
-  or volume_background.get("height") != 24
+power = json.loads(os.environ["BAR_POWER_JSON"])
+clock = json.loads(os.environ["BAR_CLOCK_JSON"])
+spaces = json.loads(os.environ["BAR_SPACES_JSON"])
+battery = json.loads(os.environ["BAR_BATTERY_JSON"])
+for item, icon in (
+    (cpu, ""),
+    (ram, ""),
+    (ssd, ""),
 ):
-  sys.exit("The volume pill geometry does not match the other top-bar pills.")
+    label = (item.get("label") or {}).get("value") or ""
+    valid_label = re.fullmatch(r"\d{2,3}%", label)
+    if not valid_label:
+        sys.exit(f"The {item['name']} item has an invalid label: {label!r}")
+    if (item.get("icon") or {}).get("value") != icon:
+        sys.exit(f"The {item['name']} item has the wrong metric icon.")
+    if (item.get("geometry") or {}).get("width") != 56:
+        sys.exit(f"The {item['name']} item must use its fixed metric width.")
 
-volume_bounds = volume.get("bounding_rects") or {}
+system_geometry = system_usage.get("geometry") or {}
+system_background = system_geometry.get("background") or {}
+if system_background.get("drawing") != "on":
+    sys.exit("The system usage item is missing its rounded pill background.")
+if (
+    system_background.get("corner_radius") != 12
+    or system_background.get("height") != 24
+    or system_background.get("padding_left") != 15
+    or system_background.get("padding_right") != 15
+):
+    sys.exit("The system usage pill geometry does not match the other top-bar pills.")
+
+for spacer, expected_width in (
+    (cpu_ram_gap, 2),
+    (ram_ssd_gap, 6),
+    (system_weather_gap, 6),
+):
+    spacer_geometry = spacer.get("geometry") or {}
+    if spacer_geometry.get("width") != expected_width or spacer_geometry.get("drawing") != "on":
+        sys.exit(f"The {spacer['name']} spacer must remain a visible-width transparent spacer.")
+
+pill_items = {
+  item["name"]: item
+  for item in (
+    power,
+    clock,
+    spaces,
+    system_usage,
+    weather,
+    battery,
+  )
+}
+for display in (
+  pill_items["power"].get("bounding_rects", {}).keys()
+  & pill_items["clock"].get("bounding_rects", {}).keys()
+  & pill_items["spaces"].get("bounding_rects", {}).keys()
+  & pill_items["system_usage"].get("bounding_rects", {}).keys()
+  & pill_items["weather"].get("bounding_rects", {}).keys()
+  & pill_items["battery"].get("bounding_rects", {}).keys()
+):
+  ordered = [
+    pill_items[name]["bounding_rects"][display]
+    for name in ("power", "clock", "spaces")
+  ]
+  right_side = [
+  pill_items[name]["bounding_rects"][display]
+  for name in ("system_usage", "weather", "battery")
+  ]
+  gaps = [
+    ordered[index + 1]["origin"][0]
+    - (ordered[index]["origin"][0] + ordered[index]["size"][0])
+    for index in range(len(ordered) - 1)
+  ]
+  gaps.extend(
+    right_side[index + 1]["origin"][0]
+    - (right_side[index]["origin"][0] + right_side[index]["size"][0])
+    for index in range(len(right_side) - 1)
+  )
+  if any(abs(gap - 6) > 0.5 for gap in gaps):
+    sys.exit(f"Top-bar pill gaps must all be six pixels, got {gaps}.")
+
+cpu_bounds = cpu.get("bounding_rects") or {}
+ram_bounds = ram.get("bounding_rects") or {}
+ssd_bounds = ssd.get("bounding_rects") or {}
+system_bounds = system_usage.get("bounding_rects") or {}
 weather_bounds = weather.get("bounding_rects") or {}
-shared_displays = volume_bounds.keys() & weather_bounds.keys()
+shared_displays = (
+  cpu_bounds.keys()
+  & ram_bounds.keys()
+  & ssd_bounds.keys()
+  & system_bounds.keys()
+  & weather_bounds.keys()
+)
 if not shared_displays:
-  sys.exit("Could not compare volume and weather positions on a shared display.")
+  sys.exit("Could not compare CPU/RAM and weather positions on a shared display.")
 for display in shared_displays:
-  volume_x = volume_bounds[display]["origin"][0]
+  cpu_x = cpu_bounds[display]["origin"][0]
+  ram_x = ram_bounds[display]["origin"][0]
+  ssd_x = ssd_bounds[display]["origin"][0]
   weather_x = weather_bounds[display]["origin"][0]
-  if volume_x >= weather_x:
-      sys.exit("The volume pill must be positioned to the left of weather.")
+  cpu_width = cpu_bounds[display]["size"][0]
+  ram_width = ram_bounds[display]["size"][0]
+  if ram_x - (cpu_x + cpu_width) < 4:
+      sys.exit("The CPU/RAM metrics need the reduced separator.")
+  if ssd_x - (ram_x + ram_width) < 4:
+      sys.exit("The RAM/SSD metrics need the reduced separator.")
+  if not cpu_x < ram_x < ssd_x < weather_x:
+      sys.exit("The fixed-width CPU/RAM/SSD metrics must be positioned to the left of weather.")
 PY
+
+system_usage_plugin="$HOME/.config/macbook-rice-v2/sketchybar/plugins/system_usage.sh"
+warning_test_dir="$(mktemp -d)"
+trap 'rm -rf "$warning_test_dir"' EXIT
+cat > "$warning_test_dir/df" <<'EOF'
+#!/bin/sh
+printf '%s\n' \
+  'Filesystem 1024-blocks Used Available Capacity Mounted on' \
+  '/dev/mock 100 85 15 85% /'
+EOF
+cat > "$warning_test_dir/sketchybar" <<'EOF'
+#!/bin/sh
+printf '%s\n' "$*"
+EOF
+chmod u+x "$warning_test_dir/df" "$warning_test_dir/sketchybar"
+warning_output="$(
+  DF_BIN="$warning_test_dir/df" \
+  SKETCHYBAR_BIN="$warning_test_dir/sketchybar" \
+  NAME=ssd \
+  CONFIG_DIR="$HOME/.config/macbook-rice-v2/sketchybar" \
+  bash "$system_usage_plugin"
+)"
+if ! grep -Fq 'icon.color=0xfff6c177' <<<"$warning_output" ||
+  ! grep -Fq 'label.color=0xfff6c177' <<<"$warning_output" ||
+  ! grep -Fq 'label=85%' <<<"$warning_output"; then
+  echo "The SDD metric does not turn orange at 80% usage." >&2
+  exit 1
+fi
+trap - EXIT
+rm -rf "$warning_test_dir"
 
 focused_workspace="$(aerospace list-workspaces --focused)"
 highest_visible_workspace=3
@@ -186,4 +337,4 @@ if grep -qi brightness <<<"$menu_actions"; then
   exit 1
 fi
 
-echo "Legacy-style top bar passed: power, clock, progressive workspace dots, volume pill left of weather, battery, no brightness."
+echo "Legacy-style top bar passed: power, clock, CPU/RAM/SSD pill, weather, battery, no network or volume."

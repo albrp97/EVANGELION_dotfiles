@@ -151,7 +151,11 @@ tiling.
 - [ ] Have the user physically verify the shortcuts before closing this
   feature.
 
-**Physical acceptance:** After macOS Secure Input ends, press `Command+2`,
+**Physical acceptance:** Ghostty's automatic Secure Input is disabled by
+choice to preserve AeroSpace shortcuts during terminal password prompts; this
+reduces automatic terminal-password protection, but manual Secure Keyboard
+Entry and Secure Input enabled by other apps still block shortcuts. After any
+other app's macOS Secure Input ends, press `Command+2`,
 `Command+3`, and `Command+1` and confirm the active workspace follows in the
 bar. With a disposable window focused, test `Command+Shift+2` and
 `Command+Shift+1` and confirm the window moves and focus follows. The
@@ -189,7 +193,11 @@ intentionally unavailable while that macOS security feature is active.
 
 - [x] Choose a macOS-compatible top-bar implementation and define its layout.
 - [x] Port the legacy Mac bar's power icon, clock, workspace dots, battery,
-  weather, and volume; intentionally omit its brightness item.
+  and weather; intentionally omit its brightness, network, and volume items.
+- [x] Add a rounded fixed-width CPU/RAM/SSD percentage capsule with compact
+  CPU-chip, database-stack, and SSD icons, equal outer margins, inter-cell
+  approximately four-pixel visible spacing, orange 80% warning colors, and
+  two-second refresh.
 - [x] Keep workspace dots 1–3 visible and reveal higher dots only through the
   highest focused or occupied numbered workspace.
 - [x] Install JankyBorders with the EVA green active gradient and dark-purple
@@ -205,16 +213,19 @@ hotkey and the leader's second-Space alias. The legacy terminal, Yazi,
 Fastfetch, screenshot, and application actions are documented in the v2
 keymap. SketchyBar
 matches the legacy Mac EVA palette, Nerd Font, rounded item backgrounds,
-power/clock/workspace-dot layout, and battery, weather, and volume indicators,
-with brightness omitted. AeroSpace supplies the active/inactive workspace
+power/clock/workspace-dot layout, fixed-width CPU/RAM/SSD usage, battery, and
+weather indicators, with brightness, network, and volume omitted. AeroSpace supplies the active/inactive workspace
 dots. Clicking the power icon opens a native macOS chooser; logout, restart,
 and shutdown require explicit confirmation. A user LaunchAgent manages the
 SketchyBar process. Startup across an actual logout/login or reboot has not
 yet been tested.
 
 **Physical bar acceptance:** Confirm the focused workspace dot is green, other
-dots are lavender, and the power, clock, battery, weather, and volume items are
-visible with no brightness item. Open the power chooser and cancel it, then
+dots are lavender, and the power, clock, roomy CPU/RAM/SSD capsule, battery, and
+weather items are visible with no brightness, network, or volume items. Confirm
+the CPU/RAM/SSD cells have equal outer margins and approximately four-pixel
+visible inter-cell spacing, and
+orange icon/text colors at 80% or higher. Open the power chooser and cancel it, then
 verify the confirmation dialog defaults to Cancel for a destructive action.
 After a normal logout/login, verify both the bar and JankyBorders start without
 an attached shell.

@@ -104,6 +104,13 @@ if ! grep -Fq "working-directory = home" "$GHOSTTY_CONFIG" ||
   echo "Ghostty is not configured to open new windows in their requested directory." >&2
   exit 1
 fi
+if [[ "$(grep -Ec '^[[:space:]]*macos-auto-secure-input[[:space:]]*=[[:space:]]*false[[:space:]]*$' "$GHOSTTY_CONFIG")" -ne 1 ]] ||
+  [[ "$(grep -Ec '^[[:space:]]*macos-auto-secure-input[[:space:]]*=' "$GHOSTTY_CONFIG")" -ne 1 ]] ||
+  ! grep -Eq '^[[:space:]]*macos-auto-secure-input[[:space:]]*=[[:space:]]*false[[:space:]]*$' \
+    "$ROOT_DIR/dotfiles/macos-v2/.config/ghostty/config.in"; then
+  echo "Ghostty must disable automatic Secure Input in the installed and tracked v2 configs." >&2
+  exit 1
+fi
 for helper in \
   rice-v2-open-terminal \
   rice-v2-new-ghostty-window \
@@ -126,6 +133,10 @@ fi
 
 fish -n "$FISH_CONFIG"
 "$GHOSTTY_BIN" +validate-config --config-file="$GHOSTTY_CONFIG"
+if ! "$GHOSTTY_BIN" +show-config | grep -Fxq 'macos-auto-secure-input = false'; then
+  echo "Ghostty's effective configuration still enables automatic Secure Input." >&2
+  exit 1
+fi
 STARSHIP_CONFIG="$STARSHIP_CONFIG" starship prompt >/dev/null
 "$SCRIPT_DIR/test-power-commands.sh"
 
